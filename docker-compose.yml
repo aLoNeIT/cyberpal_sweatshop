@@ -1,0 +1,25 @@
+version: '3'
+services:
+  hyperf-piagent:
+    container_name: hyperf-piagent
+    image: hyperf-piagent
+    build:
+      context: .
+    ports:
+      - 9502:9502
+    environment:
+      - APP_ENV=dev
+      - SCAN_CACHEABLE=false
+      # ===== Pi Agent 配置 =====
+      - PI_AGENT_BIN=pi
+      - PI_AGENT_PROVIDER=${PI_AGENT_PROVIDER:-openai}
+      - PI_AGENT_MODEL=${PI_AGENT_MODEL:-gpt-4o}
+      # ===== API Key =====
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      # 挂载 Pi Agent models.json 配置（修改后重启容器生效）
+      - ./pi-config/models.json:/root/.pi/agent/models.json
+
+networks:
+  default:
+    name: hyperf-piagent

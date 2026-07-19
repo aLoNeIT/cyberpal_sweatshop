@@ -1,0 +1,20 @@
+{
+  "providers": {
+    "openai": {
+      "baseUrl": "https://token.alonetech.com",
+      "api": "openai-responses",
+      "apiKey": "$OPENAI_API_KEY",
+      "models": [
+        {
+          "id": "gpt-5.6-sol"
+        },
+        {
+          "id": "gpt-5.6-terra"
+        },
+        {
+          "id": "gpt-5.6-luna"
+        }
+      ]
+    }
+  }
+}
