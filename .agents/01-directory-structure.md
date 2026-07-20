@@ -2,6 +2,32 @@
 
 本文档用于统一当前项目的目录层级、公共代码归类方式和目录整理原则。
 
+## 0. 仓库顶层结构（Monorepo 分区）
+
+本仓库采用「按职责分区」的 Monorepo 布局。根目录仅保留跨端共享的配置与说明，业务代码按后端 / 前端 / 文档 / 部署四类归置到一级子目录：
+
+| 目录 | 职责 | 关键内容 |
+|------|------|----------|
+| `service/` | 后端（Hyperf 3.1） | 原根目录后端代码整体迁入；含 `app/`、`config/`、`migrations/`、`composer.json` 等。运行时 `BASE_PATH` 由 `service/bin/hyperf.php` 的 `dirname(__DIR__)` 推导，故 PSR-4（`"App\\": "app/"`）相对 `service/` 自动生效，无需修改 autoload。 |
+| `web/` | 前端工程 | 自包含前端目录（构建配置见其根 `vite.config.ts`）；开发时通过 `/api`、`/chat` 代理到后端 `localhost:9502`，与顶层拆分无关。 |
+| `document/` | 文档 | 正式项目文档目录（当前为空占位，含 `.gitkeep`，待补充）。 |
+| `deploy/` | 构建 / 部署 | 构建与部署配置统一收口：`Dockerfile`、`docker-compose.yml`、`deploy.test.yml`、`.gitlab-ci.yml`、`.github/`、`.devcontainer/`；其内部构建上下文均指向 `service/`。 |
+
+### 0.1 不纳入版本控制的目录（Git 忽略）
+
+以下目录已在根 `.gitignore` 忽略，不进入版本控制，仅本地保留：
+
+- `docs/`：旧文档目录，已废弃。
+- `.tmp/`：本地临时草稿（PRD / 设计 / 调研）。
+- `.workbuddy/`：助理内部工作记忆（本机文件）。
+- `WORKSPACE.md`：个人开发环境配置（PHP 路径、容器信息等）。
+
+### 0.2 与下级规范的关系
+
+- `service/` 内部的应用分层与目录约定，见本文档第 1–4 节及 [项目分层规范](.agents/05-layered-architecture.md)。
+- `web/` 的前端结构约定，见本文档第 5 节（及 [ng-alain 前端开发规范](.agents/18-ng-alain-frontend-standards.md)）。
+- 顶层迁移历史与命令变化见仓库根 `README.md`。
+
 ## 1. `app` 顶层划分
 
 `app` 目录首先按服务器类型进行划分，包含以下两类目录：
