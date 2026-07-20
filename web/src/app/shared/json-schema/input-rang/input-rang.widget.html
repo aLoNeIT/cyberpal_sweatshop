@@ -1,0 +1,17 @@
+<sf-item-wrap [id]="id" [schema]="schema" [ui]="ui" [showError]="showError" [error]="error" [showTitle]="schema.title">
+  <nz-input-number
+    [nzMin]="0"
+    [ngModel]="rangvalue.start"
+    [nzMax]="ui.max"
+    [nzStep]="0"
+    (ngModelChange)="change($event, 'start')"
+  ></nz-input-number
+  >-
+  <nz-input-number
+    [nzMin]="0"
+    [nzMax]="ui.max"
+    [nzStep]="0"
+    [ngModel]="rangvalue.end"
+    (ngModelChange)="change($event, 'end')"
+  ></nz-input-number>
+</sf-item-wrap>

@@ -1,0 +1,55 @@
+/* ng-zorro 表单修正
+---------------------------------------------*/
+:host ::ng-deep {
+  // 设置表单项下间距
+  .ant-form-item {
+    margin-bottom: 16px;
+  }
+
+  // 修正垂直布局表单中label的下间距
+  .ant-form-vertical .ant-form-item-label,
+  .ant-col-24.ant-form-item-label,
+  .ant-col-xl-24.ant-form-item-label {
+    padding-bottom: 4px;
+  }
+
+  // 内联表单中的垂直布局(label在控件上方)
+  .x-form-inline-vertical {
+    nz-form-item {
+      display: block;
+      nz-form-label {
+        display: block !important;
+        text-align: left;
+        line-height: 22px;
+        > label {
+          height: auto;
+        }
+      }
+    }
+  }
+
+  // checkbox 和 radio 中 option 垂直布局
+  .x-form-option-vertical > label {
+    display: block;
+    height: 24px;
+    line-height: 24px;
+  }
+
+  // 为 textarea 和 垂直布局的控件(checkbox, radio) 设置label为顶对齐
+  .x-form-vertical-align-top > label {
+    height: auto;
+  }
+
+  // 为 日期&时间控件 设置宽度
+  .ant-picker {
+    width: 100%;
+  }
+}
+
+.x-form-item-hidden {
+  visibility: hidden;
+}
+
+hr {
+  border-bottom: 0;
+}

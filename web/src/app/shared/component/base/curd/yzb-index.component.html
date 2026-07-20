@@ -1,0 +1,93 @@
+<!-- index页面 -->
+<div class="bg-white px-md pt-md">
+  <!-- 骨架屏 -->
+  @if (initControl) {
+    <div>
+      <nz-skeleton-element nzType="button" [nzActive]="true" nzSize="default" nzShape="default"></nz-skeleton-element>
+      <nz-skeleton-element class="ml-sm" nzType="button" [nzActive]="true" nzSize="default" nzShape="default"> </nz-skeleton-element>
+      <nz-skeleton-element class="ml-sm" nzType="button" [nzActive]="true" nzSize="default" nzShape="default"> </nz-skeleton-element>
+    </div>
+    <div class="mt-sm">
+      <nz-skeleton-element nzType="input" [nzActive]="true" nzSize="default" style="width: 200px"></nz-skeleton-element>
+      <nz-skeleton-element class="ml-sm" nzType="input" [nzActive]="true" nzSize="default" style="width: 200px"> </nz-skeleton-element>
+      <nz-skeleton-element class="ml-sm" nzType="button" [nzActive]="true" nzSize="default" nzShape="circle"> </nz-skeleton-element>
+      <nz-skeleton-element class="ml-sm" nzType="button" [nzActive]="true" nzSize="default" nzShape="circle"> </nz-skeleton-element>
+    </div>
+    <nz-table #basicTable style="margin-top: 8px" nzBordered="true">
+      <thead>
+        <tr>
+          <th nzAlign="center">
+            <nz-skeleton-element nzType="input" [nzActive]="true" nzSize="default" style="width: 100%"> </nz-skeleton-element>
+          </th>
+          <th nzAlign="center">
+            <nz-skeleton-element nzType="input" [nzActive]="true" nzSize="default" style="width: 100%"> </nz-skeleton-element>
+          </th>
+          <th nzAlign="center">
+            <nz-skeleton-element nzType="input" [nzActive]="true" nzSize="default" style="width: 100%"> </nz-skeleton-element>
+          </th>
+          <th nzAlign="center">
+            <nz-skeleton-element nzType="input" [nzActive]="true" nzSize="default" style="width: 100%"> </nz-skeleton-element>
+          </th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </nz-table>
+  }
+  <!-- 骨架屏结束 -->
+  @if (!initControl) {
+    <nz-spin [nzTip]="loadingTip" [nzSpinning]="loading">
+      <!-- 顶部按钮区域 begin -->
+      @if (showButton(1)) {
+        <yzb-button-group (buttonClickEvent)="onButtonClick($event)" [buttons]="buttonsTop">
+          <ng-container id="rightSide">
+            <ng-container [ngTemplateOutlet]="buttonsRightSideTemplate"></ng-container>
+          </ng-container>
+        </yzb-button-group>
+      }
+      <!-- 顶部按钮区域 end -->
+      <!-- 条件选择区 begin -->
+      <div class="mt-sm">
+        <sf
+          #condition
+          mode="search"
+          [schema]="condSchema"
+          button="none"
+          [ui]="condUI"
+          layout="inline"
+          firstVisual="false"
+          [formData]="condData"
+        >
+          <button type="button" nz-button nzShape="circle" nzType="primary" (click)="search($event)" [style.display]="condButtonDisplay">
+            <i nz-icon nzType="search" nzTheme="outline"></i>
+          </button>
+          <button type="button" nz-button nzShape="circle" nzType="default" (click)="reset($event)" [style.display]="condButtonDisplay">
+            <i nz-icon nzType="redo" nzTheme="outline"></i>
+          </button>
+        </sf>
+      </div>
+      <!-- 条件选择区 end -->
+      <!-- 数据列表区 begin -->
+      <div class="mt-sm">
+        <st
+          #grid
+          resizable
+          [columns]="columns"
+          [data]="gridData"
+          [bordered]="true"
+          size="small"
+          [rowClassName]="rowClassName"
+          (change)="onGridChange($event)"
+          [page]="stPage"
+          [scroll]="gridScroll"
+          [pi]="gridPage.pi"
+          [ps]="gridPage.ps"
+          [total]="gridPage.total"
+          [contextmenu]="undefined"
+        >
+        </st>
+      </div>
+      <!-- 数据列表区end -->
+    </nz-spin>
+  }
+</div>
+<!-- index页面 end-->

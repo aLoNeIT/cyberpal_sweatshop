@@ -1,0 +1,23 @@
+<div #component class="tcccbody" [ngStyle]="{ top: position.top, left: position.left, display: visibled ? 'block' : 'none' }">
+  <div #title class="title" style="cursor: move">
+    <span style="user-select: none">{{ phoneState }}</span>
+  </div>
+  <div class="phone"> {{ phoneNumber }} </div>
+  <div nz-row>
+    <div nz-col class="gutter-row" [nzSpan]="8">
+      <button (click)="hangUp($event)" *ngIf="closeSwitch" class="btnwidth" nz-button nzType="primary" nzShape="round" nzDanger>
+        挂断
+      </button>
+    </div>
+    <div nz-col class="gutter-row" [nzSpan]="8">
+      <button *ngIf="callholdSwitch" (click)="callhold($event)" class="btnwidth" nz-button nzType="primary" nzShape="round">
+        {{ callHolded ? '取回通话' : '通话保持' }}
+      </button>
+    </div>
+    <div nz-col class="gutter-row" [nzSpan]="8">
+      <button (click)="mute($event)" *ngIf="muteSwitch" class="btnwidth" style="width: 88px" nz-button nzType="primary" nzShape="round">
+        {{ muted ? '取消静音' : '静音' }}</button
+      >
+    </div>
+  </div>
+</div>

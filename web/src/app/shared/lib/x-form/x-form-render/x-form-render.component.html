@@ -1,0 +1,201 @@
+<nz-spin [nzSpinning]="loading">
+  @if (formGroup) {
+    <form
+      nz-form
+      [formGroup]="formGroup"
+      [nzLayout]="config.layout"
+      [class.x-form-inline-vertical]="config.layout == 'inline' && config.inlineVertical"
+      style="margin-bottom: -16px"
+    >
+      <ng-container *ngTemplateOutlet="componentTpl; context: { $implicit: config }"></ng-container>
+      <!-- 表单循环模板 -->
+      <ng-template #componentTpl let-node>
+        @for (item of node.children || []; track item) {
+          @switch (item.type) {
+            <!-- 分割线 -->
+            @case ('hr') {
+              <div style="overflow: hidden; margin-top: -16px">
+                <hr [class.x-form-item-hidden]="item.hidden" [style.margin-top.px]="item.margin" [style.margin-bottom.px]="item.margin" />
+              </div>
+            }
+            <!-- 模板占位符 -->
+            @case ('template') {
+              <ng-container
+                [ngTemplateOutlet]="(templateMap || {})[item.key]"
+                [ngTemplateOutletContext]="{ $implicit: formGroup, node: item }"
+              ></ng-container>
+            }
+            <!-- 栅格 -->
+            @case ('row') {
+              <div nz-row [nzGutter]="item.nzGutter">
+                @for (col of item.children || []; track col) {
+                  <div nz-col [nzSpan]="col.nzSpan">
+                    <ng-container *ngTemplateOutlet="componentTpl; context: { $implicit: col }"></ng-container>
+                  </div>
+                }
+              </div>
+            }
+            <!-- 表单组件 -->
+            @default {
+              @if (item.model && visibleIf(item.visibleIf, item)) {
+                <nz-form-item>
+                  <nz-form-label
+                    [nzSpan]="config.layout == 'horizontal' && !item.labelWidth ? node.labelNzSpan || config.labelNzSpan : null"
+                    [nzRequired]="item.required"
+                    [class.x-form-vertical-align-top]="item.type == 'textarea' || item.layout == 'vertical'"
+                    [style.width.px]="item.labelWidth || null"
+                    >{{ item.label }}</nz-form-label
+                  >
+                  <nz-form-control
+                    [nzSpan]="config.layout == 'horizontal' && !item.labelWidth ? node.controlNzSpan || config.controlNzSpan : null"
+                    [style.width.px]="xFormService.getComponentWidth(item, config)"
+                  >
+                    @switch (item.type) {
+                      <!-- input -->
+                      @case ('input') {
+                        @if (!(item.nzAddOnBefore || item.nzAddOnAfter)) {
+                          <input
+                            nz-input
+                            [attr.type]="item.inputType"
+                            [formControlName]="item.model"
+                            [attr.placeholder]="item.placeholder"
+                            [nzSize]="config.nzSize"
+                          />
+                        }
+                        @if (item.nzAddOnBefore || item.nzAddOnAfter) {
+                          <nz-input-group [nzAddOnBefore]="item.nzAddOnBefore" [nzAddOnAfter]="item.nzAddOnAfter" [nzSize]="config.nzSize">
+                            <input
+                              nz-input
+                              [attr.type]="item.inputType"
+                              [formControlName]="item.model"
+                              [attr.placeholder]="item.placeholder"
+                            />
+                          </nz-input-group>
+                        }
+                      }
+                      <!-- textarea -->
+                      @case ('textarea') {
+                        <textarea
+                          nz-input
+                          [formControlName]="item.model"
+                          [nzAutosize]="item.nzAutosize"
+                          [attr.placeholder]="item.placeholder"
+                          [nzSize]="config.nzSize"
+                        ></textarea>
+                      }
+                      <!-- radio -->
+                      @case ('radio') {
+                        <nz-radio-group
+                          nzButtonStyle="solid"
+                          [formControlName]="item.model"
+                          [class.x-form-option-vertical]="item.layout == 'vertical'"
+                          [nzSize]="config.nzSize"
+                        >
+                          @if (!item.buttonStyle) {
+                            @for (option of item.options || []; track option) {
+                              <label nz-radio [nzValue]="option.value">{{ option.label }}</label>
+                            }
+                          }
+                          @if (item.buttonStyle) {
+                            @for (option of item.options || []; track option) {
+                              <label nz-radio-button [nzValue]="option.value">{{ option.label }}</label>
+                            }
+                          }
+                        </nz-radio-group>
+                      }
+                      <!-- checkbox -->
+                      @case ('checkbox') {
+                        <nz-checkbox-group
+                          [formControlName]="item.model"
+                          [class.x-form-option-vertical]="item.layout == 'vertical'"
+                        ></nz-checkbox-group>
+                      }
+                      <!-- switch -->
+                      @case ('switch') {
+                        <nz-switch
+                          [formControlName]="item.model"
+                          [nzCheckedChildren]="item.nzCheckedChildren"
+                          [nzUnCheckedChildren]="item.nzUnCheckedChildren"
+                          [nzSize]="config.nzSize"
+                        ></nz-switch>
+                      }
+                      <!-- select -->
+                      @case ('select') {
+                        <nz-select
+                          [formControlName]="item.model"
+                          [nzMode]="item.nzMode"
+                          nzAllowClear
+                          nzShowSearch
+                          [nzPlaceHolder]="item.placeholder"
+                          [nzDropdownMatchSelectWidth]="false"
+                          [nzSize]="config.nzSize"
+                        >
+                          @for (option of item.options; track option) {
+                            <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+                          }
+                        </nz-select>
+                      }
+                      <!-- datePicker -->
+                      @case ('datePicker') {
+                        @if (item.pickerType == 'range') {
+                          @if (item.nzShowTime) {
+                            <nz-range-picker
+                              [formControlName]="item.model"
+                              [nzPlaceHolder]="item.placeholder"
+                              nzAllowClear
+                              [nzSize]="config.nzSize"
+                              nzShowTime
+                            ></nz-range-picker>
+                          }
+                          @if (!item.nzShowTime) {
+                            <nz-range-picker
+                              [formControlName]="item.model"
+                              [nzPlaceHolder]="item.placeholder"
+                              nzAllowClear
+                              [nzSize]="config.nzSize"
+                            ></nz-range-picker>
+                          }
+                        }
+                        @if (item.pickerType != 'range') {
+                          @if (item.nzShowTime) {
+                            <nz-date-picker
+                              [formControlName]="item.model"
+                              [nzPlaceHolder]="item.placeholder"
+                              nzAllowClear
+                              [nzSize]="config.nzSize"
+                              [nzMode]="item.pickerType"
+                              nzShowTime
+                            ></nz-date-picker>
+                          }
+                          @if (!item.nzShowTime) {
+                            <nz-date-picker
+                              [formControlName]="item.model"
+                              [nzPlaceHolder]="item.placeholder"
+                              nzAllowClear
+                              [nzSize]="config.nzSize"
+                              [nzMode]="item.pickerType"
+                            ></nz-date-picker>
+                          }
+                        }
+                      }
+                      <!-- timePicker -->
+                      @case ('timePicker') {
+                        <nz-time-picker
+                          [formControlName]="item.model"
+                          [nzPlaceHolder]="item.placeholder"
+                          [nzFormat]="item.nzFormat"
+                          nzAllowClear
+                          [nzSize]="config.nzSize"
+                        ></nz-time-picker>
+                      }
+                    }
+                  </nz-form-control>
+                </nz-form-item>
+              }
+            }
+          }
+        }
+      </ng-template>
+    </form>
+  }
+</nz-spin>

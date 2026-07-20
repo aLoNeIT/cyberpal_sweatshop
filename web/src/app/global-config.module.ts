@@ -1,0 +1,96 @@
+/* eslint-disable import/order */
+import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
+import { DelonACLModule } from '@delon/acl';
+import { provideAlain } from '@delon/theme';
+import { AlainConfig, ALAIN_CONFIG } from '@delon/util/config';
+
+import { throwIfAlreadyLoaded } from '@core';
+
+import { environment } from '@env/environment';
+
+// Please refer to: https://ng-alain.com/docs/global-config
+// #region NG-ALAIN Config
+
+const alainConfig: AlainConfig = {
+  utilCurrency: { precision: 2, ingoreZeroPrecision: false },
+  st: {
+    modal: { size: 'lg' },
+    sortReName: { ascend: 'asc', descend: 'desc' },
+    multiSort: { keepEmptyKey: false, global: true },
+    widthMode: { type: 'default', strictBehavior: 'truncate' }
+  },
+  chart: { echartsExtensions: ['/assets/js/dark.min.js'], echartsLib: '/assets/js/echarts.min.js' },
+  media: {
+    urls: [
+      'https://lf9-cdn-tos.bytecdntp.com/cdn/expire-1-M/plyr/3.6.12/plyr.min.js',
+      'https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/plyr/3.6.12/plyr.min.css'
+    ]
+  },
+  pageHeader: { homeI18n: 'home' },
+  lodop: { license: `A59B099A586B3851E0F0D7FDBF37B603`, licenseA: `C94CEE276DB2187AE6B65D56B3FC2848` },
+  pdf: { lib: '/assets/pdfjs/' },
+  auth: { login_url: '/passport/login', token_send_key: 'HYPERF_SESSION_ID' },
+  sf: { uiDateNumberFormat: 'T' },
+  cache: { expire: 7200, prefix: 'cp_' },
+  xlsx: { url: '/assets/xlsx/xlsx.full.min.js', modules: [`/assets/xlsx/cpexcel.js`] }
+};
+
+const alainModules: any[] = [];
+const alainProvides = [provideAlain({ config: alainConfig })];
+
+// #region reuse-tab
+/**
+ * 若需要[路由复用](https://ng-alain.com/components/reuse-tab)需要：
+ * 1、在 `shared-delon.module.ts` 导入 `ReuseTabModule` 模块
+ * 2、注册 `RouteReuseStrategy`
+ * 3、在 `src/app/layout/default/default.component.html` 修改：
+ *  ```html
+ *  <section class="alain-default__content">
+ *    <reuse-tab #reuseTab></reuse-tab>
+ *    <router-outlet (activate)="reuseTab.activate($event)"></router-outlet>
+ *  </section>
+ *  ```
+ */
+// import { RouteReuseStrategy } from '@angular/router';
+// import { ReuseTabService, ReuseTabStrategy } from '@delon/abc/reuse-tab';
+// alainProvides.push({
+//   provide: RouteReuseStrategy,
+//   useClass: ReuseTabStrategy,
+//   deps: [ReuseTabService],
+// } as any);
+
+// #endregion
+
+// #endregion
+
+// Please refer to: https://ng.ant.design/docs/global-config/en#how-to-use
+// #region NG-ZORRO Config
+
+import { NzConfig, NZ_CONFIG } from 'ng-zorro-antd/core/config';
+import { provideHttpClient, withInterceptors, withInterceptorsFromDi } from '@angular/common/http';
+import { authSimpleInterceptor } from '@delon/auth';
+
+const ngZorroConfig: NzConfig = {};
+
+const zorroProvides = [{ provide: NZ_CONFIG, useValue: ngZorroConfig }];
+
+// #endregion
+
+@NgModule({ imports: [...alainModules, ...(environment.modules || [])] })
+export class GlobalConfigModule {
+  constructor(@Optional() @SkipSelf() parentModule: GlobalConfigModule) {
+    throwIfAlreadyLoaded(parentModule, 'GlobalConfigModule');
+  }
+
+  static forRoot(): ModuleWithProviders<GlobalConfigModule> {
+    return {
+      ngModule: GlobalConfigModule,
+      providers: [
+        ...alainProvides,
+        ...zorroProvides,
+        ...(environment.providers || []),
+        provideHttpClient(withInterceptors([...(environment.interceptorFns || []), authSimpleInterceptor]), withInterceptorsFromDi())
+      ]
+    };
+  }
+}

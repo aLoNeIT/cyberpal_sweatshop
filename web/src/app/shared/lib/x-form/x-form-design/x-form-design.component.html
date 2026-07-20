@@ -1,0 +1,1184 @@
+<div nz-row style="height: 47px; background-color: #fff; margin-top: 9px" nzAlign="middle">
+  <div nz-col nzSpan="12" style="padding-left: 10px">
+    <button nz-button nzType="default" (click)="onBack('back')"><i nz-icon nzType="arrow-left" nzTheme="outline"></i> 返回</button>
+  </div>
+  <div nz-col nzSpan="12" style="text-align: right"
+    ><button
+      nz-button
+      nzType="default"
+      nzDanger
+      nz-popconfirm
+      nzPopconfirmPlacement="bottom"
+      [nzPopconfirmTitle]="'???'"
+      (nzOnConfirm)="config.children = []; activeNode = null; propertyTabSelectedIndex = 1"
+    >
+      清空</button
+    >
+    <button nz-button nzType="default" (click)="openPreviewDialog()"><i nz-icon nzType="search" nzTheme="outline"></i> 预览</button>
+    <button nz-button nzType="primary" (click)="onBack('save')" [nzLoading]="SaveButtonLoading"
+      ><i nz-icon nzType="save" nzTheme="outline"></i> 保存</button
+    >
+  </div>
+</div>
+<div class="container row">
+  <div class="components flexNone column" style="border-top: 1px solid rgb(0 0 0 / 15%)">
+    <!-- <div class="components__title flexNone">
+      <div class="x-form-logo"></div>
+      <span>?????</span>
+      <a target="_blank" href="https://gitee.com/xujz520/ng-x-form">v1.0.3</a>
+    </div> -->
+    <div class="components__content">
+      <nz-collapse>
+        @for (group of componentsGroup; track group) {
+          <!-- 内联表单不显示布局组件 -->
+          @if (!(group.type == 'layout' && config.layout == 'inline')) {
+            <nz-collapse-panel [nzHeader]="group.text" [nzActive]="true">
+              <div class="component_group">
+                @for (component of group.children || []; track component) {
+                  <div class="component">
+                    <div
+                      class="component_content"
+                      draggable="true"
+                      (dragstart)="onDragstart($event, component.nodeData)"
+                      (dragend)="onDragend($event)"
+                      (click)="onClickAdd(component.nodeData)"
+                    >
+                      <span class="iconfont {{ component.icon }}"></span>
+                      <span class="component_text">{{ component.text }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </nz-collapse-panel>
+          }
+        }
+      </nz-collapse>
+    </div>
+  </div>
+
+  <div class="workbench column">
+    <!-- <div class="workbench__title flexNone">
+    <ng-container *ngIf="showSaveButton">
+      <button nz-button nzType="default" (click)="onBack('back')"><i nz-icon nzType="arrow-left"
+      nzTheme="outline"></i> 返回</button>
+      <button nz-button nzType="primary" (click)="onBack('save')" [nzLoading]="SaveButtonLoading"><i nz-icon
+      nzType="save" nzTheme="outline"></i> ?????</button>
+    </ng-container>
+    <div class="ant-btn-group">
+      <button nz-button nzType="default" style="padding: 0 8px; color: red" nz-popconfirm
+        nzPopconfirmPlacement="bottom" [nzPopconfirmTitle]="'???'"
+      (nzOnConfirm)="config.children = []; activeNode = null; propertyTabSelectedIndex = 1">清空</button> -->
+    <!-- <button nz-button nzType="default" style="padding: 0 8px" (click)="openJsonEditDialog()">编辑JSON</button>
+      <button nz-button nzType="default" style="padding: 0 8px" (click)="openHtmlDialog()">生成HTML</button> -->
+    <!-- </div>
+    <button nz-button nzType="primary" nzGhost (click)="openPreviewDialog()"><i nz-icon nzType="search"
+    nzTheme="outline"></i> 预览</button>
+  </div> -->
+    <div class="workbench__content">
+      @if ((config.children || []).length == 0) {
+        <div class="empty_title">从左侧组件库中拖拽或点击</div>
+      }
+      <div class="x-form-wrap">
+        <form
+          nz-form
+          class="x-form"
+          [class.x-form-inline-vertical]="config.layout == 'inline' && config.inlineVertical"
+          [style.width.px]="config.containerWidth"
+          [nzLayout]="config.layout"
+          #$form
+          [attr.data-dom-data]="saveDomData($form, config)"
+        >
+          <div class="dropList" [attr.data-orientation]="config.layout == 'inline' ? 'horizontal' : 'vertical'" data-type="form">
+            <ng-container *ngTemplateOutlet="componentTpl; context: { $implicit: config }"></ng-container>
+
+            <!-- 表单循环模板 -->
+            <ng-template #componentTpl let-node>
+              @for (item of node.children || []; track item) {
+                @switch (item.type) {
+                  <!-- ??? -->
+                  @case ('hr') {
+                    <div
+                      class="form_item_container dragItem form-item-hr"
+                      (dragstart)="onDragstart($event, item, node)"
+                      (dragend)="onDragend($event)"
+                    >
+                      <div class="form_item" [class.isActive]="activeNode == item" (click)="activeNode = item">
+                        <ng-container *ngTemplateOutlet="form_item_control; context: { item: item, parentNode: node }"> </ng-container>
+                      </div>
+                      <div style="overflow: hidden">
+                        <hr
+                          [class.x-form-item-hidden]="item.hidden"
+                          [style.margin-top.px]="item.margin"
+                          [style.margin-bottom.px]="item.margin"
+                        />
+                      </div>
+                    </div>
+                  }
+                  <!-- ????? -->
+                  @case ('template') {
+                    <div
+                      class="form_item_container dragItem"
+                      [class.hasError]="errorSet.has(item)"
+                      (dragstart)="onDragstart($event, item, node)"
+                      (dragend)="onDragend($event)"
+                    >
+                      <div class="form_item" [class.isActive]="activeNode == item" (click)="activeNode = item">
+                        <ng-container *ngTemplateOutlet="form_item_control; context: { item: item, parentNode: node }"> </ng-container>
+                      </div>
+                      <div class="template_placeholder">?????</div>
+                    </div>
+                  }
+                  <!-- 栅格 -->
+                  @case ('row') {
+                    <div class="dragItem" (dragstart)="onDragstart($event, item, node)" (dragend)="onDragend($event)">
+                      <div
+                        class="form_row"
+                        [class.isActive]="activeNode == item"
+                        (click)="activeNode = item"
+                        [class.isHover]="hoverNode == item"
+                        (mouseover)="hoverNode = item"
+                        (mouseout)="hoverNode = null"
+                        #$row
+                        [attr.data-dom-data]="saveDomData($row, item)"
+                      >
+                        <ng-container *ngTemplateOutlet="form_item_control; context: { item: item, parentNode: node }"> </ng-container>
+                        <div
+                          class="form_content"
+                          (click)="$event.stopPropagation()"
+                          (mouseover)="$event.stopPropagation()"
+                          (mouseout)="$event.stopPropagation()"
+                        >
+                          <div nz-row [nzGutter]="item.nzGutter" class="dropList" data-orientation="horizontal" data-type="row">
+                            @for (col of item.children || []; track col) {
+                              <div
+                                nz-col
+                                [nzSpan]="col.nzSpan"
+                                class="dragItem"
+                                (dragstart)="onDragstart($event, col, item)"
+                                (dragend)="onDragend($event)"
+                              >
+                                <div
+                                  class="form_col"
+                                  [class.isActive]="activeNode == col"
+                                  (click)="activeNode = col"
+                                  [class.isHover]="hoverNode == col"
+                                  (mouseover)="hoverNode = col"
+                                  (mouseout)="hoverNode = null"
+                                  #$col
+                                  [attr.data-dom-data]="saveDomData($col, col)"
+                                >
+                                  <ng-container *ngTemplateOutlet="form_item_control; context: { item: col, parentNode: item }">
+                                  </ng-container>
+                                  <div
+                                    class="form_content dropList"
+                                    data-type="col"
+                                    (click)="$event.stopPropagation()"
+                                    (mouseover)="$event.stopPropagation()"
+                                    (mouseout)="$event.stopPropagation()"
+                                  >
+                                    <ng-container *ngTemplateOutlet="componentTpl; context: { $implicit: col }"> </ng-container>
+                                  </div>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                  <!-- 表单组件 -->
+                  @default {
+                    <nz-form-item
+                      class="form_item_container dragItem"
+                      [class.hasError]="errorSet.has(item)"
+                      (dragstart)="onDragstart($event, item, node)"
+                      (dragend)="onDragend($event)"
+                    >
+                      <div class="form_item" [class.isActive]="activeNode == item" (click)="activeNode = item">
+                        <ng-container *ngTemplateOutlet="form_item_control; context: { item: item, parentNode: node }"> </ng-container>
+                      </div>
+                      <nz-form-label
+                        [nzSpan]="config.layout == 'horizontal' && !item.labelWidth " node.labelNzSpan || config.labelNzSpan : null"
+                        [nzRequired]="item.required"
+                        [class.x-form-vertical-align-top]="item.type == 'textarea' || item.layout == 'vertical'"
+                        [style.width.px]="item.labelWidth || null"
+                        >{{ item.label }}</nz-form-label
+                      >
+                      <nz-form-control
+                        [nzSpan]="config.layout == 'horizontal' && !item.labelWidth " node.controlNzSpan || config.controlNzSpan : null"
+                        [style.width.px]="xFormService.getComponentWidth(item, config)"
+                      >
+                        @switch (item.type) {
+                          <!-- input -->
+                          @case ('input') {
+                            @if (!(item.nzAddOnBefore || item.nzAddOnAfter)) {
+                              <input
+                                nz-input
+                                [attr.type]="item.inputType"
+                                [ngModel]="item.defaultValue"
+                                [ngModelOptions]="{ standalone: true }"
+                                [attr.placeholder]="item.placeholder"
+                                [nzSize]="config.nzSize"
+                              />
+                            }
+                            @if (item.nzAddOnBefore || item.nzAddOnAfter) {
+                              <nz-input-group
+                                [nzAddOnBefore]="item.nzAddOnBefore"
+                                [nzAddOnAfter]="item.nzAddOnAfter"
+                                [nzSize]="config.nzSize"
+                              >
+                                <input
+                                  nz-input
+                                  [attr.type]="item.inputType"
+                                  [ngModel]="item.defaultValue"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  [attr.placeholder]="item.placeholder"
+                                />
+                              </nz-input-group>
+                            }
+                          }
+                          <!-- textarea -->
+                          @case ('textarea') {
+                            <textarea
+                              nz-input
+                              [ngModel]="item.defaultValue"
+                              [nzAutosize]="getPropertyObj(item, 'nzAutosize')"
+                              [ngModelOptions]="{ standalone: true }"
+                              [attr.placeholder]="item.placeholder"
+                              [nzSize]="config.nzSize"
+                            ></textarea>
+                          }
+                          <!-- radio -->
+                          @case ('radio') {
+                            <nz-radio-group
+                              nzButtonStyle="solid"
+                              [ngModel]="item.defaultValue"
+                              [ngModelOptions]="{ standalone: true }"
+                              [class.x-form-option-vertical]="item.layout == 'vertical'"
+                              [nzSize]="config.nzSize"
+                            >
+                              @if (!item.buttonStyle) {
+                                @for (option of item.options || []; track option) {
+                                  <label nz-radio [nzValue]="option.value">{{ option.label }}</label>
+                                }
+                              }
+                              @if (item.buttonStyle) {
+                                @for (option of item.options || []; track option) {
+                                  <label nz-radio-button [nzValue]="option.value">{{ option.label }}</label>
+                                }
+                              }
+                            </nz-radio-group>
+                          }
+                          <!-- checkbox -->
+                          @case ('checkbox') {
+                            <nz-checkbox-group
+                              [ngModel]="item.options"
+                              [ngModelOptions]="{ standalone: true }"
+                              [class.x-form-option-vertical]="item.layout == 'vertical'"
+                            ></nz-checkbox-group>
+                          }
+                          <!-- switch -->
+                          @case ('switch') {
+                            <nz-switch
+                              [ngModel]="item.defaultValue"
+                              [nzCheckedChildren]="item.nzCheckedChildren"
+                              [nzUnCheckedChildren]="item.nzUnCheckedChildren"
+                              [ngModelOptions]="{ standalone: true }"
+                              [nzSize]="config.nzSize"
+                              style="min-width: 70px"
+                            ></nz-switch>
+                          }
+                          <!-- select -->
+                          @case ('select') {
+                            <nz-select
+                              [ngModel]="item.defaultValue"
+                              [nzMode]="item.nzMode"
+                              nzAllowClear
+                              nzShowSearch
+                              [nzPlaceHolder]="item.placeholder"
+                              [nzDropdownMatchSelectWidth]="false"
+                              [ngModelOptions]="{ standalone: true }"
+                              [nzSize]="config.nzSize"
+                            >
+                              @for (option of item.options; track option) {
+                                <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+                              }
+                            </nz-select>
+                          }
+                          <!-- datePicker -->
+                          @case ('datePicker') {
+                            @if (item.pickerType == 'range') {
+                              @if (item.nzShowTime) {
+                                <nz-range-picker
+                                  [ngModel]="item.defaultValue"
+                                  [nzPlaceHolder]="getPropertyObj(item, 'placeholder')"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  nzAllowClear
+                                  [nzSize]="config.nzSize"
+                                  nzShowTime
+                                ></nz-range-picker>
+                              }
+                              @if (!item.nzShowTime) {
+                                <nz-range-picker
+                                  [ngModel]="item.defaultValue"
+                                  [nzPlaceHolder]="getPropertyObj(item, 'placeholder')"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  nzAllowClear
+                                  [nzSize]="config.nzSize"
+                                >
+                                </nz-range-picker>
+                              }
+                            }
+                            @if (item.pickerType != 'range') {
+                              @if (item.nzShowTime) {
+                                <nz-date-picker
+                                  [ngModel]="item.defaultValue"
+                                  [nzPlaceHolder]="item.placeholder"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  nzAllowClear
+                                  [nzSize]="config.nzSize"
+                                  [nzMode]="item.pickerType"
+                                  nzShowTime
+                                ></nz-date-picker>
+                              }
+                              @if (!item.nzShowTime) {
+                                <nz-date-picker
+                                  [ngModel]="item.defaultValue"
+                                  [nzPlaceHolder]="item.placeholder"
+                                  [ngModelOptions]="{ standalone: true }"
+                                  nzAllowClear
+                                  [nzSize]="config.nzSize"
+                                  [nzMode]="item.pickerType"
+                                ></nz-date-picker>
+                              }
+                            }
+                          }
+                          <!-- timePicker -->
+                          @case ('timePicker') {
+                            <nz-time-picker
+                              [ngModel]="item.defaultValue"
+                              [nzPlaceHolder]="item.placeholder"
+                              [ngModelOptions]="{ standalone: true }"
+                              [nzFormat]="item.nzFormat"
+                              nzAllowEmpty
+                              [nzSize]="config.nzSize"
+                            ></nz-time-picker>
+                          }
+                        }
+                      </nz-form-control>
+                    </nz-form-item>
+                  }
+                }
+              }
+            </ng-template>
+
+            <!-- ??????? -->
+            <ng-template #form_item_control let-item="item" let-parentNode="parentNode">
+              <div class="control">
+                <div (click)="$event.stopPropagation()" (mousedown)="copy.hide(); remove.hide()">
+                  <span
+                    nz-tooltip
+                    nzTooltipTitle="移动"
+                    #move="nzTooltip"
+                    (mousedown)="move.hide(); onMousedown($event)"
+                    (mouseup)="onMouseup($event)"
+                    ><i nz-icon nzType="drag" nzTheme="outline"></i
+                  ></span>
+                  <span nz-tooltip nzTooltipTitle="复制" #copy="nzTooltip" (click)="copyNode(item, parentNode)"
+                    ><i nz-icon nzType="copy" nzTheme="outline"></i
+                  ></span>
+                  <span nz-tooltip nzTooltipTitle="移除" #remove="nzTooltip" (click)="removeNode(item, parentNode)"
+                    ><i nz-icon nzType="close" nzTheme="outline"></i
+                  ></span>
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="flexNone property" style="padding-top: 8px">
+    <nz-tabs [(nzSelectedIndex)]="propertyTabSelectedIndex">
+      <nz-tab nzTitle="????">
+        @if (activeNode) {
+          <div class="tab_container">
+            <!-- ?? -->
+            @if (introMap[activeNode.type]) {
+              <div class="intro" [innerHTML]="introMap[activeNode.type]"></div>
+            }
+            @if (['input', 'textarea', 'radio', 'checkbox', 'switch', 'select', 'datePicker', 'timePicker'].includes(activeNode.type)) {
+              <!-- ???? -->
+              <fieldset class="fieldset_sm baseProperty">
+                <legend>????</legend>
+                <div>
+                  <nz-input-group [nzAddOnBefore]="'标签名称'" class="nz_input_group_required">
+                    <input type="text" nz-input [(ngModel)]="activeNode.label" (ngModelChange)="validNodeConfig(activeNode)" />
+                  </nz-input-group>
+                  <nz-input-group [nzAddOnBefore]="'字段标识'" class="nz_input_group_required">
+                    @if (!(activeNode.type == 'datePicker' && activeNode.pickerType == 'range')) {
+                      <input type="text" disabled nz-input [(ngModel)]="activeNode.model" (ngModelChange)="validNodeConfig(activeNode)" />
+                    }
+                    @if (activeNode.type == 'datePicker' && activeNode.pickerType == 'range') {
+                      <input
+                        type="text"
+                        nz-input
+                        placeholder="??"
+                        [(ngModel)]="activeNode.startModel"
+                        (ngModelChange)="validNodeConfig(activeNode)"
+                        style="width: 45%; text-align: center; border-right: 0"
+                      />
+                      <input
+                        type="text"
+                        disabled
+                        nz-input
+                        placeholder="~"
+                        style="
+                          width: 10%;
+                          border-left: 0px;
+                          pointer-events: none;
+                          background-color: rgb(255, 255, 255);
+                          padding: 4px 0;
+                          border-width: 1px 0;
+                          text-align: center;
+                        "
+                      />
+                      <input
+                        type="text"
+                        nz-input
+                        placeholder="结束"
+                        [(ngModel)]="activeNode.endModel"
+                        (ngModelChange)="validNodeConfig(activeNode)"
+                        style="width: 45%; text-align: center; border-left: 0px"
+                      />
+                    }
+                  </nz-input-group>
+                  @if (
+                    ['input', 'textarea', 'datePicker', 'timePicker', 'select'].includes(activeNode.type) &&
+                    activeNode.pickerType != 'range'
+                  ) {
+                    <nz-input-group nzAddOnBefore="占位提示">
+                      <input type="text" nz-input [(ngModel)]="activeNode.placeholder" placeholder="???" />
+                    </nz-input-group>
+                  }
+                  @if (activeNode.pickerType == 'range') {
+                    <nz-input-group nzAddOnBefore="占位提示">
+                      <input
+                        type="text"
+                        nz-input
+                        placeholder="??"
+                        [(ngModel)]="activeNode.placeholder[0]"
+                        style="width: 45%; text-align: center; border-right: 0"
+                      />
+                      <input
+                        type="text"
+                        disabled
+                        nz-input
+                        placeholder="~"
+                        style="
+                          width: 10%;
+                          border-left: 0px;
+                          pointer-events: none;
+                          background-color: rgb(255, 255, 255);
+                          padding: 4px 0;
+                          border-width: 1px 0;
+                          text-align: center;
+                        "
+                      />
+                      <input
+                        type="text"
+                        nz-input
+                        placeholder="结束"
+                        [(ngModel)]="activeNode.placeholder[1]"
+                        style="width: 45%; text-align: center; border-left: 0px"
+                      />
+                    </nz-input-group>
+                  }
+                  @if (['input', 'textarea'].includes(activeNode.type)) {
+                    <nz-input-group nzAddOnBefore="???">
+                      <input type="text" nz-input [(ngModel)]="activeNode.defaultValue" placeholder="???" />
+                    </nz-input-group>
+                  }
+                  @if (activeNode.type == 'switch') {
+                    <nz-input-group nzAddOnBefore="???">
+                      <div class="input-group-switch">
+                        <nz-switch [(ngModel)]="activeNode.defaultValue"></nz-switch>
+                      </div>
+                    </nz-input-group>
+                  }
+                  @if (config.layout == 'horizontal' || (config.layout == 'inline' && !config.inlineVertical)) {
+                    <nz-input-group nzAddOnBefore="标签宽度" nzAddOnAfter="PX">
+                      <nz-input-number
+                        [(ngModel)]="activeNode.labelWidth"
+                        [nzMin]="50"
+                        [nzMax]="400"
+                        [nzStep]="16"
+                        nzPlaceHolder="???"
+                      ></nz-input-number>
+                    </nz-input-group>
+                  }
+                  @if (config.layout == 'inline') {
+                    <nz-input-group nzAddOnBefore="控件宽度" nzAddOnAfter="PX">
+                      @if (activeNode.type != 'datePicker') {
+                        <nz-input-number
+                          [(ngModel)]="activeNode.controlWidth"
+                          [nzMin]="50"
+                          [nzMax]="400"
+                          [nzStep]="16"
+                          nzPlaceHolder="???"
+                        ></nz-input-number>
+                      }
+                      @if (activeNode.type == 'datePicker') {
+                        <nz-input-number
+                          [(ngModel)]="activeNode.controlWidth[activeNode.pickerType + (activeNode.nzShowTime ? 'Time' : '')]"
+                          [nzMin]="50"
+                          [nzMax]="400"
+                          [nzStep]="16"
+                          nzPlaceHolder="???"
+                        ></nz-input-number>
+                      }
+                    </nz-input-group>
+                  }
+                </div>
+              </fieldset>
+              <!-- 显示条件 -->
+              <fieldset class="fieldset_sm">
+                <legend>显示条件</legend>
+                <div>
+                  <nz-input-group [nzAddOnBefore]="'前置组件'">
+                    <nz-select
+                      [(ngModel)]="activeNode.visibleIf.id"
+                      nzAllowClear
+                      nzPlaceHolder="请选择前置组件"
+                      [ngStyle]="{ width: '195px' }"
+                    >
+                      @for (option of config.children; track option) {
+                        <nz-option
+                          [nzValue]="option.model"
+                          [nzLabel]="option.label"
+                          [nzHide]="option.model == activeNode.model || !['radio', 'checkbox'].includes(option.type)"
+                        ></nz-option>
+                      }
+                    </nz-select>
+                  </nz-input-group>
+                  <nz-input-group [nzAddOnBefore]="'????'">
+                    <nz-select
+                      [(ngModel)]="activeNode.visibleIf.value"
+                      [ngStyle]="{ width: '195px' }"
+                      nzMode="multiple"
+                      nzPlaceHolder="??????"
+                    >
+                      @for (option of getComponentValue(activeNode.visibleIf.id); track option) {
+                        <nz-option [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+                      }
+                    </nz-select>
+                  </nz-input-group>
+                </div>
+              </fieldset>
+              <!-- 校验 -->
+              @if (activeNode.type != 'switch') {
+                <fieldset class="fieldset_sm">
+                  <legend>校验</legend>
+                  <div>
+                    <label nz-checkbox [(ngModel)]="activeNode.required">必填</label>
+                  </div>
+                </fieldset>
+              }
+            }
+            <!-- input -->
+            @if (activeNode.type == 'input') {
+              <fieldset class="fieldset_sm">
+                <legend>类型</legend>
+                <div>
+                  <nz-radio-group [(ngModel)]="activeNode.inputType" [nzButtonStyle]="'solid'">
+                    <label nz-radio-button nzValue="text">文本</label>
+                    <label nz-radio-button nzValue="number">??</label>
+                    <label nz-radio-button nzValue="password">密码</label>
+                  </nz-radio-group>
+                </div>
+              </fieldset>
+              <!-- <nz-input-group nzAddOnBefore="前缀">
+                                <input type="text" nz-input [(ngModel)]="activeNode.nzAddOnBefore" placeholder="???" />
+                              </nz-input-group>
+                              <nz-input-group nzAddOnBefore="后缀">
+                                <input type="text" nz-input [(ngModel)]="activeNode.nzAddOnAfter" placeholder="???" />
+                              </nz-input-group> -->
+            }
+            <!-- textarea -->
+            @if (activeNode.type == 'textarea') {
+              <fieldset class="fieldset_sm">
+                <legend>????</legend>
+                <div>
+                  <nz-input-group nzAddOnBefore="????">
+                    <nz-input-number
+                      [(ngModel)]="activeNode.nzAutosize.minRows"
+                      [nzMin]="2"
+                      [nzMax]="20"
+                      [nzStep]="1"
+                      nzPlaceHolder="???"
+                    ></nz-input-number>
+                  </nz-input-group>
+                  <nz-input-group nzAddOnBefore="????">
+                    <nz-input-number
+                      [(ngModel)]="activeNode.nzAutosize.maxRows"
+                      [nzMin]="2"
+                      [nzMax]="20"
+                      [nzStep]="1"
+                      nzPlaceHolder="???"
+                    ></nz-input-number>
+                  </nz-input-group>
+                </div>
+              </fieldset>
+            }
+            <!-- 'radio', 'checkbox', 'select' -->
+            @if (['radio', 'checkbox', 'select'].includes(activeNode.type)) {
+              <!-- <fieldset class="fieldset_sm" *ngIf="['radio', 'checkbox'].includes(activeNode.type)">
+                              <legend>样式</legend>
+                              <div>
+                                <div *ngIf="activeNode.type == 'radio'">
+                                  <label nz-checkbox [(ngModel)]="activeNode.buttonStyle"
+                                  (ngModelChange)="$event && (activeNode.layout = 'horizontal')">按钮风格</label>
+                                </div>
+                                <nz-radio-group *ngIf="!activeNode.buttonStyle"
+                                  [style.margin-top]="activeNode.type == 'radio' ? '8px' : 0" [(ngModel)]="activeNode.layout"
+                                  [nzButtonStyle]="'solid'">
+                                  <label nz-radio-button nzValue="horizontal">水平排列</label>
+                                  <label nz-radio-button nzValue="vertical">垂直排列</label>
+                                </nz-radio-group>
+                              </div>
+                            </fieldset> -->
+              @if (activeNode.type == 'select') {
+                <fieldset class="fieldset_sm">
+                  <legend>类型</legend>
+                  <div>
+                    <nz-radio-group
+                      [(ngModel)]="activeNode.nzMode"
+                      (ngModelChange)="activeNode.defaultValue = $event == 'default' " null : []"
+                      [nzButtonStyle]="'solid'"
+                    >
+                      <label nz-radio-button nzValue="default">??</label>
+                      <label nz-radio-button nzValue="multiple">??</label>
+                      <label nz-radio-button nzValue="tags">标签输入</label>
+                    </nz-radio-group>
+                  </div>
+                </fieldset>
+              }
+              <fieldset class="fieldset_sm">
+                <!-- <legend>选项来源</legend> -->
+                <div>
+                  <!-- <nz-radio-group [(ngModel)]="activeNode.optionSourceType" [nzButtonStyle]="'solid'"
+                                style="margin-bottom: 8px">
+                                <label nz-radio-button nzValue="manual">手动添加</label>
+                                <label nz-radio-button nzValue="native">本地数据</label>
+                                <label nz-radio-button nzValue="server">服务接口</label>
+                              </nz-radio-group> -->
+                  <!-- 手动添加 -->
+                  @if (activeNode.optionSourceType == 'manual') {
+                    <div class="option_config">
+                      <div class="config__head">
+                        <div><span style="color: red">* </span>标签</div>
+                        <div><span style="color: red">* </span>?</div>
+                        <div style="flex: 0 0 30px">选中</div>
+                        <div style="flex: 0 0 50px">+/-</div>
+                      </div>
+                      @for (option of activeNode.options || []; track option; let i = $index) {
+                        <div class="config_body">
+                          <div>
+                            <!-- <input type="text" nzSize="small" nz-input [(ngModel)]="option.label"
+                                        (ngModelChange)="option.value = option.label" placeholder="" /> -->
+                            <input type="text" nzSize="small" nz-input [(ngModel)]="option.label" placeholder="" />
+                          </div>
+                          <div>
+                            <input disabled="disabled" type="text" nzSize="small" nz-input [(ngModel)]="option.value" placeholder="" />
+                          </div>
+                          <div style="flex: 0 0 30px; text-align: center">
+                            <!-- radio -->
+                            @if (activeNode.type == 'radio') {
+                              <label
+                                nz-checkbox
+                                [ngModel]="activeNode.defaultValue == option.value"
+                                (ngModelChange)="activeNode.defaultValue = $event " option.value : null"
+                              ></label>
+                            }
+                            <!-- checkbox -->
+                            @if (activeNode.type == 'checkbox') {
+                              <label nz-checkbox [(ngModel)]="option.checked"></label>
+                            }
+                            <!-- select -->
+                            @if (activeNode.type == 'select') {
+                              <!-- ?? -->
+                              @if (activeNode.nzMode == 'default') {
+                                <label
+                                  nz-checkbox
+                                  [ngModel]="activeNode.defaultValue == option.value"
+                                  (ngModelChange)="activeNode.defaultValue = $event " option.value : null"
+                                ></label>
+                              }
+                              <!-- ?? -->
+                              @if (activeNode.nzMode != 'default') {
+                                <label
+                                  nz-checkbox
+                                  [ngModel]="activeNode.defaultValue.includes(option.value)"
+                                  (ngModelChange)="selectOptionCheckboxChange($event, option)"
+                                ></label>
+                              }
+                            }
+                          </div>
+                          <div style="flex: 0 0 50px; text-align: center">
+                            <!-- (click)="activeNode.options.splice(i + 1, 0, { label: '选项' + (i + 2), value: 'option' + (i + 2) })" -->
+                            <i nz-icon class="plus" nzType="plus-circle" nzTheme="outline" (click)="clickOptions(i)"></i>
+                            <i
+                              nz-icon
+                              class="minus"
+                              nzType="minus-circle"
+                              nzTheme="outline"
+                              (click)="activeNode.options.splice(i, 1); validNodeConfig(activeNode)"
+                            ></i>
+                          </div>
+                        </div>
+                      }
+                      @if ((activeNode.options || []).length == 0) {
+                        <div>
+                          <button
+                            nz-button
+                            nzType="dashed"
+                            nzSize="small"
+                            nzBlock
+                            (click)="activeNode.options.splice(0, 0, { label: 'option1', value: 'option1' }); validNodeConfig(activeNode)"
+                          >
+                            <i nz-icon class="plus" nzType="plus-circle" nzTheme="outline"></i>
+                            <span>添加</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                  <!-- 本地数据 -->
+                  @if (activeNode.optionSourceType == 'native') {
+                    <div class="intro">???????</div>
+                    <div class="nativeSourceProperty">
+                      <nz-input-group [nzAddOnBefore]="'?????'" class="nz_input_group_required">
+                        <input
+                          type="text"
+                          nz-input
+                          [(ngModel)]="activeNode.nativeSourceField"
+                          (ngModelChange)="validNodeConfig(activeNode)"
+                          placeholder=""
+                        />
+                      </nz-input-group>
+                      <nz-input-group [nzAddOnBefore]="'标签字段'" class="nz_input_group_required">
+                        <input
+                          type="text"
+                          nz-input
+                          [(ngModel)]="activeNode.labelField"
+                          (ngModelChange)="validNodeConfig(activeNode)"
+                          placeholder="?????????"
+                        />
+                      </nz-input-group>
+                      <nz-input-group [nzAddOnBefore]="'???'" class="nz_input_group_required">
+                        <input
+                          type="text"
+                          nz-input
+                          [(ngModel)]="activeNode.valueField"
+                          (ngModelChange)="validNodeConfig(activeNode)"
+                          placeholder="数据源中值的字段"
+                        />
+                      </nz-input-group>
+                    </div>
+                  }
+                  <!-- 服务接口 -->
+                  @if (activeNode.optionSourceType == 'server') {
+                    <div class="intro">???????</div>
+                    <div class="nativeSourceProperty">
+                      <nz-input-group [nzAddOnBefore]="'接口地址'" class="nz_input_group_required">
+                        <input
+                          type="text"
+                          nz-input
+                          [(ngModel)]="activeNode.url"
+                          (ngModelChange)="validNodeConfig(activeNode)"
+                          placeholder="完整url或相对于baseUrl"
+                        />
+                      </nz-input-group>
+                      <nz-input-group [nzAddOnBefore]="'请求方式'" class="nz_input_group_required">
+                        <nz-select [(ngModel)]="activeNode.method">
+                          <nz-option nzValue="get" nzLabel="GET"></nz-option>
+                          <nz-option nzValue="post_json" nzLabel="POST(JSON)"></nz-option>
+                          <nz-option nzValue="post_form" nzLabel="POST(FORM)"></nz-option>
+                        </nz-select>
+                      </nz-input-group>
+                      <nz-input-group
+                        [nzAddOnBefore]="'?????'"
+                        nz-popover
+                        [nzPopoverContent]="serverSourceField_title"
+                        nzPopoverPlacement="left"
+                        class="nz_input_group_required"
+                      >
+                        <ng-template #serverSourceField_title>
+                          ?????? / ????(????)<br />
+                          * 字段路径: data.data<br />
+                          * 匿名函数示例: (res) => res.data.data || []
+                        </ng-template>
+                        <input
+                          type="text"
+                          nz-input
+                          [(ngModel)]="activeNode.serverSourceField"
+                          (ngModelChange)="validNodeConfig(activeNode)"
+                          placeholder="???? / ????"
+                        />
+                      </nz-input-group>
+                      <nz-input-group [nzAddOnBefore]="'标签字段'" class="nz_input_group_required">
+                        <input
+                          type="text"
+                          nz-input
+                          [(ngModel)]="activeNode.labelField"
+                          (ngModelChange)="validNodeConfig(activeNode)"
+                          placeholder="?????????"
+                        />
+                      </nz-input-group>
+                      <nz-input-group [nzAddOnBefore]="'???'" class="nz_input_group_required">
+                        <input
+                          type="text"
+                          nz-input
+                          [(ngModel)]="activeNode.valueField"
+                          (ngModelChange)="validNodeConfig(activeNode)"
+                          placeholder="数据源中值的字段"
+                        />
+                      </nz-input-group>
+                    </div>
+                  }
+                </div>
+              </fieldset>
+            }
+            <!-- switch -->
+            @if (activeNode.type == 'switch') {
+              <fieldset class="fieldset_sm switchProperty">
+                <legend>????</legend>
+                <div>
+                  <nz-input-group nzAddOnBefore="????">
+                    <input type="text" nz-input [(ngModel)]="activeNode.nzCheckedChildren" placeholder="???" />
+                  </nz-input-group>
+                  <nz-input-group nzAddOnBefore="?????">
+                    <input type="text" nz-input [(ngModel)]="activeNode.nzUnCheckedChildren" placeholder="???" />
+                  </nz-input-group>
+                </div>
+              </fieldset>
+            }
+            <!-- datePicker -->
+            @if (activeNode.type == 'datePicker') {
+              <fieldset class="fieldset_sm">
+                <legend>类型</legend>
+                <div>
+                  <nz-radio-group
+                    [(ngModel)]="activeNode.pickerType"
+                    (ngModelChange)="activeNode.placeholder = null; initNodes([activeNode])"
+                    [nzButtonStyle]="'solid'"
+                  >
+                    <label nz-radio-button nzValue="date">?</label>
+                    <label nz-radio-button nzValue="week">?</label>
+                    <label nz-radio-button nzValue="month">?</label>
+                    <label nz-radio-button nzValue="year">?</label>
+                    <label nz-radio-button nzValue="range">范围</label>
+                  </nz-radio-group>
+                  @if (['date', 'range'].includes(activeNode.pickerType)) {
+                    <div style="margin-top: 8px">
+                      <label nz-checkbox [(ngModel)]="activeNode.nzShowTime" (ngModelChange)="setPickerDefaultValue(activeNode)"
+                        >增加时间选择功能</label
+                      >
+                    </div>
+                  }
+                </div>
+              </fieldset>
+              @if (['date', 'range'].includes(activeNode.pickerType)) {
+                <fieldset class="fieldset_sm">
+                  <legend>????</legend>
+                  <div>
+                    <nz-radio-group [(ngModel)]="activeNode.valueType" [nzButtonStyle]="'solid'">
+                      <label nz-radio-button nzValue="timestamp" nz-tooltip nzTooltipTitle="????" style="padding: 0 8px">???</label>
+                      <label nz-radio-button nzValue="ISO8601T" nz-tooltip nzTooltipTitle="yyyy-MM-ddTHH:mm:ss" style="padding: 0 8px"
+                        >ISO8601</label
+                      >
+                      <label nz-radio-button nzValue="ISO8601" nz-tooltip nzTooltipTitle="yyyy-MM-dd HH:mm:ss" style="padding: 0 8px"
+                        >ISO8601(空格分隔)</label
+                      >
+                    </nz-radio-group>
+                  </div>
+                </fieldset>
+              }
+              <label nz-checkbox [(ngModel)]="activeNode.now" (ngModelChange)="setPickerDefaultValue(activeNode)"
+                >设置默认值为当前时间</label
+              >
+            }
+            <!-- timePicker -->
+            @if (activeNode.type == 'timePicker') {
+              <fieldset class="fieldset_sm">
+                <legend>类型</legend>
+                <div>
+                  <nz-radio-group
+                    [(ngModel)]="activeNode.nzFormat"
+                    (ngModelChange)="setPickerDefaultValue(activeNode)"
+                    [nzButtonStyle]="'solid'"
+                  >
+                    <label nz-radio-button nzValue="HH:mm:ss">???</label>
+                    <label nz-radio-button nzValue="HH:mm">时分</label>
+                  </nz-radio-group>
+                </div>
+              </fieldset>
+              <label nz-checkbox [(ngModel)]="activeNode.now" (ngModelChange)="setPickerDefaultValue(activeNode)"
+                >设置默认值为当前时间</label
+              >
+            }
+            <!-- row -->
+            @if (activeNode.type == 'row') {
+              <nz-input-group nzAddOnBefore="栅格间隔" nzAddOnAfter="PX" style="margin-bottom: 8px">
+                <nz-input-number [(ngModel)]="activeNode.nzGutter" [nzMin]="0" [nzStep]="8" nzPlaceHolder="???"> </nz-input-number>
+              </nz-input-group>
+              <button
+                nz-button
+                nzType="primary"
+                nzGhost
+                nzBlock
+                (click)="activeNode.children.push({ type: 'col', nzSpan: 12 }); bindDragover()"
+              >
+                <i nz-icon class="plus" nzType="plus-circle" nzTheme="outline"></i>
+                <span>????</span>
+              </button>
+            }
+            <!-- col -->
+            @if (activeNode.type == 'col') {
+              <nz-input-group nzAddOnBefore="??" nzAddOnAfter="/24" style="margin-bottom: 8px">
+                <nz-input-number
+                  [(ngModel)]="activeNode.nzSpan"
+                  [nzMin]="4"
+                  [nzMax]="24"
+                  [nzStep]="4"
+                  nzPlaceHolder="小于等于24"
+                ></nz-input-number>
+              </nz-input-group>
+              @if (config.layout == 'horizontal') {
+                <fieldset class="fieldset_sm">
+                  <legend>?????</legend>
+                  <div>
+                    <nz-input-group nzAddOnBefore="标签宽度">
+                      <nz-input-number
+                        [(ngModel)]="activeNode.labelNzSpan"
+                        (ngModelChange)="activeNode.controlNzSpan = 24 - activeNode.labelNzSpan"
+                        [nzMin]="2"
+                        [nzMax]="22"
+                        [nzStep]="1"
+                        nzPlaceHolder=""
+                      ></nz-input-number>
+                    </nz-input-group>
+                    <nz-input-group nzAddOnBefore="控件宽度">
+                      <nz-input-number
+                        [(ngModel)]="activeNode.controlNzSpan"
+                        (ngModelChange)="activeNode.labelNzSpan = 24 - activeNode.controlNzSpan"
+                        [nzMin]="2"
+                        [nzMax]="22"
+                        [nzStep]="1"
+                        nzPlaceHolder=""
+                      ></nz-input-number>
+                    </nz-input-group>
+                  </div>
+                </fieldset>
+              }
+            }
+            <!-- hr -->
+            @if (activeNode.type == 'hr') {
+              <nz-input-group nzAddOnBefore="上下间距" nzAddOnAfter="PX" style="margin-bottom: 8px">
+                <nz-input-number
+                  [(ngModel)]="activeNode.margin"
+                  [nzMin]="16"
+                  [nzMax]="400"
+                  [nzStep]="4"
+                  nzPlaceHolder="???"
+                ></nz-input-number>
+              </nz-input-group>
+              <label nz-checkbox [(ngModel)]="activeNode.hidden">?????(????)</label>
+            }
+            <!-- template -->
+            @if (activeNode.type == 'template') {
+              <nz-input-group [nzAddOnBefore]="'Key'" class="nz_input_group_required">
+                <input
+                  type="text"
+                  nz-input
+                  [(ngModel)]="activeNode.key"
+                  (ngModelChange)="validNodeConfig(activeNode)"
+                  placeholder="用于获取templateRef"
+                />
+              </nz-input-group>
+            }
+          </div>
+        }
+      </nz-tab>
+      <nz-tab nzTitle="????" nzDisabled>
+        <div class="tab_container">
+          <fieldset class="fieldset_sm">
+            <legend>表单布局</legend>
+            <div>
+              <nz-radio-group [(ngModel)]="config.layout" [nzButtonStyle]="'solid'">
+                <label nz-radio-button nzValue="horizontal">水平</label>
+                <label nz-radio-button nzValue="vertical">垂直</label>
+                <label nz-radio-button nzValue="inline">行内</label>
+              </nz-radio-group>
+              @if (config.layout == 'inline') {
+                <div style="margin-top: 8px">
+                  <label nz-checkbox [(ngModel)]="config.inlineVertical">?????????</label>
+                </div>
+              }
+            </div>
+          </fieldset>
+          @if (config.layout != 'inline') {
+            <fieldset class="fieldset_sm">
+              <legend><span style="color: red">*</span> 表单容器宽度</legend>
+              <div>
+                <nz-input-group [nzAddOnAfter]="'PX'" class="nzaddonafter" style="margin-bottom: 8px">
+                  <nz-input-number
+                    [(ngModel)]="config.containerWidth"
+                    [nzMin]="400"
+                    [nzMax]="1200"
+                    [nzStep]="100"
+                    nzPlaceHolder=""
+                  ></nz-input-number>
+                </nz-input-group>
+                <nz-slider
+                  [nzMarks]="{ '400': '?', '600': '?', '800': '?', '1200': '??' }"
+                  [(ngModel)]="config.containerWidth"
+                  [nzMin]="400"
+                  [nzMax]="1200"
+                ></nz-slider>
+              </div>
+            </fieldset>
+          }
+          @if (config.layout == 'horizontal') {
+            <fieldset class="fieldset_sm">
+              <legend>?????</legend>
+              <div>
+                <nz-input-group [nzAddOnBefore]="'标签宽度'" class="nzaddonbefore" class="nz_input_group_required">
+                  <nz-input-number
+                    [(ngModel)]="config.labelNzSpan"
+                    (ngModelChange)="config.controlNzSpan = 24 - config.labelNzSpan"
+                    [nzMin]="2"
+                    [nzMax]="22"
+                    [nzStep]="1"
+                    nzPlaceHolder=""
+                  ></nz-input-number>
+                </nz-input-group>
+                <nz-input-group [nzAddOnBefore]="'控件宽度'" class="nzaddonbefore" class="nz_input_group_required">
+                  <nz-input-number
+                    [(ngModel)]="config.controlNzSpan"
+                    (ngModelChange)="config.labelNzSpan = 24 - config.controlNzSpan"
+                    [nzMin]="2"
+                    [nzMax]="22"
+                    [nzStep]="1"
+                    nzPlaceHolder=""
+                  ></nz-input-number>
+                </nz-input-group>
+              </div>
+            </fieldset>
+          }
+          <fieldset class="fieldset_sm">
+            <legend>控件大小</legend>
+            <div>
+              <nz-radio-group [(ngModel)]="config.nzSize" [nzButtonStyle]="'solid'">
+                <label nz-radio-button nzValue="small">?</label>
+                <label nz-radio-button nzValue="default">?</label>
+                <label nz-radio-button nzValue="large">?</label>
+              </nz-radio-group>
+            </div>
+          </fieldset>
+        </div>
+      </nz-tab>
+    </nz-tabs>
+  </div>
+</div>
+
+<!-- JSON ????? -->
+<nz-modal
+  [(nzVisible)]="jsonEditDialog.display"
+  nzTitle="编辑配置"
+  [nzContent]="jsonModalContent"
+  (nzOnCancel)="jsonEditDialog.display = false"
+  (nzOnOk)="jsonEditDialogOk()"
+>
+  <ng-template #jsonModalContent>
+    <textarea nz-input [(ngModel)]="jsonEditDialog.value" [nzAutosize]="{ minRows: 2, maxRows: 25 }" style="min-height: 250px"></textarea>
+  </ng-template>
+</nz-modal>
+
+<!-- HTML ????? -->
+<nz-modal
+  [(nzVisible)]="htmlDialog.display"
+  nzTitle="Angular ?????"
+  [nzContent]="htmlModalContent"
+  [nzWidth]="800"
+  (nzOnCancel)="htmlDialog.display = false"
+  [nzFooter]="null"
+>
+  <ng-template #htmlModalContent>
+    <nz-tabs [(nzSelectedIndex)]="htmlDialog.tabSelectedIndex" style="margin-top: -25px">
+      <ng-template nzTabBarExtraContent="end">
+        <ng-container [ngTemplateOutlet]="tabsetextraTemplate"></ng-container>
+      </ng-template>
+      <nz-tab nzTitle="HTML">
+        <div class="htmlCodeContainer">{{ htmlDialog.html }}</div>
+      </nz-tab>
+      <nz-tab nzTitle="TypeScript">
+        <div class="htmlCodeContainer">{{ htmlDialog.ts }}</div>
+      </nz-tab>
+    </nz-tabs>
+    <ng-template #tabsetextraTemplate>
+      <button nz-button nzType="primary" nzGhost nzSize="small" (click)="clipboardCopy()"
+        ><i nz-icon nzType="copy" nzTheme="outline"></i> 复制</button
+      >
+    </ng-template>
+  </ng-template>
+</nz-modal>
+
+<!-- ????? -->
+<nz-modal
+  [(nzVisible)]="previewDialog.display"
+  nzTitle="预览"
+  [nzContent]="previewModalContent"
+  [nzWidth]="previewDialog.config.layout == 'inline' ? 1200 : previewDialog.config.containerWidth"
+  (nzOnCancel)="previewDialog.display = false"
+  [nzFooter]="null"
+>
+  <ng-template #previewModalContent>
+    <x-form-render #XFormRender [config]="previewDialog.config" [formValue]="previewDialog.formValue" [baseUrl]="baseUrl"></x-form-render>
+    <div style="background: #f5f5f6; padding: 10px 16px; text-align: right; margin: -24px; margin-top: 40px">
+      <div class="ant-btn-group">
+        <button nz-button nzType="default" (click)="XFormRender.disable()">禁用</button>
+        <button nz-button nzType="default" (click)="XFormRender.enable()">启用</button>
+      </div>
+      <div class="ant-btn-group" style="margin: 0 8px">
+        <button nz-button nzType="primary" nzGhost (click)="previewDialogSetValue(XFormRender)"
+          ><i nz-icon nzType="form" nzTheme="outline"></i>????</button
+        >
+      </div>
+      <div class="ant-btn-group">
+        <button nz-button nzDanger nzType="primary" nzGhost (click)="XFormRender.reset()"
+          ><i nz-icon nzType="reload" nzTheme="outline"></i>重置</button
+        >
+      </div>
+    </div>
+  </ng-template>
+</nz-modal>
+
+<!-- ??????? -->
+<nz-modal
+  [(nzVisible)]="previewDialog.setValueDialog.display"
+  nzTitle="??"
+  [nzContent]="fillModalContent"
+  (nzOnCancel)="previewDialog.setValueDialog.display = false"
+  (nzOnOk)="setValueDialogOk()"
+>
+  <ng-template #fillModalContent>
+    <textarea
+      nz-input
+      [(ngModel)]="previewDialog.setValueDialog.value"
+      [nzAutosize]="{ minRows: 2, maxRows: 25 }"
+      style="min-height: 250px"
+    ></textarea>
+  </ng-template>
+</nz-modal>

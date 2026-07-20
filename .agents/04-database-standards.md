@@ -24,7 +24,7 @@
 
 说明：
 
-- 时间字段必须使用 `int` 或 `bigint` 存储秒级 Unix 时间戳。
+- 时间字段必须使用 `bigint unsigned` 存储秒级 Unix 时间戳。
 - 禁止业务表时间字段使用 `datetime`、`timestamp` 或字符串日期格式。
 - 模型需要自动维护创建、修改、删除时间时，必须在子类中按实际字段名显式定义 `CREATED_AT`、`UPDATED_AT`、`DELETED_AT`。
 
@@ -52,5 +52,5 @@
 - 字段类型必须符合业务需求。
 - 所有字段必须存在默认值。
 - 所有字段禁止为 `null`。
-- 时间字段统一使用秒级 Unix 时间戳，字段类型只能使用 `int` 或 `bigint`，并设置为 `unsigned` 类型。
+- 时间字段统一使用秒级 Unix 时间戳，字段类型统一使用 `bigint unsigned`。
 - 金额字段统一使用 `decimal(10,2)` 设计。

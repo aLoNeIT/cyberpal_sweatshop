@@ -1,0 +1,38 @@
+<sf-item-wrap [id]="id" [schema]="schema" [ui]="ui" [showError]="showError" [error]="error" [showTitle]="schema.title">
+  <nz-input-group
+    nzSearch
+    [nzSize]="ui.size || 'default'"
+    [nzSuffix]="'icon' == ui.buttonStyle ? suffixSearch : ''"
+    [nzAddOnAfter]="'button' == ui.buttonStyle || !ui.buttonStyle ? suffixButton : ''"
+  >
+    <input
+      type="text"
+      nz-input
+      [placeholder]="ui.placeholder || '请选择数据'"
+      [attr.readonly]="ui.readonly"
+      [ngModel]="displayText"
+      (ngModelChange)="change($event)"
+      (keydown)="onKeyDown($event)"
+      (keyup)="onKeyUp($event)"
+      (dblclick)="onDblClick($event)"
+      [disabled]="disabled || false"
+    />
+  </nz-input-group>
+  <ng-template #suffixSearch>
+    <span nz-icon nzType="search" [ngStyle]="{ cursor: 'pointer' }" (click)="click($event)"></span>
+  </ng-template>
+  <ng-template #suffixButton>
+    <button
+      nz-button
+      type="button"
+      [nzType]="ui.buttonType || 'primary'"
+      [nzSize]="ui.buttonSize || 'default'"
+      [disabled]="disabled"
+      (click)="click($event)"
+    >
+      @if (!ui.buttonText) {
+      <i nz-icon [nzType]="ui.iconType || 'search'"></i>
+      } @else { {{ ui.buttonText || '打开' }} }
+    </button>
+  </ng-template>
+</sf-item-wrap>

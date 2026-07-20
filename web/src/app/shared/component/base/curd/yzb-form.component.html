@@ -1,0 +1,18 @@
+<div class="mt-sm">
+  <nz-spin [nzTip]="loadingTip" [nzSpinning]="loading">
+    <sf
+      #form
+      mode="default"
+      [schema]="schema"
+      [ui]="ui"
+      [formData]="data"
+      [loading]="loading"
+      button="none"
+      layout="horizontal"
+      firstVisual="false"
+      liveValidate="true"
+      (formError)="onformError($event)"
+    >
+    </sf>
+  </nz-spin>
+</div>

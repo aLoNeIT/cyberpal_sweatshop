@@ -1,0 +1,56 @@
+/* You can add global styles to this file, and also import other style files */
+.basictitle{
+  width: 1px;
+  height: 10px;
+  margin-right: 10px;
+  background-color: #1890ff;
+}
+
+.basiccolor{
+  color: #1890ff;
+}
+/* stylelint-disable-next-line rule-empty-line-before */
+.basiccolor-black{
+  color: #282627;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.basic-top-title{
+  position: fixed;
+    top: 7px;
+    left: 50%;
+    z-index: 111;
+    width: 600px;
+    margin: 0 auto;
+    transform: translate(-50%, 0);
+}
+//控制欢迎语编辑框便签鼠标经过不选中
+.unselectable {
+  user-select: none !important;
+}
+.mt-12{
+  margin-top: 12px !important;
+}
+.text-14{
+  font-size: 14px !important;
+
+}
+
+// TinyMCE 的插入图片、源码等弹框需要高于 NG-ZORRO modal。
+// 协议管理打开 TinyMCE 子弹框时会把 aux 挂到当前 CDK overlay pane，这里补齐弹层尺寸和层级。
+.tox-tinymce-aux,
+.tox-dialog-wrap,
+.tox-menu,
+.tox-dialog__popups {
+  z-index: 1100 !important;
+}
+
+.cdk-overlay-pane > .tox-tinymce-aux {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}

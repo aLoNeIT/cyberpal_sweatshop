@@ -1,0 +1,35 @@
+<div nz-col class="bg-white px-md d-flex" style="flex-flow: column nowrap" [style.width]="width" [style.height]="height" [style]="style">
+  <div class="alain-default__content-title">
+    <span class="text-balck">{{ masterTitle }}</span>
+    <button nz-button nzSize="default" *ngIf="backButtonVisibled" (click)="onButtonBackClick($event)"
+      ><i nz-icon nzType="left"></i>返回</button
+    >
+  </div>
+  <nz-spin [nzSpinning]="loading">
+    <sv-container class="mb-sm" [labelWidth]="masterLabelWidth" [col]="masterCol">
+      <sv *ngFor="let item of masterData" [label]="item.title">{{ item.value }}</sv>
+    </sv-container>
+    <div class="alain-default__content-title" *ngIf="'' !== detailTitle">
+      <span class="text-balck">{{ detailTitle }}</span>
+      <yzb-button-group [buttons]="buttons" [enableAcl]="enableAcl" (buttonClickEvent)="onButtonClick($event)"> </yzb-button-group>
+    </div>
+  </nz-spin>
+
+  <st
+    #st
+    [columns]="columns"
+    [data]="data"
+    [loading]="loading"
+    [bordered]="true"
+    size="small"
+    [page]="page"
+    [pi]="gridPage.pi"
+    [ps]="gridPage.ps"
+    [total]="gridPage.total"
+    (change)="stChange($event)"
+    [virtualScroll]="data.length > 0"
+    [virtualItemSize]="39"
+    [scroll]="data.length > 0 " scroll : {}"
+  >
+  </st>
+</div>

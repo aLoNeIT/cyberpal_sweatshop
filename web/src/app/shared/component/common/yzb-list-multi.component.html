@@ -1,0 +1,43 @@
+<nz-modal
+  [(nzVisible)]="visibled"
+  [nzTitle]="title"
+  (nzOnCancel)="close()"
+  (nzOnOk)="submit()"
+  nzMaskClosable="false"
+  nzCancelText="关闭"
+  [nzOkLoading]="loading"
+>
+  <ng-container *nzModalContent>
+    <nz-input-group class="mb-md" nzSearch [nzAddOnAfter]="suffixIconButton">
+      <input nz-input [placeholder]="placeholder" nzSize="large" (input)="onSearchInput($event)" />
+    </nz-input-group>
+    <ng-template #suffixIconButton>
+      <button nz-button nzType="primary" nzSearch><i nz-icon nzType="search"></i></button>
+    </ng-template>
+
+    <nz-list
+      [nzBordered]="bordered"
+      [nzSize]="size"
+      [nzLoading]="loading"
+      [nzHeader]="header.length > 0 " headers : undefined"
+      [nzFooter]="footer"
+      [nzItemLayout]="itemLayout"
+      [nzNoResult]="noResult"
+      [nzLoading]="loading"
+    >
+      <ng-template #headers>
+        <div nz-row *ngIf="header.length > 0">
+          <ng-container *ngFor="let value of header">
+            <div class="pr-xs font-weight-bold" nz-col nzFlex="1">{{ value }}</div>
+          </ng-container>
+        </div>
+      </ng-template>
+      <nz-list-item *ngFor="let item of showData; let i = index" (click)="itemClick($event, item, i)" [class]="itemClassName(item, i)">
+        <ng-container *ngFor="let value of getItemLabels(item.label)">
+          <div class="pr-xs" nz-col nzFlex="1">{{ value }}</div>
+        </ng-container>
+      </nz-list-item>
+      <nz-list-footer *ngIf="!!footer">{{ footer }}</nz-list-footer>
+    </nz-list>
+  </ng-container>
+</nz-modal>

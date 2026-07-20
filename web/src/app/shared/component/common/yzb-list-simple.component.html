@@ -1,0 +1,36 @@
+<div nz-col class="bg-white px-md mr-md" [style.width]="width" [style.height]="height" [style]="style">
+  <div class="alain-default__content-title">
+    <span class="text-balck">{{ title }}</span>
+  </div>
+  <nz-spin [nzSpinning]="loading">
+    <sf #sf mode="default" [layout]="'vertical'" [schema]="schema" button="none" [ui]="ui" firstVisual="false" [loading]="loading">
+      <button *ngIf="!initControl" type="button" nz-button nzShape="circle" nzType="primary" (click)="search($event)">
+        <i nz-icon nzType="search" nzTheme="outline"></i>
+      </button>
+      <button *ngIf="!initControl" type="button" nz-button nzShape="circle" nzType="default" (click)="reset($event)">
+        <i nz-icon nzType="redo" nzTheme="outline"></i>
+      </button>
+    </sf>
+  </nz-spin>
+  <div style="height: 10px"></div>
+  <nz-spin [nzSpinning]="loading">
+    <st
+      #st
+      [columns]="columns"
+      [data]="data"
+      [loading]="loading"
+      [bordered]="false"
+      size="small"
+      [page]="{ simple: true, front: false }"
+      [pi]="gridPage.pi"
+      [ps]="gridPage.ps"
+      [total]="gridPage.total"
+      (change)="stChange($event)"
+      [rowClassName]="rowClassName"
+      [virtualScroll]="data.length > 10"
+      [virtualItemSize]="39"
+      [scroll]="data.length > 10 " scroll : {}"
+    >
+    </st>
+  </nz-spin>
+</div>

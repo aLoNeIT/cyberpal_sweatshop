@@ -1,0 +1,28 @@
+<yzb-index
+  #index
+  [dict]="dict"
+  [loading]="loading"
+  [title]="title"
+  [gridData]="gridData"
+  [gridPage]="gridPage"
+  [backButton]="backButton"
+  [buttonStyle]="buttonStyle"
+  [rowNumbered]="rowNumbered"
+  [checkBoxed]="checkBoxed"
+  [functionSet]="functionSet"
+  [multiSelected]="multiSelected"
+  [buttonsRightSideTemplate]="container"
+  (searchEvent)="onSearch($event)"
+  (initConditionEvent)="onConditionSchema($event)"
+  (buttonClickEvent)="onButtonClick($event)"
+  (selectRowEvent)="onSelectRow($event)"
+  (getDataEvent)="onGetData($event)"
+  (initGridEvent)="onInitGrid($event)"
+  (initButtonsEvent)="onInitButtons($event)"
+  (initGridButtonEvent)="initGridButton($event)"
+  (resetEvent)="onReset($event)"
+>
+</yzb-index>
+<ng-template #container>
+  <ng-template #buttonsRightSideContainer></ng-template>
+</ng-template>

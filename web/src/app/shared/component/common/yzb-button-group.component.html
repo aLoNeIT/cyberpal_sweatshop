@@ -1,0 +1,25 @@
+<nz-spin nzTip="加载中..." [nzSpinning]="loading">
+  @if (enableAcl) {
+    @for (btn of buttons; track btn) {
+      <button
+        nz-button
+        (click)="execute($event, btn.code)"
+        [nzType]="btn.type || 'default'"
+        [ngClass]="btn.class"
+        [disabled]="!btn.enable"
+        acl
+        [acl-ability]="btn.code"
+      >
+        {{ btn.title }}
+      </button>
+    }
+    <ng-content select="#rightSide"></ng-content>
+  } @else {
+    @for (btn of buttons; track btn) {
+      <button nz-button (click)="execute($event, btn.code)" [nzType]="btn.type || 'default'" [ngClass]="btn.class" [disabled]="!btn.enable">
+        {{ btn.title }}
+      </button>
+    }
+    <ng-content select="#rightSide"></ng-content>
+  }
+</nz-spin>

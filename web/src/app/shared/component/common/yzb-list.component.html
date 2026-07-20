@@ -1,0 +1,39 @@
+<nz-modal
+  [(nzVisible)]="visibled"
+  [nzTitle]="title"
+  (nzOnCancel)="close()"
+  (nzOnOk)="submit()"
+  nzMaskClosable="false"
+  nzCancelText="关闭"
+  [nzOkLoading]="loading"
+>
+  <ng-container *nzModalContent>
+    <nz-list
+      [nzBordered]="bordered"
+      [nzSize]="size"
+      [nzLoading]="loading"
+      [nzHeader]="header"
+      [nzFooter]="footer"
+      [nzItemLayout]="itemLayout"
+      [nzNoResult]="noResult"
+      [nzLoading]="loading"
+    >
+      <nz-list-header>
+        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+          <input nz-input placeholder="请输入查询数据" nzSize="large" (input)="onSearchInput($event)" />
+        </nz-input-group>
+        <ng-template #suffixIconButton>
+          <button nz-button nzType="primary" nzSearch><i nz-icon nzType="search"></i></button>
+        </ng-template>
+      </nz-list-header>
+      @for (item of showData; track item; let i = $index) {
+        <nz-list-item (click)="itemClick($event, item, i)" [class]="itemClassName(item, i)">
+          {{ item.label }}
+        </nz-list-item>
+      }
+      @if (!!footer) {
+        <nz-list-footer>{{ footer }}</nz-list-footer>
+      }
+    </nz-list>
+  </ng-container>
+</nz-modal>

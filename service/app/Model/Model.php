@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace App\Model;
 
-use Hyperf\DbConnection\Model\Model as BaseModel;
+use app\common\model\BaseModel;
 
 abstract class Model extends BaseModel
 {

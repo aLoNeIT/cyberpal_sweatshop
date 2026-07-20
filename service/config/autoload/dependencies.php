@@ -1,13 +1,9 @@
 <?php
 
 declare(strict_types=1);
-/**
- * This file is part of Hyperf.
- *
- * @link     https://www.hyperf.io
- * @document https://hyperf.wiki
- * @contact  group@hyperf.io
- * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
- */
+
 return [
+    \app\common\contract\SessionLogicContract::class => \app\common\logic\SessionLogic::class,
+    \Hyperf\Session\SessionManager::class => \app\common\util\TokenSessionManager::class,
+    \Hyperf\HttpServer\Contract\RequestInterface::class => \app\http\common\Request::class,
 ];

@@ -28,3 +28,6 @@ WORKSPACE.md
 
 # 助理内部工作记忆（本机文件，不纳入版本控制）
 .workbuddy/
+
+# 旧 React 前端备份（已被 Angular/ng-alain 重写，仅本地保留，不纳入版本控制）
+web_react_backup/

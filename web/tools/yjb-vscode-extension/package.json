@@ -1,0 +1,114 @@
+{
+  "name": "yjb-vscode-extension",
+  "displayName": "养基宝",
+  "description": "在 VS Code 侧边栏查看和刷新基金持仓数据。",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:yjb.dashboard",
+    "onCommand:yjb.refresh",
+    "onCommand:yjb.showDiagnostics",
+    "onCommand:yjb.openSettings"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "yjb.refresh",
+        "title": "养基宝: 刷新数据",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "yjb.openSettings",
+        "title": "养基宝: 打开设置",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "yjb.showDiagnostics",
+        "title": "养基宝: 显示诊断信息",
+        "icon": "$(output)"
+      }
+    ],
+    "configuration": {
+      "title": "养基宝",
+      "properties": {
+        "yjb.apiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "基金数据接口地址。留空时使用扩展内置示例数据。"
+        },
+        "yjb.useYangjibaoApi": {
+          "type": "boolean",
+          "default": false,
+          "description": "启用养基宝浏览器插件同款接口。启用后会请求 /index_data 和 /account_collect。"
+        },
+        "yjb.yangjibaoBaseUrl": {
+          "type": "string",
+          "default": "http://browser-plug-api.yangjibao.com",
+          "description": "养基宝接口基础地址。"
+        },
+        "yjb.authToken": {
+          "type": "string",
+          "default": "",
+          "description": "接口认证令牌。自定义接口模式下会作为 Bearer Token；养基宝接口模式下会原样放入 Authorization。"
+        },
+        "yjb.autoRefreshSeconds": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "自动刷新间隔，单位秒。0 表示关闭自动刷新。"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "yjb",
+          "title": "养基宝",
+          "icon": "resources/yjb.svg"
+        }
+      ]
+    },
+    "views": {
+      "yjb": [
+        {
+          "id": "yjb.dashboard",
+          "type": "webview",
+          "name": "养基宝"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "yjb.refresh",
+          "when": "view == yjb.dashboard",
+          "group": "navigation"
+        },
+        {
+          "command": "yjb.openSettings",
+          "when": "view == yjb.dashboard",
+          "group": "navigation"
+        },
+        {
+          "command": "yjb.showDiagnostics",
+          "when": "view == yjb.dashboard",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "node --check src/extension.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.2"
+  }
+}

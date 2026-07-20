@@ -1,0 +1,5 @@
+<sf-item-wrap [id]="id" [schema]="schema" [ui]="ui" [showError]="showError" [error]="error" [showTitle]="schema.title">
+  <nz-time-picker [(ngModel)]="start" (ngModelChange)="change($event, 'start')" nzFormat="HH:mm"></nz-time-picker>
+  -
+  <nz-time-picker [(ngModel)]="end" (ngModelChange)="change($event, 'end')" nzFormat="HH:mm"></nz-time-picker>
+</sf-item-wrap>

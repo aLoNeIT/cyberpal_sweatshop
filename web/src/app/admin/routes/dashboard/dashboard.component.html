@@ -1,0 +1,26 @@
+<page-header [autoTitle]="false">
+  <ng-template #title>CyberPal</ng-template>
+  <ng-template #content>
+    <p class="text-lg text-gray-500">AI Agent 管理平台控制台</p>
+  </ng-template>
+</page-header>
+
+<div class="p-6">
+  <nz-row [nzGutter]="24">
+    <nz-col [nzSpan]="8">
+      <nz-card nzTitle="Agent 管理">
+        <p>管理您的 AI Agent 配置和运行状态</p>
+      </nz-card>
+    </nz-col>
+    <nz-col [nzSpan]="8">
+      <nz-card nzTitle="会话记录">
+        <p>查看和管理用户会话历史</p>
+      </nz-card>
+    </nz-col>
+    <nz-col [nzSpan]="8">
+      <nz-card nzTitle="系统设置">
+        <p>配置平台参数和集成选项</p>
+      </nz-card>
+    </nz-col>
+  </nz-row>
+</div>

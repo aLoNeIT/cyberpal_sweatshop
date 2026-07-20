@@ -1,0 +1,24 @@
+<div class="modal-header modal-header-fix">
+  <div class="modal-title">{{ options.title }}</div>
+</div>
+@if (!enableClose) {
+  <nz-spin class="modal-spin"></nz-spin>
+}
+<ng-template #tpl> </ng-template>
+@if (options.buttons && options.buttons.length > 0) {
+  <nz-spin [nzTip]="loadingTip" [nzSpinning]="loading">
+    <div class="modal-footer">
+      @for (button of options.buttons; track button) {
+        <button
+          nz-button
+          type="button"
+          (click)="buttonClick($event, button)"
+          [nzType]="button.type || 'default'"
+          [nzDanger]="button.isDanger"
+        >
+          {{ button.title }}
+        </button>
+      }
+    </div>
+  </nz-spin>
+}
