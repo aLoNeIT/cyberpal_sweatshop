@@ -9,7 +9,7 @@
 | 目录 | 职责 | 说明 |
 |------|------|------|
 | `service/` | **后端** | Hyperf 3.1 工程（原根目录后端代码整体迁入）。含 `app/`、`config/`、`migrations/`、`composer.json` 等；`bin/hyperf.php` 用 `dirname(__DIR__)` 推导 `BASE_PATH`，故 PSR-4（`"App\\": "app/"`）相对 `service/` 自动生效，无需改 autoload。 |
-| `web/` | **前端** | 前端工程（当前为 React + TypeScript + Vite）。自包含，含 `src/`、`vite.config.ts`；开发时通过 `/api`、`/chat` 代理到后端 `localhost:9502`。 |
+| `web/` | **前端** | 前端工程，**目标技术栈 Angular + ng-alain**（规范见 [ng-alain 前端开发规范](.agents/18-ng-alain-frontend-standards.md)）。当前 `web/` 仍为 React + TypeScript + Vite 过渡实现，开发时通过 `/api`、`/chat` 代理到后端 `localhost:9502`，后续将整体迁移至 ng-alain。 |
 | `document/` | **文档** | 正式项目文档目录（当前为占位，含 `.gitkeep`，待补充）。 |
 | `deploy/` | **构建 / 部署** | 构建与部署配置统一收口：`Dockerfile`、`docker-compose.yml`、`deploy.test.yml`、`.gitlab-ci.yml`、`.github/ `、`.devcontainer/`；其内部构建上下文均指向 `service/`。 |
 
@@ -42,6 +42,8 @@ composer analyse
 ```
 
 ### 前端（web/）
+
+> 当前 `web/` 为 React + TypeScript + Vite 过渡实现；目标技术栈为 **Angular + ng-alain**，迁移完成后开发命令将以 `ng serve` 为主。前端规范见 [.agents/18-ng-alain-frontend-standards.md](.agents/18-ng-alain-frontend-standards.md)。
 
 ```bash
 cd web
