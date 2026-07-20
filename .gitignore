@@ -16,3 +16,6 @@ vendor/
 /phpunit.xml
 node_modules/
 *.log
+
+# 旧 docs/ 已废弃：不再纳入版本控制，忽略以防重新出现
+docs/
