@@ -1,0 +1,16 @@
+{
+  "name": "omp-gateway",
+  "version": "0.1.0",
+  "description": "oh-my-pi agent gateway — Service / Session / Agent 三层隔离",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/server.ts",
+    "start": "bun run src/server.ts"
+  },
+  "dependencies": {
+    "@oh-my-pi/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
