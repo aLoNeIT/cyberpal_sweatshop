@@ -43,7 +43,7 @@ class PiSessionPool
      * 获取或创建会话（增强版，T07）
      *
      * 使用 AgentLauncherService 组装启动命令，注入 cwd、profile、skill、mcp。
-     * 增加配置失效检测：比对 agent.updated_at 与 Redis stale 标记，不一致则重建进程。
+     * 增加配置失效检测：比对 agent.update_time 与 Redis stale 标记，不一致则重建进程。
      *
      * @param AgentModel   $agent   Agent 实例
      * @param SessionModel $session Session 实例
@@ -75,7 +75,7 @@ class PiSessionPool
                     $this->logger->warning('[Pool] Session dead, will recreate: ' . $sessionId);
                     @$existing->pi->stop();
                     $needsRebuild = true;
-                } elseif ($this->isAgentConfigStale($agent->id, $agent->updated_at ?? '')) {
+                } elseif ($this->isAgentConfigStale($agent->id, $agent->update_time ?? 0)) {
                     // 配置失效检测（T07）：agent 配置变更后重建进程
                     $this->logger->info('[Pool] Agent config stale, recreating: ' . $sessionId, [
                         'agent_id' => $agent->id,
@@ -104,8 +104,8 @@ class PiSessionPool
 
                 $this->sessions[$sessionId] = new PiAgentSession($pi, time());
 
-                // 记录当前 agent 版本（updated_at + 清除 stale 标记）
-                $this->sessionAgentVersions[$agent->id] = $agent->updated_at ?? '';
+                // 记录当前 agent 版本（update_time + 清除 stale 标记）
+                $this->sessionAgentVersions[$agent->id] = $agent->update_time ?? 0;
                 $this->clearStaleMark($agent->id);
             }
 
@@ -174,13 +174,13 @@ class PiSessionPool
      *
      * 策略：
      * 1. 检查 Redis 的 agent:stale:{agentId} 标记
-     * 2. 比对该 agent 的 updated_at 与上次记录版本
+     * 2. 比对该 agent 的 update_time 与上次记录版本
      *
      * @param string $agentId         Agent ID
-     * @param string $currentVersion  当前 agent.updated_at
+     * @param int    $currentVersion  当前 agent.update_time（秒级时间戳）
      * @return bool true = 已失效需重建
      */
-    private function isAgentConfigStale(string $agentId, string $currentVersion): bool
+    private function isAgentConfigStale(string $agentId, int $currentVersion): bool
     {
         // 方法 1：Redis stale 标记
         try {

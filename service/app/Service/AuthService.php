@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Model\User;
+use App\Model\CsUser;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Hyperf\Contract\ConfigInterface;
@@ -16,6 +16,8 @@ use RuntimeException;
  *
  * 提供 bcrypt 密码哈希/校验、JWT 签发/验证。
  * 对应架构文档 §4.1 的 /api/auth/* 端点背后的逻辑。
+ *
+ * 用户统一存于 cs_user；JWT 的 user_id / sub 均使用 cs_user.usr_id。
  */
 class AuthService
 {
@@ -65,7 +67,7 @@ class AuthService
      * 校验明文密码与哈希是否匹配
      *
      * @param string $password      明文密码
-     * @param string $passwordHash  数据库中的哈希值
+     * @param string $passwordHash  数据库中的哈希值（cs_user.usr_pwd，bcrypt）
      * @return bool 是否匹配
      */
     public function verifyPassword(string $password, string $passwordHash): bool
@@ -80,10 +82,10 @@ class AuthService
     /**
      * 为用户签发 JWT
      *
-     * @param User $user 用户模型实例
+     * @param CsUser $user 用户模型实例
      * @return string JWT 字符串
      */
-    public function issueToken(User $user): string
+    public function issueToken(CsUser $user): string
     {
         $now = time();
 
@@ -91,12 +93,13 @@ class AuthService
             'iss'        => $this->jwtIssuer,       // 签发者
             'iat'        => $now,                    // 签发时间
             'exp'        => $now + $this->jwtTtl,    // 过期时间
-            'sub'        => (string) $user->id,      // 主体 = user_id
-            'user_id'    => $user->id,               // 业务字段
-            'email'      => $user->email,
+            'sub'        => (string) $user->usr_id,  // 主体 = usr_id
+            'user_id'    => $user->usr_id,           // 业务字段
+            'email'      => $user->usr_account,
+            'app_type'   => $user->usr_app_type,
         ];
 
-        $this->logger->info('[Auth] Issuing JWT', ['user_id' => $user->id, 'email' => $user->email]);
+        $this->logger->info('[Auth] Issuing JWT', ['user_id' => $user->usr_id, 'email' => $user->usr_account]);
 
         return JWT::encode($payload, $this->jwtSecret, self::ALGORITHM);
     }

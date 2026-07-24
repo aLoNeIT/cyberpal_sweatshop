@@ -6,12 +6,16 @@ namespace App\Model;
 
 use Hyperf\Database\Model\Relations\BelongsToMany;
 use Hyperf\Database\Model\Relations\HasMany;
+use Hyperf\Database\Model\SoftDeletes;
 
 /**
  * Agent 模型
  *
  * 对应架构文档 §3.2 agents 表。
  * 主键使用 UUID 字符串。
+ *
+ * 时间戳：采用项目统一约定（$dateFormat='U'，见 BaseModel），
+ * create_time / update_time / delete_time 均为 BIGINT 秒级时间戳。
  *
  * @property string      $id                   UUID
  * @property int         $user_id              租户归属
@@ -26,16 +30,23 @@ use Hyperf\Database\Model\Relations\HasMany;
  * @property string|null $tools_blacklist      工具黑名单（逗号分隔）
  * @property string      $profile_name         OMP --profile 值
  * @property string      $status               offline|online|error
- * @property string      $created_at
- * @property string      $updated_at
+ * @property int         $create_time          创建时间（秒级时间戳）
+ * @property int         $update_time          更新时间（秒级时间戳）
+ * @property int         $delete_time          删除时间（软删，秒级时间戳）
  */
 class Agent extends Model
 {
+    use SoftDeletes;
+
     protected ?string $table = 'agents';
 
     /** 主键非自增，类型为 string */
     protected string $keyType = 'string';
     public bool $incrementing = false;
+
+    public const CREATED_AT = 'create_time';
+    public const UPDATED_AT = 'update_time';
+    public const DELETED_AT = 'delete_time';
 
     protected array $fillable = [
         'id',
@@ -54,7 +65,7 @@ class Agent extends Model
     ];
 
     protected array $casts = [
-        'id'     => 'string',
+        'id'      => 'string',
         'user_id' => 'integer',
     ];
 

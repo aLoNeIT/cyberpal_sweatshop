@@ -44,7 +44,7 @@ class AgentController extends AbstractController
         $page    = max(1, (int) $request->input('page', 1));
         $perPage = min(100, max(1, (int) $request->input('per_page', 20)));
 
-        $query = Agent::query()->where('user_id', $userId)->orderBy('updated_at', 'desc');
+        $query = Agent::query()->where('user_id', $userId)->orderBy('update_time', 'desc');
 
         $total   = $query->count();
         $agents  = $query->forPage($page, $perPage)->get();
@@ -345,12 +345,12 @@ class AgentController extends AbstractController
     /**
      * 标记 Agent 全部活跃 session 失效（供 T07 Pool 感知）
      *
-     * 使用 Redis 记录 agent 的最新 updated_at，
+     * 使用 Redis 记录 agent 的最新 update_time，
      * Pool 启动会话时比对判否需要重建进程。
      */
     private function markAgentSessionsStale(string $agentId): void
     {
-        // 更新 agent.updated_at 作为版本标记
+        // 更新 agent.update_time 作为版本标记
         $agent = Agent::query()->find($agentId);
         if ($agent !== null) {
             $agent->touch();

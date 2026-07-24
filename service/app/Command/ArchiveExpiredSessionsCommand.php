@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Model\Session;
-use App\Model\User;
 use Hyperf\Command\Command as HyperfCommand;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -13,10 +12,14 @@ use Symfony\Component\Console\Input\InputOption;
 /**
  * 自动归档过期会话
  *
- * 查询 users.auto_archive_enabled=1 且 sessions.updated_at 超过 users.auto_archive_days 天的活跃会话，
+ * 查询 cs_user.auto_archive_enabled=1 且 sessions.update_time 超过 cs_user.auto_archive_days 天的活跃会话，
  * 批量改为 archived 状态。
  *
  * 对应 PRD R-017（P2）：会话结束 N 天后自动归档，默认开启 30 天。
+ * 用户统一存于 cs_user（usr_app_type=4），无独立 users 表。
+ *
+ * 时间戳说明：update_time / archived_time 均为 BIGINT 秒级时间戳（见 BaseModel.$dateFormat='U'），
+ * 故归档判定用 UNIX_TIMESTAMP() - days*86400，归档时间用 time()。
  *
  * 用法：php bin/hyperf.php archive:expired [--dry-run]
  */
@@ -45,16 +48,16 @@ class ArchiveExpiredSessionsCommand extends HyperfCommand
         $this->logger->info("[Archive:Expired] Starting ({$mode})");
 
         // 查询符合条件的会话
-        // JOIN users ON sessions.user_id = users.id
+        // JOIN cs_user ON sessions.user_id = cs_user.usr_id
         // WHERE sessions.status = 'active'
-        //   AND users.auto_archive_enabled = 1
-        //   AND sessions.updated_at < DATE_SUB(NOW(), INTERVAL users.auto_archive_days DAY)
+        //   AND cs_user.auto_archive_enabled = 1
+        //   AND sessions.update_time < UNIX_TIMESTAMP() - cs_user.auto_archive_days * 86400
         $expiredSessions = Session::query()
             ->select('sessions.*')
-            ->join('users', 'sessions.user_id', '=', 'users.id')
+            ->join('cs_user', 'sessions.user_id', '=', 'cs_user.usr_id')
             ->where('sessions.status', 'active')
-            ->where('users.auto_archive_enabled', 1)
-            ->whereRaw('sessions.updated_at < DATE_SUB(NOW(), INTERVAL users.auto_archive_days DAY)')
+            ->where('cs_user.auto_archive_enabled', 1)
+            ->whereRaw('sessions.update_time < UNIX_TIMESTAMP() - cs_user.auto_archive_days * 86400')
             ->get();
 
         $count = $expiredSessions->count();
@@ -73,12 +76,12 @@ class ArchiveExpiredSessionsCommand extends HyperfCommand
             $this->logger->info('[Archive:Expired] Archiving session', [
                 'session_id' => $session->id,
                 'user_id'    => $session->user_id,
-                'updated_at' => $session->updated_at,
+                'update_time' => $session->update_time,
             ]);
 
             if (!$dryRun) {
                 $session->status = 'archived';
-                $session->archived_at = date('Y-m-d H:i:s');
+                $session->archived_time = time();
                 $session->save();
             }
 

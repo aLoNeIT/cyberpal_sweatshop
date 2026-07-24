@@ -114,7 +114,7 @@ class SessionService
     public function archiveSession(Session $session): void
     {
         $session->status = 'archived';
-        $session->archived_at = date('Y-m-d H:i:s');
+        $session->archived_time = time();
         $session->save();
 
         $this->logger->info('[Session] Archived', ['session_id' => $session->id]);
@@ -127,6 +127,7 @@ class SessionService
      *
      * @param int   $userId   租户 ID
      * @param array $filters  { agent_id, status, keyword, from, to, page, per_page }
+     *                        from/to 为 BIGINT 秒级时间戳（与 update_time 同语义）
      * @return array
      */
     public function getHistory(int $userId, array $filters = []): array
@@ -155,15 +156,15 @@ class SessionService
             $query->where('title', 'like', '%' . $filters['keyword'] . '%');
         }
 
-        // 按时间范围筛选
+        // 按时间范围筛选（update_time 为 BIGINT 秒级时间戳）
         if (!empty($filters['from'])) {
-            $query->where('updated_at', '>=', $filters['from']);
+            $query->where('update_time', '>=', $filters['from']);
         }
         if (!empty($filters['to'])) {
-            $query->where('updated_at', '<=', $filters['to']);
+            $query->where('update_time', '<=', $filters['to']);
         }
 
-        $query->orderBy('updated_at', 'desc');
+        $query->orderBy('update_time', 'desc');
 
         $total    = $query->count();
         $sessions = $query->forPage($page, $perPage)->get();

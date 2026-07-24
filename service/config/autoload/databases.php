@@ -21,7 +21,7 @@ return [
         'password' => env('DB_PASSWORD', ''),
         'charset' => env('DB_CHARSET', 'utf8'),
         'collation' => env('DB_COLLATION', 'utf8_unicode_ci'),
-        'prefix' => env('DB_PREFIX', ''),
+        'prefix' => env('DB_PREFIX', 'cs_'),
         'pool' => [
             'min_connections' => 1,
             'max_connections' => 10,

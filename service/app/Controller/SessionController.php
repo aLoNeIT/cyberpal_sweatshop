@@ -53,7 +53,7 @@ class SessionController extends AbstractController
             $query->where('agent_id', $agentId);
         }
 
-        $query->orderBy('updated_at', 'desc');
+        $query->orderBy('update_time', 'desc');
 
         $total    = $query->count();
         $sessions = $query->forPage($page, $perPage)->get();

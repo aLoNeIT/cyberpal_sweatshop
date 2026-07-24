@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Model;
 
+use Hyperf\Database\Model\SoftDeletes;
+
 /**
  * 计费记录模型
  *
  * 对应架构文档 §3.6 billing_records 表。
+ *
+ * 时间戳：create_time / update_time / delete_time 均为 BIGINT 秒级时间戳（项目统一约定）。
  *
  * @property int    $id
  * @property int    $user_id           租户
@@ -21,13 +25,19 @@ namespace App\Model;
  * @property int    $cache_write_tokens 缓存写入 token
  * @property float  $cost_estimate     估算费用（USD）
  * @property string $source            数据来源 usage|estimate|provider_api
- * @property string $created_at
+ * @property int    $create_time 创建时间（秒级时间戳）
+ * @property int    $update_time 更新时间（秒级时间戳）
+ * @property int    $delete_time 删除时间（软删，秒级时间戳）
  */
 class BillingRecord extends Model
 {
+    use SoftDeletes;
+
     protected ?string $table = 'billing_records';
 
-    public const UPDATED_AT = null;
+    public const CREATED_AT = 'create_time';
+    public const UPDATED_AT = 'update_time';
+    public const DELETED_AT = 'delete_time';
 
     protected array $fillable = [
         'user_id',

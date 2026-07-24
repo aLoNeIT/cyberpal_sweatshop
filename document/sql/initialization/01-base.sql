@@ -166,6 +166,9 @@ create table `cs_user` (
     `usr_pwd` VARCHAR (80) not null default '68b6b4ab792a4476db8f6937bb4c4d12' comment '密码123456',
     `usr_salt` VARCHAR (4) not null default 'RzyL' comment '用户盐值',
     `usr_real_name` VARCHAR (50) not null default '' comment '真实姓名',
+    `theme_pref`            VARCHAR(16)  NOT NULL DEFAULT 'system' COMMENT '主题偏好 light|dark|system',
+    `auto_archive_enabled`  TINYINT      NOT NULL DEFAULT 1        COMMENT '自动归档开关 0/1',
+    `auto_archive_days`     INT UNSIGNED NOT NULL DEFAULT 30       COMMENT '自动归档天数阈值',
     `usr_sex` VARCHAR (4) not null default '' comment '性别',
     `usr_remark` VARCHAR (255) not null default '' comment '用户备注',
     `usr_login_time` BIGINT not null default 0 comment '登录时间',
@@ -559,3 +562,35 @@ create table `cs_provider_application_subscriber` (
     key `idx_pas_provider` (`pas_provider`) using BTREE,
     key `idx_pas_subscriber` (`pas_join_table`, `pas_join_data`) using BTREE
 ) comment = '服务商应用被订阅的关联表';
+
+-- ============================================================================
+-- 初始化种子数据（用户决策 1.3：角色、用户均在初始化建表语句中插入数据）
+-- 依据 07-admin-account-rbac.md FR-1 / FR-3：Admin 为系统 seed 生成；三档角色本期全种子。
+-- 注意：
+--   * 超管账号口令为框架默认占位（123456，salt=RzyL）；首次登录强制改密（07 FR-1.5）。
+--     生产部署应通过部署脚本随机化口令并打印到部署日志/环境变量。
+--   * cs_role.r_level=0 为超级管理员快路径（PermissionMiddleware 直接全放行）；
+--     运营/客服走显式 cs_role_permission 授权（待 admin 功能码目录补全后补，见 07 §9）。
+--   * 角色/用户 id 显式指定，便于 cs_relation 直接引用，且不影响后续 AUTO_INCREMENT。
+-- ============================================================================
+
+-- ----------------------------
+-- 种子：超级管理员账号（app_type=1）
+-- ----------------------------
+INSERT INTO `cs_user` (`usr_id`, `usr_app_type`, `usr_account`, `usr_pwd`, `usr_salt`, `usr_real_name`, `usr_state`, `usr_create_time`, `usr_update_time`)
+VALUES (1, 1, 'admin', '68b6b4ab792a4476db8f6937bb4c4d12', 'RzyL', '超级管理员', 1, 0, 0);
+
+-- ----------------------------
+-- 种子：Admin 三档角色（超管 / 运营 / 客服）
+-- ----------------------------
+INSERT INTO `cs_role` (`r_id`, `r_app_type`, `r_level`, `r_systemed`, `r_name`, `r_state`)
+VALUES
+    (1, 1, 0, 1, '超级管理员', 1),
+    (2, 1, 1, 1, '运营', 1),
+    (3, 1, 2, 1, '客服', 1);
+
+-- ----------------------------
+-- 种子：超管账号 ↔ 超级管理员角色 绑定
+-- ----------------------------
+INSERT INTO `cs_relation` (`rel_user`, `rel_role`, `rel_app_type`, `rel_role_level`)
+VALUES (1, 1, 1, 0);

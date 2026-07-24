@@ -12,6 +12,9 @@ use Hyperf\Database\Model\Collection;
  *
  * 提供用量汇总、分模型明细、分页明细。
  * 对应架构文档 §4.1 的 /api/billing/* 端点背后的逻辑。
+ *
+ * 时间戳说明：create_time 为 BIGINT 秒级时间戳（见 BaseModel.$dateFormat='U'），
+ * 故时间范围筛选 / 排序均基于 Unix 秒，periodRange 返回 Unix 秒而非日期字符串。
  */
 class BillingService
 {
@@ -32,7 +35,7 @@ class BillingService
 
         $query = BillingRecord::query()
             ->where('user_id', $userId)
-            ->whereBetween('created_at', [$start, $end]);
+            ->whereBetween('create_time', [$start, $end]);
 
         // 汇总
         $totals = (clone $query)->selectRaw(
@@ -67,6 +70,7 @@ class BillingService
      *
      * @param int         $userId   租户 ID
      * @param array       $filters  { from, to, session_id, page, per_page }
+     *                        from/to 为 BIGINT 秒级时间戳
      * @return array
      */
     public function getRecords(int $userId, array $filters = []): array
@@ -76,12 +80,12 @@ class BillingService
 
         $query = BillingRecord::query()->where('user_id', $userId);
 
-        // 时间范围
+        // 时间范围（create_time 为 BIGINT 秒级时间戳）
         if (!empty($filters['from'])) {
-            $query->where('created_at', '>=', $filters['from']);
+            $query->where('create_time', '>=', $filters['from']);
         }
         if (!empty($filters['to'])) {
-            $query->where('created_at', '<=', $filters['to']);
+            $query->where('create_time', '<=', $filters['to']);
         }
 
         // 按会话筛选
@@ -89,7 +93,7 @@ class BillingService
             $query->where('session_id', $filters['session_id']);
         }
 
-        $query->orderBy('created_at', 'desc');
+        $query->orderBy('create_time', 'desc');
 
         $total   = $query->count();
         $records = $query->forPage($page, $perPage)->get();
@@ -103,15 +107,16 @@ class BillingService
     }
 
     /**
-     * 将月份字符串转为起止时间
+     * 将月份字符串转为起止 Unix 时间戳（秒）
      *
      * @param string $period 如 '2025-07'
-     * @return array{string, string}
+     * @return array{int, int}
      */
     private function periodRange(string $period): array
     {
-        $start = $period . '-01 00:00:00';
-        $end   = date('Y-m-t 23:59:59', strtotime($start));
+        // create_time 为 BIGINT 秒级时间戳，返回 Unix 秒而非日期字符串
+        $start = strtotime($period . '-01 00:00:00');
+        $end   = strtotime(date('Y-m-t 23:59:59', $start));
 
         return [$start, $end];
     }

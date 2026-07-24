@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Model\User;
+use App\Model\CsUser;
 use App\Service\AuthService;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpServer\Contract\RequestInterface;
@@ -16,6 +16,8 @@ use Psr\Log\LoggerInterface;
  *
  * 对应架构文档 §4.1 的 /api/auth/* 端点。
  * 提供注册、登录、登出、查询当前用户功能。
+ *
+ * 用户统一存于 cs_user（usr_app_type=4 为用户端账户），无独立 users 表。
  */
 class AuthController extends AbstractController
 {
@@ -54,20 +56,28 @@ class AuthController extends AbstractController
             return $this->error($response, '显示名称不能超过 64 个字符', 422);
         }
 
-        // 检查邮箱是否已注册
-        $existing = User::query()->where('email', $email)->first();
+        // 检查邮箱是否已注册（用户端账户 usr_app_type=4）
+        $existing = CsUser::query()
+            ->where('usr_app_type', 4)
+            ->where('usr_account', $email)
+            ->first();
         if ($existing !== null) {
             return $this->error($response, '该邮箱已被注册', 409);
         }
 
-        // 创建用户
-        $user = User::create([
-            'email'         => $email,
-            'password_hash' => $this->authService->hashPassword($password),
-            'display_name'  => $display,
+        // 创建用户（统一写入 cs_user）
+        $now   = time();
+        $user  = CsUser::create([
+            'usr_app_type'   => 4,
+            'usr_account'    => $email,
+            'usr_pwd'        => $this->authService->hashPassword($password),
+            'usr_real_name'  => $display,
+            'usr_state'      => 1,
+            'usr_create_time' => $now,
+            'usr_update_time' => $now,
         ]);
 
-        $this->logger->info('[Auth] User registered', ['user_id' => $user->id]);
+        $this->logger->info('[Auth] User registered', ['user_id' => $user->usr_id]);
 
         // 签发 JWT
         $token = $this->authService->issueToken($user);
@@ -96,12 +106,15 @@ class AuthController extends AbstractController
             return $this->error($response, '请输入密码', 422);
         }
 
-        $user = User::query()->where('email', $email)->first();
-        if ($user === null || !$this->authService->verifyPassword($password, $user->password_hash)) {
+        $user = CsUser::query()
+            ->where('usr_app_type', 4)
+            ->where('usr_account', $email)
+            ->first();
+        if ($user === null || $user->usr_state != 1 || !$this->authService->verifyPassword($password, $user->usr_pwd)) {
             return $this->error($response, '邮箱或密码错误', 401);
         }
 
-        $this->logger->info('[Auth] User logged in', ['user_id' => $user->id]);
+        $this->logger->info('[Auth] User logged in', ['user_id' => $user->usr_id]);
 
         $token = $this->authService->issueToken($user);
 
@@ -135,7 +148,7 @@ class AuthController extends AbstractController
     {
         $userId = $request->getAttribute('user_id', 0);
 
-        $user = User::query()->find($userId);
+        $user = CsUser::query()->find($userId);
         if ($user === null) {
             return $this->error($response, '用户不存在', 404);
         }
@@ -152,17 +165,17 @@ class AuthController extends AbstractController
     /**
      * 格式化用户数据（去除敏感字段）
      */
-    private function formatUser(User $user): array
+    private function formatUser(CsUser $user): array
     {
         return [
-            'id'                   => $user->id,
-            'email'                => $user->email,
-            'display_name'         => $user->display_name ?? '',
+            'id'                   => $user->usr_id,
+            'email'                => $user->usr_account,
+            'display_name'         => $user->usr_real_name ?? '',
             'theme_pref'           => $user->theme_pref ?? 'system',
             'auto_archive_enabled' => (bool) ($user->auto_archive_enabled ?? true),
             'auto_archive_days'    => (int) ($user->auto_archive_days ?? 30),
-            'created_at'           => $user->created_at,
-            'updated_at'           => $user->updated_at,
+            'created_at'           => $user->usr_create_time,
+            'updated_at'           => $user->usr_update_time,
         ];
     }
 
