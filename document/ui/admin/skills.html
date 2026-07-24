@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - Skill库治理</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .action-btn {
+      width: 30px; height: 30px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--color-text-tertiary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+
+    .action-btn:hover { color: var(--color-primary); background: var(--color-primary-subtle); }
+    .action-btn.danger:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+
+    .action-btn svg {
+      width: 15px; height: 15px;
+      stroke: currentColor; fill: none; stroke-width: 2;
+    }
+
+    .admin-avatar {
+      position: relative;
+    }
+
+    .admin-badge-tag {
+      position: absolute;
+      bottom: -3px;
+      right: -6px;
+      font-size: 10px;
+      background: var(--color-warning);
+      color: #fff;
+      padding: 1px 5px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      line-height: 1.2;
+      border: 1.5px solid var(--color-surface);
+    }
+
+    .skill-desc {
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-text-secondary);
+    }
+
+    .info-tip {
+      background: var(--color-info-bg);
+      border: 1px solid rgba(22,119,255,.2);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--color-info);
+      line-height: 1.5;
+    }
+
+    .info-tip svg {
+      width: 16px; height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="agents-sessions.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="skills.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">Skill库治理</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>Skills 总数</span>
+            <strong>24</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span class="admin-badge-tag">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>Skill 库治理</h1>
+            <p>管理平台 Skill 供给，控制用户端可挂载的能力</p>
+          </div>
+          <div class="page-header-right">
+            <button class="btn btn-primary btn-sm" id="addSkillBtn">新增 Skill</button>
+          </div>
+        </div>
+
+        <!-- Info Tip -->
+        <div class="info-tip mb-2">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>禁用后 Skill 将不在用户端可选列表中显示，已挂载的 Agent 不受影响。</span>
+        </div>
+
+        <!-- Search -->
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="search-input" placeholder="搜索Skill名称或描述..." id="skillSearch">
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill Table -->
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table" id="skillTable">
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>描述</th>
+                  <th>类型</th>
+                  <th>分类</th>
+                  <th>启用状态</th>
+                  <th>挂载次数</th>
+                  <th>创建时间</th>
+                  <th class="col-actions">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-skill="1" data-enabled="true" data-category="development">
+                  <td style="font-weight:500;">Git 版本控制</td>
+                  <td><span class="skill-desc">提供 Git 命令支持，包括 commit、branch、merge、rebase 等版本控制操作</span></td>
+                  <td><span class="badge badge-info">官方</span></td>
+                  <td>开发工具</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" checked data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>156</td>
+                  <td class="col-time">2025-01-15</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr data-skill="2" data-enabled="true" data-category="development">
+                  <td style="font-weight:500;">代码审查</td>
+                  <td><span class="skill-desc">对代码变更进行自动化审查，覆盖安全漏洞、逻辑缺陷、性能瓶颈和代码坏味道</span></td>
+                  <td><span class="badge badge-info">官方</span></td>
+                  <td>开发工具</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" checked data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>128</td>
+                  <td class="col-time">2025-01-20</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr data-skill="3" data-enabled="true" data-category="productivity">
+                  <td style="font-weight:500;">PDF 文档处理</td>
+                  <td><span class="skill-desc">支持 PDF 创建、编辑、转换、合并拆分、表单、加密与 OCR 识别</span></td>
+                  <td><span class="badge badge-info">官方</span></td>
+                  <td>办公效率</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" checked data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>203</td>
+                  <td class="col-time">2025-02-01</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr data-skill="4" data-enabled="true" data-category="productivity">
+                  <td style="font-weight:500;">XLSX 电子表格</td>
+                  <td><span class="skill-desc">Excel 文件的创建、读取、编辑与格式化，支持公式和图表操作</span></td>
+                  <td><span class="badge badge-info">官方</span></td>
+                  <td>办公效率</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" checked data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>189</td>
+                  <td class="col-time">2025-02-10</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr data-skill="5" data-enabled="false" data-category="ai">
+                  <td style="font-weight:500;">AI 图像生成</td>
+                  <td><span class="skill-desc">利用 AI 模型从文本描述生成高质量图片，支持多种风格</span></td>
+                  <td><span class="badge badge-default">社区</span></td>
+                  <td>AI 能力</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>45</td>
+                  <td class="col-time">2025-03-05</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr data-skill="6" data-enabled="true" data-category="data">
+                  <td style="font-weight:500;">金融数据查询</td>
+                  <td><span class="skill-desc">自然语言查询 A股/港股/美股行情、财报、研报、基金等金融数据</span></td>
+                  <td><span class="badge badge-info">官方</span></td>
+                  <td>数据分析</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" checked data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>312</td>
+                  <td class="col-time">2025-03-20</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr data-skill="7" data-enabled="true" data-category="ai">
+                  <td style="font-weight:500;">浏览器自动化</td>
+                  <td><span class="skill-desc">通过 Playwright 实现网页自动化操作，支持表单填写、截图与数据提取</span></td>
+                  <td><span class="badge badge-default">社区</span></td>
+                  <td>AI 能力</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" checked data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>67</td>
+                  <td class="col-time">2025-04-08</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr data-skill="8" data-enabled="true" data-category="ui">
+                  <td style="font-weight:500;">前端界面设计</td>
+                  <td><span class="skill-desc">提供高品质的前端 UI 生成能力，产出可直接使用的组件与页面</span></td>
+                  <td><span class="badge badge-info">官方</span></td>
+                  <td>界面设计</td>
+                  <td>
+                    <label class="toggle" style="margin:0;">
+                      <input type="checkbox" checked data-action="toggle-skill">
+                      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                  </td>
+                  <td>234</td>
+                  <td class="col-time">2025-05-15</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" style="padding:12px 24px;border-top:1px solid var(--color-border);">
+            <div class="pagination-info">共 8 条，第 1/2 页</div>
+            <div class="pagination-btns">
+              <button class="pagination-btn" disabled>&laquo;</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn">2</button>
+              <button class="pagination-btn">&raquo;</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- ===== Add/Edit Skill Modal ===== -->
+  <div class="modal-overlay" id="skillFormModal" style="display:none;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="skillFormModalTitle">新增 Skill</h3>
+        <button class="modal-close" onclick="document.getElementById('skillFormModal').style.display='none';document.body.style.overflow=''">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">名称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="skillFormName" placeholder="输入 Skill 名称">
+        </div>
+        <div class="form-group">
+          <label class="form-label">描述 <span class="required">*</span></label>
+          <textarea class="form-textarea" id="skillFormDesc" placeholder="输入 Skill 描述" style="min-height:80px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">路径 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="skillFormPath" placeholder="例如: skills/git/SKILL.md">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">分类</label>
+            <select class="form-select" id="skillFormCategory">
+              <option value="development">开发工具</option>
+              <option value="productivity">办公效率</option>
+              <option value="ai">AI 能力</option>
+              <option value="data">数据分析</option>
+              <option value="ui">界面设计</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">类型</label>
+            <select class="form-select" id="skillFormType">
+              <option value="official">官方</option>
+              <option value="community">社区</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">启用</label>
+          <label class="toggle">
+            <input type="checkbox" id="skillFormEnabled" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span style="font-size:13px;color:var(--color-text-secondary);" id="skillFormEnabledLabel">启用后用户端可见</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('skillFormModal').style.display='none';document.body.style.overflow=''">取消</button>
+        <button class="btn btn-primary" id="skillFormSubmit">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Delete Skill Modal ===== -->
+  <div class="modal-overlay" id="deleteSkillModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>删除 Skill</h3>
+        <button class="modal-close" onclick="document.getElementById('deleteSkillModal').style.display='none';document.body.style.overflow=''">&times;</button>
+      </div>
+      <div class="modal-body" id="deleteSkillBody">
+        确认删除 Skill <strong>Skill名称</strong>？
+        <div class="warning-text">该操作不可逆，已挂载此 Skill 的 Agent 将失去该能力。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('deleteSkillModal').style.display='none';document.body.style.overflow=''">取消</button>
+        <button class="btn btn-danger" id="deleteSkillConfirm">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ===== Skill data =====
+      var skills = {
+        '1': { name:'Git 版本控制', desc:'提供 Git 命令支持，包括 commit、branch、merge、rebase 等版本控制操作', type:'official', category:'development', enabled:true, mounts:156, created:'2025-01-15', path:'skills/git/SKILL.md' },
+        '2': { name:'代码审查', desc:'对代码变更进行自动化审查，覆盖安全漏洞、逻辑缺陷、性能瓶颈和代码坏味道', type:'official', category:'development', enabled:true, mounts:128, created:'2025-01-20', path:'skills/code-audit/SKILL.md' },
+        '3': { name:'PDF 文档处理', desc:'支持 PDF 创建、编辑、转换、合并拆分、表单、加密与 OCR 识别', type:'official', category:'productivity', enabled:true, mounts:203, created:'2025-02-01', path:'skills/pdf/SKILL.md' },
+        '4': { name:'XLSX 电子表格', desc:'Excel 文件的创建、读取、编辑与格式化，支持公式和图表操作', type:'official', category:'productivity', enabled:true, mounts:189, created:'2025-02-10', path:'skills/xlsx/SKILL.md' },
+        '5': { name:'AI 图像生成', desc:'利用 AI 模型从文本描述生成高质量图片，支持多种风格', type:'community', category:'ai', enabled:false, mounts:45, created:'2025-03-05', path:'skills/image-gen/SKILL.md' },
+        '6': { name:'金融数据查询', desc:'自然语言查询 A股/港股/美股行情、财报、研报、基金等金融数据', type:'official', category:'data', enabled:true, mounts:312, created:'2025-03-20', path:'skills/finance/SKILL.md' },
+        '7': { name:'浏览器自动化', desc:'通过 Playwright 实现网页自动化操作，支持表单填写、截图与数据提取', type:'community', category:'ai', enabled:true, mounts:67, created:'2025-04-08', path:'skills/browser/SKILL.md' },
+        '8': { name:'前端界面设计', desc:'提供高品质的前端 UI 生成能力，产出可直接使用的组件与页面', type:'official', category:'ui', enabled:true, mounts:234, created:'2025-05-15', path:'skills/ui-design/SKILL.md' }
+      };
+
+      var nextSkillId = 9;
+      var editingSkillId = null;
+
+      // ===== Search =====
+      document.getElementById('skillSearch').addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        document.querySelectorAll('#skillTable tbody tr').forEach(function(row) {
+          var text = row.textContent.toLowerCase();
+          row.style.display = q ? (text.indexOf(q) !== -1 ? '' : 'none') : '';
+        });
+      });
+
+      // ===== Toggle Switch =====
+      document.querySelectorAll('#skillTable [data-action="toggle-skill"]').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+          var row = this.closest('tr');
+          var skillId = row.dataset.skill;
+          var skill = skills[skillId];
+          var enabled = this.checked;
+
+          skill.enabled = enabled;
+          row.dataset.enabled = enabled ? 'true' : 'false';
+
+          if (enabled) {
+            CyberPal.Toast.show('Skill "' + skill.name + '" 已启用，将在用户端显示', 'success');
+          } else {
+            CyberPal.Toast.show('Skill "' + skill.name + '" 已禁用，用户端不再可见', 'warning');
+          }
+        });
+      });
+
+      // ===== Add Skill Button =====
+      document.getElementById('addSkillBtn').addEventListener('click', function() {
+        editingSkillId = null;
+        document.getElementById('skillFormModalTitle').textContent = '新增 Skill';
+        document.getElementById('skillFormName').value = '';
+        document.getElementById('skillFormDesc').value = '';
+        document.getElementById('skillFormPath').value = '';
+        document.getElementById('skillFormCategory').value = 'development';
+        document.getElementById('skillFormType').value = 'official';
+        document.getElementById('skillFormEnabled').checked = true;
+        document.getElementById('skillFormEnabledLabel').textContent = '启用后用户端可见';
+
+        // Reset submit button
+        var submitBtn = document.getElementById('skillFormSubmit');
+        var newSubmitBtn = submitBtn.cloneNode(true);
+        submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+        newSubmitBtn.addEventListener('click', handleSkillFormSubmit);
+
+        document.getElementById('skillFormModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      });
+
+      // ===== Edit Skill =====
+      document.querySelectorAll('#skillTable [data-action="edit-skill"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var row = this.closest('tr');
+          var skillId = row.dataset.skill;
+          var skill = skills[skillId];
+
+          editingSkillId = skillId;
+          document.getElementById('skillFormModalTitle').textContent = '编辑 Skill';
+          document.getElementById('skillFormName').value = skill.name;
+          document.getElementById('skillFormDesc').value = skill.desc;
+          document.getElementById('skillFormPath').value = skill.path;
+          document.getElementById('skillFormCategory').value = skill.category;
+          document.getElementById('skillFormType').value = skill.type;
+          document.getElementById('skillFormEnabled').checked = skill.enabled;
+          document.getElementById('skillFormEnabledLabel').textContent = skill.enabled ? '启用后用户端可见' : '禁用状态';
+
+          // Reset submit button
+          var submitBtn = document.getElementById('skillFormSubmit');
+          var newSubmitBtn = submitBtn.cloneNode(true);
+          submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+          newSubmitBtn.addEventListener('click', handleSkillFormSubmit);
+
+          document.getElementById('skillFormModal').style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+        });
+      });
+
+      function handleSkillFormSubmit() {
+        var name = document.getElementById('skillFormName').value.trim();
+        var desc = document.getElementById('skillFormDesc').value.trim();
+        var path = document.getElementById('skillFormPath').value.trim();
+        var category = document.getElementById('skillFormCategory').value;
+        var type = document.getElementById('skillFormType').value;
+        var enabled = document.getElementById('skillFormEnabled').checked;
+
+        if (!name || !desc || !path) {
+          CyberPal.Toast.show('请填写所有必填字段', 'error');
+          return;
+        }
+
+        var categoryNames = { development:'开发工具', productivity:'办公效率', ai:'AI 能力', data:'数据分析', ui:'界面设计', other:'其他' };
+        var typeLabel = type === 'official' ? '官方' : '社区';
+        var typeBadgeClass = type === 'official' ? 'badge-info' : 'badge-default';
+
+        if (editingSkillId) {
+          // Update existing skill
+          var skill = skills[editingSkillId];
+          skill.name = name;
+          skill.desc = desc;
+          skill.path = path;
+          skill.category = category;
+          skill.type = type;
+          skill.enabled = enabled;
+
+          // Update table row
+          var row = document.querySelector('#skillTable tr[data-skill="' + editingSkillId + '"]');
+          if (row) {
+            row.querySelector('td').textContent = name;
+            row.querySelector('.skill-desc').textContent = desc;
+            var badge = row.querySelector('.badge');
+            badge.className = 'badge ' + typeBadgeClass;
+            badge.textContent = typeLabel;
+            row.querySelectorAll('td')[3].textContent = categoryNames[category];
+            var checkbox = row.querySelector('input[type="checkbox"]');
+            checkbox.checked = enabled;
+            row.dataset.enabled = enabled ? 'true' : 'false';
+          }
+
+          CyberPal.Toast.show('Skill "' + name + '" 已更新', 'success');
+        } else {
+          // Add new skill
+          var newId = String(nextSkillId++);
+          var now = new Date();
+          var created = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0');
+
+          skills[newId] = {
+            name: name, desc: desc, path: path,
+            type: type, category: category, enabled: enabled,
+            mounts: 0, created: created
+          };
+
+          // Insert new row
+          var tbody = document.querySelector('#skillTable tbody');
+          var checkboxHTML = enabled
+            ? '<label class="toggle" style="margin:0;"><input type="checkbox" checked data-action="toggle-skill"><span class="toggle-track"><span class="toggle-thumb"></span></span></label>'
+            : '<label class="toggle" style="margin:0;"><input type="checkbox" data-action="toggle-skill"><span class="toggle-track"><span class="toggle-thumb"></span></span></label>';
+
+          var tr = document.createElement('tr');
+          tr.setAttribute('data-skill', newId);
+          tr.setAttribute('data-enabled', enabled ? 'true' : 'false');
+          tr.setAttribute('data-category', category);
+          tr.innerHTML =
+            '<td style="font-weight:500;">' + name + '</td>' +
+            '<td><span class="skill-desc">' + desc + '</span></td>' +
+            '<td><span class="badge ' + typeBadgeClass + '">' + typeLabel + '</span></td>' +
+            '<td>' + categoryNames[category] + '</td>' +
+            '<td>' + checkboxHTML + '</td>' +
+            '<td>0</td>' +
+            '<td class="col-time">' + created + '</td>' +
+            '<td class="col-actions">' +
+              '<button class="action-btn" title="编辑" data-action="edit-skill"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+              '<button class="action-btn danger" title="删除" data-action="delete-skill"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+            '</td>';
+          tbody.appendChild(tr);
+
+          // Bind events to new row
+          bindRowEvents(tr);
+
+          CyberPal.Toast.show('Skill "' + name + '" 已创建', 'success');
+        }
+
+        document.getElementById('skillFormModal').style.display = 'none';
+        document.body.style.overflow = '';
+      }
+
+      function bindRowEvents(row) {
+        // Toggle
+        var checkbox = row.querySelector('[data-action="toggle-skill"]');
+        if (checkbox) {
+          checkbox.addEventListener('change', function() {
+            var skillId = row.dataset.skill;
+            var skill = skills[skillId];
+            var enabled = this.checked;
+            skill.enabled = enabled;
+            row.dataset.enabled = enabled ? 'true' : 'false';
+            if (enabled) {
+              CyberPal.Toast.show('Skill "' + skill.name + '" 已启用，将在用户端显示', 'success');
+            } else {
+              CyberPal.Toast.show('Skill "' + skill.name + '" 已禁用，用户端不再可见', 'warning');
+            }
+          });
+        }
+
+        // Edit
+        var editBtn = row.querySelector('[data-action="edit-skill"]');
+        if (editBtn) {
+          editBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var skillId = row.dataset.skill;
+            var skill = skills[skillId];
+            editingSkillId = skillId;
+            document.getElementById('skillFormModalTitle').textContent = '编辑 Skill';
+            document.getElementById('skillFormName').value = skill.name;
+            document.getElementById('skillFormDesc').value = skill.desc;
+            document.getElementById('skillFormPath').value = skill.path;
+            document.getElementById('skillFormCategory').value = skill.category;
+            document.getElementById('skillFormType').value = skill.type;
+            document.getElementById('skillFormEnabled').checked = skill.enabled;
+            document.getElementById('skillFormEnabledLabel').textContent = skill.enabled ? '启用后用户端可见' : '禁用状态';
+
+            var submitBtn = document.getElementById('skillFormSubmit');
+            var newSubmitBtn = submitBtn.cloneNode(true);
+            submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+            newSubmitBtn.addEventListener('click', handleSkillFormSubmit);
+
+            document.getElementById('skillFormModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+          });
+        }
+
+        // Delete
+        var deleteBtn = row.querySelector('[data-action="delete-skill"]');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var skillId = row.dataset.skill;
+            var skill = skills[skillId];
+            document.getElementById('deleteSkillBody').innerHTML =
+              '确认删除 Skill <strong>' + skill.name + '</strong>？' +
+              '<div class="warning-text">该操作不可逆，已挂载此 Skill 的 Agent 将失去该能力。</div>';
+
+            var confirmBtn = document.getElementById('deleteSkillConfirm');
+            var newBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+            newBtn.addEventListener('click', function() {
+              row.remove();
+              delete skills[skillId];
+              document.getElementById('deleteSkillModal').style.display = 'none';
+              document.body.style.overflow = '';
+              CyberPal.Toast.show('Skill "' + skill.name + '" 已删除', 'success');
+            });
+
+            document.getElementById('deleteSkillModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+          });
+        }
+      }
+
+      // ===== Delete Skill Modal =====
+      document.querySelectorAll('#skillTable [data-action="delete-skill"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var row = this.closest('tr');
+          var skillId = row.dataset.skill;
+          var skill = skills[skillId];
+          document.getElementById('deleteSkillBody').innerHTML =
+            '确认删除 Skill <strong>' + skill.name + '</strong>？' +
+            '<div class="warning-text">该操作不可逆，已挂载此 Skill 的 Agent 将失去该能力。</div>';
+
+          var confirmBtn = document.getElementById('deleteSkillConfirm');
+          var newBtn = confirmBtn.cloneNode(true);
+          confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+          newBtn.addEventListener('click', function() {
+            row.remove();
+            delete skills[skillId];
+            document.getElementById('deleteSkillModal').style.display = 'none';
+            document.body.style.overflow = '';
+            CyberPal.Toast.show('Skill "' + skill.name + '" 已删除', 'success');
+          });
+
+          document.getElementById('deleteSkillModal').style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+        });
+      });
+
+      // ===== Modal overlay click to close =====
+      document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.style.display = 'none';
+            document.body.style.overflow = '';
+          }
+        });
+      });
+
+      // ===== Nav placeholder =====
+      document.querySelectorAll('.nav-item:not(.active)').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+          var href = this.getAttribute('href');
+          if (!href || href === '#') {
+            CyberPal.placeholder();
+            e.preventDefault();
+          }
+        });
+      });
+
+      // ===== Avatar click =====
+      document.querySelector('.user-avatar').addEventListener('click', function() {
+        CyberPal.placeholder();
+      });
+
+    })();
+  </script>
+
+</body>
+</html>

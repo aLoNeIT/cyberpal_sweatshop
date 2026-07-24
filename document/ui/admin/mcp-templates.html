@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - MCP模板管理</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .transport-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      white-space: nowrap;
+    }
+    .transport-badge.stdio { background: rgba(22,163,74,.12); color: var(--color-success); }
+    .transport-badge.http  { background: rgba(22,119,255,.12); color: var(--color-primary); }
+    .transport-badge.sse   { background: rgba(139,92,246,.12); color: var(--color-secondary); }
+
+    .desc-cell {
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .alert-icon-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .alert-icon-wrap svg {
+      width: 18px; height: 18px;
+      stroke: currentColor; fill: none; stroke-width: 2;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .modal-lg .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-cond {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+    }
+
+    .empty-row td {
+      text-align: center;
+      color: var(--color-text-tertiary);
+      padding: 48px 16px !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="billing-dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="mcp-templates.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">MCP模板管理</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span class="admin-badge-tag" style="position:absolute;bottom:-3px;right:-6px;font-size:10px;background:var(--color-warning);color:#fff;padding:1px 5px;border-radius:var(--radius-pill);font-weight:600;line-height:1.2;border:1.5px solid var(--color-surface);">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>MCP 模板管理</h1>
+            <p>管理平台级 MCP 模板，用户可从模板一键添加到 Agent</p>
+          </div>
+          <div class="page-header-right">
+            <button class="btn btn-primary btn-sm" onclick="openTemplateModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              新增模板
+            </button>
+          </div>
+        </div>
+
+        <!-- Info Alert -->
+        <div class="alert alert-info mb-2">
+          <div class="alert-icon-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>MCP 模板为平台级配置，用户端可从模板库一键添加；禁用后模板不在用户端展示。</span>
+          </div>
+        </div>
+
+        <!-- Table Toolbar -->
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="search-input" id="searchInput" placeholder="搜索模板名称或描述..." oninput="filterTemplates()">
+            </div>
+          </div>
+          <div class="table-toolbar-right">
+            <span class="text-xs text-tertiary" id="tableCount">共 6 条</span>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table" id="templateTable">
+              <thead>
+                <tr>
+                  <th>模板名称</th>
+                  <th>传输类型</th>
+                  <th>描述</th>
+                  <th>启用状态</th>
+                  <th>创建时间</th>
+                  <th class="col-actions">操作</th>
+                </tr>
+              </thead>
+              <tbody id="templateTableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+          <div class="pagination-info" id="paginationInfo">显示 1-6 条，共 6 条</div>
+          <div class="pagination-btns" id="paginationBtns">
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ===== Add / Edit Modal ===== -->
+  <div class="modal-overlay" id="templateModal" style="display:none;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="templateModalTitle">新增 MCP 模板</h3>
+        <button class="modal-close" data-modal-close="templateModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="templateForm">
+          <input type="hidden" id="tplId">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">模板名称 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="tplName" placeholder="例如：Filesystem MCP">
+            </div>
+            <div class="form-group">
+              <label class="form-label">传输类型 <span class="required">*</span></label>
+              <select class="form-select" id="tplTransport" onchange="onTransportChange()">
+                <option value="stdio">stdio</option>
+                <option value="http">http</option>
+                <option value="sse">sse</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" id="tplCommandGroup">
+            <label class="form-label">命令</label>
+            <input type="text" class="form-input" id="tplCommand" placeholder="例如：npx -y @modelcontextprotocol/server-filesystem">
+          </div>
+          <div class="form-group" id="tplArgsGroup">
+            <label class="form-label">参数</label>
+            <input type="text" class="form-input" id="tplArgs" placeholder="例如：/path/to/allowed/dir">
+          </div>
+          <div class="form-group hidden" id="tplUrlGroup">
+            <label class="form-label">URL <span class="required">*</span></label>
+            <input type="text" class="form-input" id="tplUrl" placeholder="例如：https://mcp.example.com/sse">
+          </div>
+          <div class="form-group">
+            <label class="form-label">环境变量</label>
+            <textarea class="form-textarea" id="tplEnv" placeholder="KEY1=value1&#10;KEY2=value2" style="min-height:80px;"></textarea>
+            <div class="form-hint">每行一个环境变量，格式：KEY=value</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea class="form-textarea" id="tplDesc" placeholder="模板描述信息，帮助用户理解模板用途"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="toggle">
+              <input type="checkbox" id="tplEnabled" checked>
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span>启用</span>
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="CyberPal.Modal.close('templateModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveTemplate()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Delete Confirm Modal ===== -->
+  <div class="modal-overlay" id="deleteModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>确认删除</h3>
+        <button class="modal-close" data-modal-close="deleteModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>确定要删除模板 <strong id="deleteTargetName"></strong> 吗？</p>
+        <p class="warning-text">删除后不影响已配置该模板的用户 Agent。</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="CyberPal.Modal.close('deleteModal')">取消</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ===== Demo Data =====
+      const templates = [
+        { id:1, name:'Filesystem MCP', transport:'stdio', command:'npx -y @modelcontextprotocol/server-filesystem', args:'/workspace', url:'', env:'WORKSPACE=/workspace', desc:'提供文件系统读写能力，支持文件创建、读取、编辑、删除、目录遍历等操作。', enabled:true, createdAt:'2026-06-12 14:30' },
+        { id:2, name:'GitHub MCP', transport:'http', command:'', args:'', url:'https://api.github.com/mcp', env:'GITHUB_TOKEN=${GITHUB_TOKEN}', desc:'集成 GitHub API，管理 Issues、PR、仓库操作及代码搜索。', enabled:true, createdAt:'2026-06-10 09:15' },
+        { id:3, name:'PostgreSQL MCP', transport:'stdio', command:'npx -y @modelcontextprotocol/server-postgres', args:'postgresql://localhost:5432/mydb', url:'', env:'PGHOST=localhost\nPGPORT=5432', desc:'连接 PostgreSQL 数据库，支持查询、Schema 检查、数据操作。', enabled:true, createdAt:'2026-06-08 16:45' },
+        { id:4, name:'Brave Search MCP', transport:'http', command:'', args:'', url:'https://api.search.brave.com/mcp', env:'BRAVE_API_KEY=${BRAVE_API_KEY}', desc:'通过 Brave Search API 进行网络搜索，返回结构化搜索结果。', enabled:false, createdAt:'2026-06-05 11:20' },
+        { id:5, name:'Slack MCP', transport:'sse', command:'', args:'', url:'https://slack.com/api/mcp/sse', env:'SLACK_BOT_TOKEN=xoxb-xxxx', desc:'集成 Slack 消息推送、频道管理、用户查询等协作能力。', enabled:true, createdAt:'2026-06-01 08:00' },
+        { id:6, name:'Memory MCP', transport:'sse', command:'', args:'', url:'https://memory.server.com/sse', env:'MEMORY_PATH=/data/memory', desc:'提供知识图谱记忆存储，支持语义检索与上下文持久化。', enabled:true, createdAt:'2026-05-28 13:10' },
+      ];
+
+      let currentPage = 1;
+      const pageSize = 6;
+      let deleteTargetId = null;
+      let editingId = null;
+
+      // ===== Render Table =====
+      function renderTable(data) {
+        const tbody = document.getElementById('templateTableBody');
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="6">暂无匹配的模板</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.map(tpl => {
+          const transportClass = tpl.transport;
+          const transportLabel = tpl.transport.toUpperCase();
+          return `
+            <tr>
+              <td><strong>${escapeHtml(tpl.name)}</strong></td>
+              <td><span class="transport-badge ${transportClass}">${transportLabel}</span></td>
+              <td><span class="desc-cell" title="${escapeHtml(tpl.desc)}">${escapeHtml(tpl.desc)}</span></td>
+              <td>
+                <label class="toggle" onclick="event.stopPropagation()">
+                  <input type="checkbox" ${tpl.enabled ? 'checked' : ''} onchange="toggleTemplate(${tpl.id}, this.checked)">
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </td>
+              <td class="col-time">${tpl.createdAt}</td>
+              <td class="col-actions">
+                <button class="btn btn-ghost btn-sm" onclick="openTemplateModal(${tpl.id})">
+                  <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-ghost btn-sm" style="color:var(--color-danger);" onclick="confirmDelete(${tpl.id})">
+                  <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        updateTableCount(data.length);
+      }
+
+      function updateTableCount(len) {
+        document.getElementById('tableCount').textContent = '共 ' + len + ' 条';
+        document.getElementById('paginationInfo').textContent = len > 0
+          ? '显示 1-' + len + ' 条，共 ' + len + ' 条'
+          : '暂无数据';
+      }
+
+      // ===== Filter =====
+      function filterTemplates() {
+        const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        const result = templates.filter(t => !q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q));
+        renderTable(result);
+      }
+
+      // ===== Toggle =====
+      window.toggleTemplate = function(id, checked) {
+        const tpl = templates.find(t => t.id === id);
+        if (tpl) {
+          tpl.enabled = checked;
+          CyberPal.Toast.show('模板 "' + tpl.name + '" 已' + (checked ? '启用' : '禁用'), checked ? 'success' : 'warning');
+        }
+      };
+
+      // ===== Modal: Add / Edit =====
+      window.openTemplateModal = function(id) {
+        editingId = id || null;
+        const modal = document.getElementById('templateModal');
+        const title = document.getElementById('templateModalTitle');
+
+        if (id) {
+          title.textContent = '编辑 MCP 模板';
+          const tpl = templates.find(t => t.id === id);
+          if (tpl) {
+            document.getElementById('tplId').value = tpl.id;
+            document.getElementById('tplName').value = tpl.name;
+            document.getElementById('tplTransport').value = tpl.transport;
+            document.getElementById('tplCommand').value = tpl.command || '';
+            document.getElementById('tplArgs').value = tpl.args || '';
+            document.getElementById('tplUrl').value = tpl.url || '';
+            document.getElementById('tplEnv').value = tpl.env || '';
+            document.getElementById('tplDesc').value = tpl.desc || '';
+            document.getElementById('tplEnabled').checked = tpl.enabled;
+          }
+        } else {
+          title.textContent = '新增 MCP 模板';
+          document.getElementById('tplId').value = '';
+          document.getElementById('tplName').value = '';
+          document.getElementById('tplTransport').value = 'stdio';
+          document.getElementById('tplCommand').value = '';
+          document.getElementById('tplArgs').value = '';
+          document.getElementById('tplUrl').value = '';
+          document.getElementById('tplEnv').value = '';
+          document.getElementById('tplDesc').value = '';
+          document.getElementById('tplEnabled').checked = true;
+        }
+
+        onTransportChange();
+        CyberPal.Modal.open('templateModal');
+      };
+
+      window.onTransportChange = function() {
+        const transport = document.getElementById('tplTransport').value;
+        const cmdGroup = document.getElementById('tplCommandGroup');
+        const argsGroup = document.getElementById('tplArgsGroup');
+        const urlGroup = document.getElementById('tplUrlGroup');
+
+        if (transport === 'stdio') {
+          cmdGroup.classList.remove('hidden');
+          argsGroup.classList.remove('hidden');
+          urlGroup.classList.add('hidden');
+        } else {
+          cmdGroup.classList.add('hidden');
+          argsGroup.classList.add('hidden');
+          urlGroup.classList.remove('hidden');
+        }
+      };
+
+      window.saveTemplate = function() {
+        const name = document.getElementById('tplName').value.trim();
+        const transport = document.getElementById('tplTransport').value;
+        if (!name) { CyberPal.Toast.show('请输入模板名称', 'error'); return; }
+        if ((transport === 'http' || transport === 'sse') && !document.getElementById('tplUrl').value.trim()) {
+          CyberPal.Toast.show('请输入 URL', 'error'); return;
+        }
+
+        if (editingId) {
+          const tpl = templates.find(t => t.id === editingId);
+          if (tpl) {
+            tpl.name = name;
+            tpl.transport = transport;
+            tpl.command = document.getElementById('tplCommand').value.trim();
+            tpl.args = document.getElementById('tplArgs').value.trim();
+            tpl.url = document.getElementById('tplUrl').value.trim();
+            tpl.env = document.getElementById('tplEnv').value.trim();
+            tpl.desc = document.getElementById('tplDesc').value.trim();
+            tpl.enabled = document.getElementById('tplEnabled').checked;
+            CyberPal.Toast.show('模板 "' + tpl.name + '" 更新成功', 'success');
+          }
+        } else {
+          const now = new Date();
+          const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+          const newTpl = {
+            id: Math.max(...templates.map(t => t.id)) + 1,
+            name, transport,
+            command: document.getElementById('tplCommand').value.trim(),
+            args: document.getElementById('tplArgs').value.trim(),
+            url: document.getElementById('tplUrl').value.trim(),
+            env: document.getElementById('tplEnv').value.trim(),
+            desc: document.getElementById('tplDesc').value.trim(),
+            enabled: document.getElementById('tplEnabled').checked,
+            createdAt: dateStr
+          };
+          templates.push(newTpl);
+          CyberPal.Toast.show('模板 "' + newTpl.name + '" 创建成功', 'success');
+        }
+
+        CyberPal.Modal.close('templateModal');
+        filterTemplates();
+      };
+
+      // ===== Delete =====
+      window.confirmDelete = function(id) {
+        const tpl = templates.find(t => t.id === id);
+        if (!tpl) return;
+        deleteTargetId = id;
+        document.getElementById('deleteTargetName').textContent = tpl.name;
+        CyberPal.Modal.open('deleteModal');
+      };
+
+      document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (deleteTargetId === null) return;
+        const idx = templates.findIndex(t => t.id === deleteTargetId);
+        if (idx !== -1) {
+          const name = templates[idx].name;
+          templates.splice(idx, 1);
+          CyberPal.Toast.show('模板 "' + name + '" 已删除', 'success');
+        }
+        deleteTargetId = null;
+        CyberPal.Modal.close('deleteModal');
+        filterTemplates();
+      });
+
+      // ===== Helpers =====
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // ===== Init =====
+      renderTable(templates);
+      document.getElementById('paginationBtns').style.display = 'none';
+
+      document.querySelectorAll('.nav-item:not(.active)').forEach(item => {
+        item.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          if (!href || href === '#') { CyberPal.placeholder(); e.preventDefault(); }
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>

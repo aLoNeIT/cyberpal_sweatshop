@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>会话历史 - CyberPal</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  /* Mode badges */
+  .badge-mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+  .badge-mode.normal { background: var(--color-info-bg); color: var(--color-info); }
+  .badge-mode.continue { background: rgba(139,92,246,.12); color: var(--color-secondary); }
+  .badge-mode.fork { background: var(--color-warning-bg); color: var(--color-warning); }
+  /* Storage bar */
+  .storage-bar {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .storage-bar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .storage-bar-item {
+    flex: 1;
+    min-width: 200px;
+  }
+  .storage-bar-label {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .storage-bar-label .count {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  .storage-warning {
+    font-size: 12px;
+    color: var(--color-warning);
+    margin-top: 4px;
+  }
+  /* Toast */
+  .toast { /* handled by common.js */ }
+  /* Modal danger text */
+  .modal-body .danger-text {
+    color: var(--color-danger);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  /* Tooltip */
+  [data-tooltip] {
+    position: relative;
+  }
+  [data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-text);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    z-index: 900;
+    margin-bottom: 6px;
+  }
+  /* Action buttons in table */
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+  }
+  .action-btn:hover { color: var(--color-primary); background: var(--color-primary-subtle); }
+  .action-btn.danger:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+  .action-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  /* Date range */
+  .date-range {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .date-range input[type="date"] {
+    height: 32px;
+    padding: 0 8px;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    outline: none;
+  }
+  .date-range input[type="date"]:focus {
+    border-color: var(--color-primary);
+  }
+  .date-range span {
+    color: var(--color-text-tertiary);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">C</div>
+      <span class="sidebar-logo-text">CyberPal</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">工作台</div>
+        <a href="dashboard.html" class="nav-item">
+          <span id="icon-dashboard"></span> 控制台
+        </a>
+        <a href="chat.html" class="nav-item">
+          <span id="icon-chat"></span> 会话
+        </a>
+        <a href="agents.html" class="nav-item">
+          <span id="icon-agent"></span> Agent 市场
+        </a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">管理</div>
+        <a href="sessions.html" class="nav-item active">
+          <span id="icon-sessions"></span> 会话历史
+        </a>
+        <a href="billing.html" class="nav-item">
+          <span id="icon-billing"></span> 计费
+        </a>
+        <a href="team.html" class="nav-item">
+          <span id="icon-team"></span> 团队
+        </a>
+        <a href="settings.html" class="nav-item">
+          <span id="icon-settings"></span> 设置
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+
+    <!-- Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-trigger" id="menuTrigger">
+          <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div class="topbar-breadcrumb">控制台 <span>/</span> <span class="current">会话历史</span></div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-usage">
+          本月用量 <strong>$2.48</strong> / $50.00
+        </div>
+        <button class="theme-toggle" title="切换主题">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <div class="user-avatar" title="用户">WR</div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="app-content">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>会话历史</h1>
+          <p>查看和管理所有历史会话记录</p>
+        </div>
+        <div class="page-header-right">
+          <button class="btn btn-primary" id="newSessionBtn">
+            <span id="icon-plus-btn"></span> 新建会话
+          </button>
+        </div>
+      </div>
+
+      <!-- Storage Bar -->
+      <div class="storage-bar">
+        <div class="storage-bar-row">
+          <div class="storage-bar-item">
+            <div class="storage-bar-label">
+              <span>活跃会话</span>
+              <span class="count" id="activeCount">35</span><span style="font-size:12px;color:var(--color-text-tertiary)">/ 100</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill primary" id="activeBar" style="width:35%"></div>
+            </div>
+            <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:4px">35%</div>
+          </div>
+          <div class="storage-bar-item">
+            <div class="storage-bar-label">
+              <span>已归档</span>
+              <span class="count" id="archiveCount">18</span><span style="font-size:12px;color:var(--color-text-tertiary)">/ 50</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill warning" id="archiveBar" style="width:36%"></div>
+            </div>
+            <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:4px">36%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-body" style="padding:16px 24px">
+          <div class="table-toolbar" style="margin-bottom:0">
+            <div class="table-toolbar-left">
+              <div class="search-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="search-input" placeholder="搜索会话标题或内容..." id="searchInput">
+              </div>
+              <div class="filter-chips" id="filterChips">
+                <span class="filter-chip active" data-filter="all">全部</span>
+                <span class="filter-chip" data-filter="active">活跃</span>
+                <span class="filter-chip" data-filter="archived">已归档</span>
+              </div>
+            </div>
+            <div class="table-toolbar-right">
+              <div class="date-range">
+                <input type="date" id="dateFrom" value="2026-06-22">
+                <span>—</span>
+                <input type="date" id="dateTo" value="2026-07-22">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="card">
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>会话标题</th>
+                <th>Agent</th>
+                <th>消息数</th>
+                <th>Token 用量</th>
+                <th>状态</th>
+                <th>模式</th>
+                <th>最后活跃</th>
+                <th style="text-align:right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Rows injected by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" style="padding:16px 24px">
+          <div class="pagination-info">共 <strong>47</strong> 条记录，第 1/6 页</div>
+          <div class="pagination-btns">
+            <button class="pagination-btn" disabled>‹</button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <button class="pagination-btn">...</button>
+            <button class="pagination-btn">6</button>
+            <button class="pagination-btn">›</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /app-content -->
+  </main><!-- /app-main -->
+</div><!-- /app-layout -->
+
+<!-- Archive Confirm Modal -->
+<div class="modal-overlay" id="archiveModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>确认归档</h3>
+      <button class="modal-close" data-modal-close="archiveModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>确认归档该会话？</p>
+      <p style="margin-top:8px;font-size:13px">归档后该会话将变为只读状态，无法继续对话或修改内容。</p>
+      <p class="danger-text">⚠ 归档操作不可恢复，仅可只读查看。</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="archiveModal">取消</button>
+      <button class="btn btn-danger" id="confirmArchive">确认归档</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>确认删除</h3>
+      <button class="modal-close" data-modal-close="deleteModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>确认删除该会话？</p>
+      <p style="margin-top:8px;font-size:13px">删除后该会话的所有消息和附件将被永久清除。</p>
+      <p class="danger-text">⚠ 此操作不可恢复，请谨慎操作。</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="deleteModal">取消</button>
+      <button class="btn btn-danger" id="confirmDelete">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/icons.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ===== Nav Icons =====
+  document.getElementById('icon-dashboard').innerHTML = Icon.get('dashboard');
+  document.getElementById('icon-chat').innerHTML = Icon.get('chat');
+  document.getElementById('icon-agent').innerHTML = Icon.get('agent');
+  document.getElementById('icon-sessions').innerHTML = Icon.get('chat');
+  document.getElementById('icon-billing').innerHTML = Icon.get('billing');
+  document.getElementById('icon-team').innerHTML = Icon.get('team');
+  document.getElementById('icon-settings').innerHTML = Icon.get('settings');
+  document.getElementById('icon-plus-btn').innerHTML = Icon.get('plus', 14);
+
+  // ===== Session Data =====
+  var sessionData = [
+    { title: 'CSV 批量处理脚本开发', agent: '默认助手', msgs: 24, tokens: '12.4K', status: 'active', mode: 'normal', time: '2026-07-22 14:30' },
+    { title: 'React 性能优化方案', agent: '代码审查专家', msgs: 41, tokens: '28.1K', status: 'active', mode: 'continue', time: '2026-07-22 11:15' },
+    { title: 'API 接口设计讨论', agent: '默认助手', msgs: 18, tokens: '9.2K', status: 'archived', mode: 'normal', time: '2026-07-21 16:45' },
+    { title: '数据库索引优化', agent: '数据分析师', msgs: 32, tokens: '18.7K', status: 'active', mode: 'fork', time: '2026-07-21 09:20' },
+    { title: 'K8s 集群部署排查', agent: '默认助手', msgs: 56, tokens: '35.6K', status: 'archived', mode: 'continue', time: '2026-07-20 17:30' },
+    { title: '日志系统架构设计', agent: '文档助手', msgs: 15, tokens: '7.8K', status: 'active', mode: 'normal', time: '2026-07-20 10:00' },
+    { title: '单元测试覆盖率提升', agent: '代码审查专家', msgs: 29, tokens: '15.3K', status: 'archived', mode: 'normal', time: '2026-07-19 15:22' },
+    { title: '前端状态管理调研', agent: '默认助手', msgs: 38, tokens: '22.1K', status: 'active', mode: 'fork', time: '2026-07-19 08:45' }
+  ];
+
+  var currentFilter = 'all';
+
+  function getStatusBadge(status) {
+    if (status === 'active') return '<span class="badge badge-success">活跃</span>';
+    return '<span class="badge badge-default">已归档</span>';
+  }
+
+  function getModeBadge(mode) {
+    if (mode === 'normal') return '<span class="badge-mode normal">普通</span>';
+    if (mode === 'continue') return '<span class="badge-mode continue">续聊</span>';
+    return '<span class="badge-mode fork">分叉</span>';
+  }
+
+  function renderTable() {
+    var tbody = document.getElementById('tableBody');
+    var searchText = (document.getElementById('searchInput').value || '').toLowerCase();
+    var html = '';
+    for (var i = 0; i < sessionData.length; i++) {
+      var row = sessionData[i];
+
+      // Filter by status
+      if (currentFilter === 'active' && row.status !== 'active') continue;
+      if (currentFilter === 'archived' && row.status !== 'archived') continue;
+
+      // Filter by search
+      if (searchText && row.title.toLowerCase().indexOf(searchText) === -1 && row.agent.toLowerCase().indexOf(searchText) === -1) continue;
+
+      var isArchived = row.status === 'archived';
+      var archiveAction = isArchived
+        ? '<span class="action-btn opacity-50" style="cursor:not-allowed" title="已归档">' + Icon.get('archive', 14) + '</span>'
+        : '<span class="action-btn" onclick=\'openArchiveModal("' + row.title + '", ' + i + ')\'>' + Icon.get('archive', 14) + '</span>';
+
+      html += '<tr>';
+      html += '<td style="font-weight:500">' + row.title + '</td>';
+      html += '<td>' + row.agent + '</td>';
+      html += '<td class="text-mono">' + row.msgs + '</td>';
+      html += '<td class="text-mono">' + row.tokens + '</td>';
+      html += '<td>' + getStatusBadge(row.status) + '</td>';
+      html += '<td>' + getModeBadge(row.mode) + '</td>';
+      html += '<td class="col-time">' + row.time + '</td>';
+      html += '<td class="col-actions">';
+      html += '<span class="action-btn" onclick="viewSession(\'' + row.title + '\')">' + Icon.get('eye', 14) + '</span>';
+      html += isArchived
+        ? '<span class="action-btn opacity-50" style="cursor:not-allowed" title="已归档">续聊</span>'
+        : '<span class="action-btn" onclick="continueSession(\'' + row.title + '\')">续聊</span>';
+      html += isArchived
+        ? '<span class="action-btn opacity-50" style="cursor:not-allowed" title="已归档">分叉</span>'
+        : '<span class="action-btn" onclick="forkSession(\'' + row.title + '\')">分叉</span>';
+      html += archiveAction;
+      html += '<span class="action-btn danger" onclick=\'openDeleteModal("' + row.title + '", ' + i + ')\'>' + Icon.get('trash', 14) + '</span>';
+      html += '</td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  // Expose to inline onclick
+  window.viewSession = function(title) {
+    CyberPal.Toast.show('查看会话：「' + title + '」', 'info');
+  };
+  window.continueSession = function(title) {
+    CyberPal.Toast.show('续聊会话：「' + title + '」——跳转至聊天页', 'success');
+  };
+  window.forkSession = function(title) {
+    CyberPal.Toast.show('分叉会话：「' + title + '」——已创建新分支', 'success');
+  };
+  window.openArchiveModal = function(title, idx) {
+    document.getElementById('archiveModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  };
+  window.openDeleteModal = function(title, idx) {
+    document.getElementById('deleteModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  };
+
+  // Archive confirm
+  document.getElementById('confirmArchive').addEventListener('click', function() {
+    CyberPal.Modal.close('archiveModal');
+    CyberPal.Toast.show('会话已归档', 'success');
+    // Simulate: move first active to archived
+    for (var i = 0; i < sessionData.length; i++) {
+      if (sessionData[i].status === 'active') {
+        sessionData[i].status = 'archived';
+        break;
+      }
+    }
+    updateStorageBar();
+    renderTable();
+  });
+
+  // Delete confirm
+  document.getElementById('confirmDelete').addEventListener('click', function() {
+    CyberPal.Modal.close('deleteModal');
+    CyberPal.Toast.show('会话已删除', 'success');
+    // Simulate: remove first active
+    for (var i = 0; i < sessionData.length; i++) {
+      if (sessionData[i].status === 'active') {
+        sessionData.splice(i, 1);
+        break;
+      }
+    }
+    updateStorageBar();
+    renderTable();
+  });
+
+  // Filter chips
+  document.querySelectorAll('#filterChips .filter-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      document.querySelectorAll('#filterChips .filter-chip').forEach(function(c) { c.classList.remove('active'); });
+      this.classList.add('active');
+      currentFilter = this.getAttribute('data-filter');
+      renderTable();
+    });
+  });
+
+  // Search input
+  document.getElementById('searchInput').addEventListener('input', function() {
+    renderTable();
+  });
+
+  // New session button
+  document.getElementById('newSessionBtn').addEventListener('click', function() {
+    CyberPal.Toast.show('已创建新会话，正在跳转...', 'success');
+  });
+
+  // Update storage bar
+  function updateStorageBar() {
+    var activeCount = 0;
+    var archiveCount = 0;
+    for (var i = 0; i < sessionData.length; i++) {
+      if (sessionData[i].status === 'active') activeCount++;
+      else archiveCount++;
+    }
+    // Add some extra simulated counts
+    activeCount += 27;
+    archiveCount += 12;
+    document.getElementById('activeCount').textContent = activeCount;
+    document.getElementById('archiveCount').textContent = archiveCount;
+    document.getElementById('activeBar').style.width = activeCount + '%';
+    document.getElementById('archiveBar').style.width = (archiveCount / 50 * 100) + '%';
+  }
+
+  // Pagination click
+  document.querySelectorAll('.pagination-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (this.disabled || this.classList.contains('active')) return;
+      document.querySelectorAll('.pagination-btn').forEach(function(b) { b.classList.remove('active'); });
+      this.classList.add('active');
+    });
+  });
+
+  // Mobile sidebar
+  var menuTrigger = document.getElementById('menuTrigger');
+  var appSidebar = document.getElementById('appSidebar');
+  menuTrigger.addEventListener('click', function() {
+    appSidebar.classList.toggle('open');
+  });
+  document.addEventListener('click', function(e) {
+    if (!appSidebar.contains(e.target) && !menuTrigger.contains(e.target)) {
+      appSidebar.classList.remove('open');
+    }
+  });
+
+  // Initial render
+  renderTable();
+  updateStorageBar();
+
+})();
+</script>
+
+</body>
+</html>

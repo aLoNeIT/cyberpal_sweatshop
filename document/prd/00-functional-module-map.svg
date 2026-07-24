@@ -1,0 +1,133 @@
+<svg viewBox="0 0 680 822" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Pi-Agent SaaS 平台全局功能模块图（审计版）</title>
+  <desc>用户端 8 模块 + 管理端 6 模块 + 跨端公共能力，按设计状态着色：绿=已设计/已就绪，黄=仅占位/待建，红=缺失/待补。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <text x="340" y="26" text-anchor="middle" font-size="15" font-weight="500" fill="#0C447C">Pi-Agent SaaS 平台 · 全局功能模块图（审计版 2026-07-22）</text>
+
+  <!-- Platform node -->
+  <rect x="230" y="40" width="220" height="56" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+  <text x="340" y="62" text-anchor="middle" font-size="14" font-weight="500" fill="#0C447C">Pi-Agent SaaS 平台</text>
+  <text x="340" y="80" text-anchor="middle" font-size="12" fill="#185FA5">单一 cs_user · usr_app_type 分区隔离</text>
+
+  <!-- Pillars -->
+  <rect x="35" y="120" width="280" height="48" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+  <text x="175" y="144" text-anchor="middle" font-size="13" font-weight="500" fill="#0C447C">用户端 User End (app_type=4)</text>
+  <rect x="365" y="120" width="280" height="48" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+  <text x="505" y="144" text-anchor="middle" font-size="13" font-weight="500" fill="#0C447C">管理端 Admin End (app_type=1)</text>
+
+  <!-- Spine connectors -->
+  <line x1="340" y1="96" x2="175" y2="120" stroke="#888780" stroke-width="0.5"/>
+  <line x1="340" y1="96" x2="505" y2="120" stroke="#888780" stroke-width="0.5"/>
+  <line x1="175" y1="168" x2="30" y2="178" stroke="#888780" stroke-width="0.5"/>
+  <line x1="505" y1="168" x2="650" y2="178" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="178" x2="30" y2="666" stroke="#888780" stroke-width="0.5"/>
+  <line x1="650" y1="178" x2="650" y2="534" stroke="#888780" stroke-width="0.5"/>
+
+  <!-- ===== USER boxes (x=46 w=278) ===== -->
+  <line x1="30" y1="204" x2="46" y2="204" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="270" x2="46" y2="270" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="336" x2="46" y2="336" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="402" x2="46" y2="402" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="468" x2="46" y2="468" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="534" x2="46" y2="534" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="600" x2="46" y2="600" stroke="#888780" stroke-width="0.5"/>
+  <line x1="30" y1="666" x2="46" y2="666" stroke="#888780" stroke-width="0.5"/>
+
+  <rect x="46" y="176" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="60" y="198" font-size="13" font-weight="500" fill="#27500A">账号体系</text>
+  <text x="60" y="218" font-size="12" fill="#3B6D11">已设计 · R-001 注册/登录/资料</text>
+
+  <rect x="46" y="242" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="60" y="264" font-size="13" font-weight="500" fill="#27500A">Agent 管理</text>
+  <text x="60" y="284" font-size="12" fill="#3B6D11">已设计 · R-002/003/004/009/011/012</text>
+
+  <rect x="46" y="308" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="60" y="330" font-size="13" font-weight="500" fill="#27500A">会话与聊天</text>
+  <text x="60" y="350" font-size="12" fill="#3B6D11">已设计 · R-005/006/008/017/存储上限</text>
+
+  <rect x="46" y="374" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="60" y="396" font-size="13" font-weight="500" fill="#27500A">Skill 库</text>
+  <text x="60" y="416" font-size="12" fill="#3B6D11">已设计 · R-003 平台托管挂载</text>
+
+  <rect x="46" y="440" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="60" y="462" font-size="13" font-weight="500" fill="#27500A">MCP 配置</text>
+  <text x="60" y="482" font-size="12" fill="#3B6D11">已设计 · R-004 per-agent 配置</text>
+
+  <rect x="46" y="506" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="60" y="528" font-size="13" font-weight="500" fill="#27500A">计费与用量</text>
+  <text x="60" y="548" font-size="12" fill="#3B6D11">已设计 · R-007/010 仅展示</text>
+
+  <rect x="46" y="572" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="60" y="594" font-size="13" font-weight="500" fill="#27500A">用户设置</text>
+  <text x="60" y="614" font-size="12" fill="#3B6D11">已设计 · 主题/归档偏好</text>
+
+  <rect x="46" y="638" width="278" height="56" rx="10" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+  <text x="60" y="660" font-size="13" font-weight="500" fill="#633806">协作 / 团队</text>
+  <text x="60" y="680" font-size="12" fill="#854F0B">仅页面占位 · 4.8</text>
+
+  <!-- ===== ADMIN boxes (x=356 w=278) ===== -->
+  <line x1="634" y1="204" x2="650" y2="204" stroke="#888780" stroke-width="0.5"/>
+  <line x1="634" y1="270" x2="650" y2="270" stroke="#888780" stroke-width="0.5"/>
+  <line x1="634" y1="336" x2="650" y2="336" stroke="#888780" stroke-width="0.5"/>
+  <line x1="634" y1="402" x2="650" y2="402" stroke="#888780" stroke-width="0.5"/>
+  <line x1="634" y1="468" x2="650" y2="468" stroke="#888780" stroke-width="0.5"/>
+  <line x1="634" y1="534" x2="650" y2="534" stroke="#888780" stroke-width="0.5"/>
+
+  <rect x="356" y="176" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="370" y="198" font-size="13" font-weight="500" fill="#27500A">账号与 RBAC</text>
+  <text x="370" y="218" font-size="12" fill="#3B6D11">已设计 · PRD 07</text>
+
+  <rect x="356" y="242" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="370" y="264" font-size="13" font-weight="500" fill="#27500A">用户管理 + 隐私</text>
+  <text x="370" y="284" font-size="12" fill="#3B6D11">已设计 · PRD 08</text>
+
+  <rect x="356" y="308" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="370" y="330" font-size="13" font-weight="500" fill="#27500A">Skill 库治理</text>
+  <text x="370" y="350" font-size="12" fill="#3B6D11">已设计 · PRD 09</text>
+
+  <rect x="356" y="374" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="370" y="396" font-size="13" font-weight="500" fill="#27500A">MCP 模板</text>
+  <text x="370" y="416" font-size="12" fill="#3B6D11">已建表 cs_mcp_template（D8）</text>
+
+  <rect x="356" y="440" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="370" y="462" font-size="13" font-weight="500" fill="#27500A">计费大盘</text>
+  <text x="370" y="482" font-size="12" fill="#3B6D11">已设计 · 仅聚合展示</text>
+
+  <rect x="356" y="506" width="278" height="56" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="370" y="528" font-size="13" font-weight="500" fill="#27500A">全局配置</text>
+  <text x="370" y="548" font-size="12" fill="#3B6D11">已设计 · 仅超管可改</text>
+
+  <!-- ===== Cross-cutting ===== -->
+  <text x="340" y="718" text-anchor="middle" font-size="13" font-weight="500" fill="#3C3489">平台公共能力 / 跨端</text>
+
+  <rect x="20" y="724" width="120" height="48" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="80" y="744" text-anchor="middle" font-size="12" font-weight="500" fill="#27500A">RBAC 框架</text>
+  <text x="80" y="762" text-anchor="middle" font-size="11" fill="#3B6D11">已就绪</text>
+
+  <rect x="148" y="724" width="120" height="48" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="208" y="744" text-anchor="middle" font-size="12" font-weight="500" fill="#27500A">Agent Gateway</text>
+  <text x="208" y="762" text-anchor="middle" font-size="11" fill="#3B6D11">已设计 PRD 06</text>
+
+  <rect x="276" y="724" width="110" height="48" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="331" y="744" text-anchor="middle" font-size="12" font-weight="500" fill="#27500A">审计日志</text>
+  <text x="331" y="762" text-anchor="middle" font-size="11" fill="#3B6D11">已设计</text>
+
+  <rect x="394" y="724" width="120" height="48" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="454" y="744" text-anchor="middle" font-size="12" font-weight="500" fill="#27500A">通知通道</text>
+  <text x="454" y="762" text-anchor="middle" font-size="11" fill="#3B6D11">已建表 cs_notify_* 4表</text>
+
+  <rect x="522" y="724" width="120" height="48" rx="10" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="582" y="744" text-anchor="middle" font-size="12" font-weight="500" fill="#27500A">指标体系</text>
+  <text x="582" y="762" text-anchor="middle" font-size="11" fill="#3B6D11">已建表 cs_metrics_* 2表</text>
+
+  <!-- Legend -->
+  <rect x="60" y="792" width="16" height="12" rx="3" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+  <text x="82" y="803" font-size="12" fill="#444441">已设计 / 已就绪</text>
+  <rect x="260" y="792" width="16" height="12" rx="3" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+  <text x="282" y="803" font-size="12" fill="#444441">仅占位 / 待建</text>
+</svg>

@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - 用户管理</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    /* Drawer */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 1000;
+      display: none;
+      animation: fadeIn .2s ease;
+    }
+
+    .drawer-overlay.open { display: block; }
+
+    .drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 360px;
+      background: var(--color-surface);
+      box-shadow: var(--shadow-lg);
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .3s ease;
+    }
+
+    .drawer-overlay.open .drawer { transform: translateX(0); }
+
+    .drawer-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .drawer-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .drawer-close {
+      width: 32px; height: 32px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all var(--transition-fast);
+    }
+
+    .drawer-close:hover { background: var(--color-surface-2); color: var(--color-text); }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .drawer-section {
+      margin-bottom: 24px;
+    }
+
+    .drawer-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .drawer-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    .drawer-info-row + .drawer-info-row {
+      border-top: 1px solid var(--color-border);
+    }
+
+    .drawer-info-label {
+      color: var(--color-text-secondary);
+      flex-shrink: 0;
+    }
+
+    .drawer-info-value {
+      color: var(--color-text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      text-align: right;
+      max-width: 55%;
+      word-break: break-all;
+    }
+
+    .drawer-info-value.name {
+      font-family: var(--font-ui);
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .drawer-storage-warn {
+      background: var(--color-warning-bg);
+      border: 1px solid rgba(217,119,6,.25);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--color-warning);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .drawer-storage-warn svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none; stroke-width: 2;
+      flex-shrink: 0;
+    }
+
+    .drawer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .drawer-actions .btn { flex: 1; }
+
+    .drawer-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--color-border);
+      flex-shrink: 0;
+    }
+
+    /* Table actions */
+    .action-btn {
+      width: 30px; height: 30px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--color-text-tertiary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+
+    .action-btn:hover { color: var(--color-primary); background: var(--color-primary-subtle); }
+    .action-btn.danger:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+    .action-btn.success:hover { color: var(--color-success); background: var(--color-success-bg); }
+
+    .action-btn svg {
+      width: 15px; height: 15px;
+      stroke: currentColor; fill: none; stroke-width: 2;
+    }
+
+    .action-btn.hidden-action { display: none; }
+
+    /* Table row clickable */
+    .data-table tbody tr.clickable { cursor: pointer; }
+
+    /* Chip toolbar wrap */
+    .user-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .user-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* User name cell */
+    .user-name-cell {
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    .user-email-cell {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    .badge-disabled {
+      background: rgba(217,119,6,.12);
+      color: var(--color-warning);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">用户管理</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>平台总用户</span>
+            <strong>1,284</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar" style="position:relative;">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span style="position:absolute;bottom:-3px;right:-6px;font-size:10px;background:var(--color-warning);color:#fff;padding:1px 5px;border-radius:var(--radius-pill);font-weight:600;line-height:1.2;border:1.5px solid var(--color-surface);">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>用户管理</h1>
+            <p>管理平台终端用户（user 端账户）</p>
+          </div>
+          <div class="page-header-right">
+            <button class="btn btn-primary btn-sm" onclick="CyberPal.placeholder()">邀请用户</button>
+          </div>
+        </div>
+
+        <!-- Search + Filter -->
+        <div class="user-toolbar">
+          <div class="table-toolbar-left" style="flex-wrap:wrap;">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="search-input" placeholder="搜索账号或昵称..." id="userSearch">
+            </div>
+            <div class="filter-chips" style="margin-bottom:0;" id="filterChips">
+              <span class="filter-chip active" data-filter="all">全部</span>
+              <span class="filter-chip" data-filter="active">启用</span>
+              <span class="filter-chip" data-filter="disabled">禁用</span>
+              <span class="filter-chip" data-filter="deleted">已删除</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Table -->
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table" id="userTable">
+              <thead>
+                <tr>
+                  <th>账号</th>
+                  <th>昵称</th>
+                  <th>状态</th>
+                  <th>注册时间</th>
+                  <th>Agent数</th>
+                  <th>活跃Session</th>
+                  <th>累计Token</th>
+                  <th>累计费用</th>
+                  <th>最近活跃</th>
+                  <th class="col-actions">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="clickable" data-userid="1" data-status="active">
+                  <td>
+                    <div class="user-name-cell">zhangwei</div>
+                    <div class="user-email-cell">zhangwei@cyberpal.io</div>
+                  </td>
+                  <td>张伟</td>
+                  <td><span class="badge badge-success">启用</span></td>
+                  <td class="col-time">2025-02-15</td>
+                  <td>12</td>
+                  <td>3</td>
+                  <td class="col-id">356.8K</td>
+                  <td class="col-id">$35.68</td>
+                  <td class="col-time">07-22 15:42</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn success" title="禁用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr class="clickable" data-userid="2" data-status="active">
+                  <td>
+                    <div class="user-name-cell">liming</div>
+                    <div class="user-email-cell">liming@cyberpal.io</div>
+                  </td>
+                  <td>李明</td>
+                  <td><span class="badge badge-success">启用</span></td>
+                  <td class="col-time">2025-03-08</td>
+                  <td>8</td>
+                  <td>2</td>
+                  <td class="col-id">298.4K</td>
+                  <td class="col-id">$29.84</td>
+                  <td class="col-time">07-22 14:18</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn success" title="禁用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr class="clickable" data-userid="3" data-status="active">
+                  <td>
+                    <div class="user-name-cell">wangfang</div>
+                    <div class="user-email-cell">wangfang@cyberpal.io</div>
+                  </td>
+                  <td>王芳</td>
+                  <td><span class="badge badge-success">启用</span></td>
+                  <td class="col-time">2025-04-12</td>
+                  <td>15</td>
+                  <td>5</td>
+                  <td class="col-id">245.1K</td>
+                  <td class="col-id">$24.51</td>
+                  <td class="col-time">07-22 16:05</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn success" title="禁用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr class="clickable" data-userid="4" data-status="disabled">
+                  <td>
+                    <div class="user-name-cell">chengyi</div>
+                    <div class="user-email-cell">chengyi@cyberpal.io</div>
+                  </td>
+                  <td>陈毅</td>
+                  <td><span class="badge badge-warning">禁用</span></td>
+                  <td class="col-time">2025-01-20</td>
+                  <td>5</td>
+                  <td>0</td>
+                  <td class="col-id">189.3K</td>
+                  <td class="col-id">$18.93</td>
+                  <td class="col-time">06-15 09:32</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn" title="启用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr class="clickable" data-userid="5" data-status="active">
+                  <td>
+                    <div class="user-name-cell">liuqiang</div>
+                    <div class="user-email-cell">liuqiang@cyberpal.io</div>
+                  </td>
+                  <td>刘强</td>
+                  <td><span class="badge badge-success">启用</span></td>
+                  <td class="col-time">2025-05-03</td>
+                  <td>7</td>
+                  <td>1</td>
+                  <td class="col-id">156.7K</td>
+                  <td class="col-id">$15.67</td>
+                  <td class="col-time">07-21 20:15</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn success" title="禁用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr class="clickable" data-userid="6" data-status="active">
+                  <td>
+                    <div class="user-name-cell">sunyue</div>
+                    <div class="user-email-cell">sunyue@cyberpal.io</div>
+                  </td>
+                  <td>孙悦</td>
+                  <td><span class="badge badge-success">启用</span></td>
+                  <td class="col-time">2025-06-18</td>
+                  <td>4</td>
+                  <td>2</td>
+                  <td class="col-id">98.2K</td>
+                  <td class="col-id">$9.82</td>
+                  <td class="col-time">07-22 11:40</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn success" title="禁用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr class="clickable" data-userid="7" data-status="disabled">
+                  <td>
+                    <div class="user-name-cell">zhaoling</div>
+                    <div class="user-email-cell">zhaoling@cyberpal.io</div>
+                  </td>
+                  <td>赵玲</td>
+                  <td><span class="badge badge-warning">禁用</span></td>
+                  <td class="col-time">2025-02-28</td>
+                  <td>3</td>
+                  <td>0</td>
+                  <td class="col-id">45.6K</td>
+                  <td class="col-id">$4.56</td>
+                  <td class="col-time">05-30 17:22</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn" title="启用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+                <tr class="clickable" data-userid="8" data-status="active">
+                  <td>
+                    <div class="user-name-cell">zhoujie</div>
+                    <div class="user-email-cell">zhoujie@cyberpal.io</div>
+                  </td>
+                  <td>周杰</td>
+                  <td><span class="badge badge-success">启用</span></td>
+                  <td class="col-time">2025-07-01</td>
+                  <td>2</td>
+                  <td>1</td>
+                  <td class="col-id">12.3K</td>
+                  <td class="col-id">$1.23</td>
+                  <td class="col-time">07-22 08:55</td>
+                  <td class="col-actions">
+                    <button class="action-btn" title="查看详情" data-action="view"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="action-btn success" title="禁用" data-action="toggle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+                    <button class="action-btn" title="重置密码" data-action="resetpw"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+                    <button class="action-btn danger" title="删除" data-action="delete" data-super="true"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" style="padding:12px 24px;border-top:1px solid var(--color-border);">
+            <div class="pagination-info">共 8 条，第 1/1 页</div>
+            <div class="pagination-btns">
+              <button class="pagination-btn" disabled>&laquo;</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn" disabled>&raquo;</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- ===== User Detail Drawer ===== -->
+  <div class="drawer-overlay" id="userDrawer">
+    <div class="drawer">
+      <div class="drawer-header">
+        <h3>用户详情</h3>
+        <button class="drawer-close" id="drawerClose">&times;</button>
+      </div>
+      <div class="drawer-body" id="drawerBody">
+        <!-- 基本信息 -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">基本信息</div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">账号</span>
+            <span class="drawer-info-value name" id="drawer-account">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">昵称</span>
+            <span class="drawer-info-value" id="drawer-nickname" style="font-family:var(--font-ui);">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">邮箱</span>
+            <span class="drawer-info-value" id="drawer-email">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">状态</span>
+            <span class="drawer-info-value" id="drawer-status" style="font-family:var(--font-ui);">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">注册时间</span>
+            <span class="drawer-info-value" id="drawer-regtime">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">最近活跃</span>
+            <span class="drawer-info-value" id="drawer-lastactive">-</span>
+          </div>
+        </div>
+
+        <!-- 用量概览 -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">用量概览</div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">累计 Token</span>
+            <span class="drawer-info-value" id="drawer-tokens">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">累计费用</span>
+            <span class="drawer-info-value" id="drawer-cost">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">活跃 Session</span>
+            <span class="drawer-info-value" id="drawer-sessions">-</span>
+          </div>
+        </div>
+
+        <!-- 资源概览 -->
+        <div class="drawer-section">
+          <div class="drawer-section-title">资源概览</div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">Agent 数</span>
+            <span class="drawer-info-value" id="drawer-agents">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">活跃 Session</span>
+            <span class="drawer-info-value" id="drawer-active-sessions">-</span>
+          </div>
+          <div class="drawer-info-row">
+            <span class="drawer-info-label">总会话数</span>
+            <span class="drawer-info-value" id="drawer-total-sessions">-</span>
+          </div>
+          <div class="drawer-storage-warn" id="drawer-storage-warn" style="display:none;">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>存储已用 85%，接近触顶 (100GB 上限)</span>
+          </div>
+
+          <!-- Agent & Session 管理入口 -->
+          <div class="drawer-actions mt-2">
+            <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">Agent 管理</button>
+            <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">Session 管理</button>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn btn-secondary" style="width:100%;" id="drawerCloseBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Disable/Enable Confirm Modal ===== -->
+  <div class="modal-overlay" id="toggleModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="toggleModalTitle">确认操作</h3>
+        <button class="modal-close" onclick="document.getElementById('toggleModal').style.display='none';document.body.style.overflow=''">&times;</button>
+      </div>
+      <div class="modal-body" id="toggleModalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('toggleModal').style.display='none';document.body.style.overflow=''">取消</button>
+        <button class="btn btn-primary" id="toggleModalConfirm">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Reset Password Modal ===== -->
+  <div class="modal-overlay" id="resetPwModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>重置密码</h3>
+        <button class="modal-close" onclick="document.getElementById('resetPwModal').style.display='none';document.body.style.overflow=''">&times;</button>
+      </div>
+      <div class="modal-body" id="resetPwModalBody">确认为用户 <strong id="resetPwUser"></strong> 重置密码？<br><span style="font-size:13px;color:var(--color-text-tertiary);">系统将生成密码重置链接发送至用户邮箱。</span></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('resetPwModal').style.display='none';document.body.style.overflow=''">取消</button>
+        <button class="btn btn-primary" id="resetPwModalConfirm">确认重置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Delete Modal ===== -->
+  <div class="modal-overlay" id="deleteModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>删除用户</h3>
+        <button class="modal-close" onclick="document.getElementById('deleteModal').style.display='none';document.body.style.overflow=''">&times;</button>
+      </div>
+      <div class="modal-body" id="deleteModalBody">
+        确认删除用户 <strong id="deleteUser"></strong>？
+        <div class="warning-text">该操作不可逆，用户数据将保留但无法登录。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('deleteModal').style.display='none';document.body.style.overflow=''">取消</button>
+        <button class="btn btn-danger" id="deleteModalConfirm">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // Demo user data (matching table rows)
+      var users = {
+        '1': { account:'zhangwei', nickname:'张伟', email:'zhangwei@cyberpal.io', status:'active', regTime:'2025-02-15', agents:12, activeSessions:3, totalSessions:156, tokens:'356.8K', cost:'$35.68', lastActive:'07-22 15:42', storagePct:85 },
+        '2': { account:'liming', nickname:'李明', email:'liming@cyberpal.io', status:'active', regTime:'2025-03-08', agents:8, activeSessions:2, totalSessions:98, tokens:'298.4K', cost:'$29.84', lastActive:'07-22 14:18', storagePct:62 },
+        '3': { account:'wangfang', nickname:'王芳', email:'wangfang@cyberpal.io', status:'active', regTime:'2025-04-12', agents:15, activeSessions:5, totalSessions:210, tokens:'245.1K', cost:'$24.51', lastActive:'07-22 16:05', storagePct:45 },
+        '4': { account:'chengyi', nickname:'陈毅', email:'chengyi@cyberpal.io', status:'disabled', regTime:'2025-01-20', agents:5, activeSessions:0, totalSessions:67, tokens:'189.3K', cost:'$18.93', lastActive:'06-15 09:32', storagePct:28 },
+        '5': { account:'liuqiang', nickname:'刘强', email:'liuqiang@cyberpal.io', status:'active', regTime:'2025-05-03', agents:7, activeSessions:1, totalSessions:42, tokens:'156.7K', cost:'$15.67', lastActive:'07-21 20:15', storagePct:34 },
+        '6': { account:'sunyue', nickname:'孙悦', email:'sunyue@cyberpal.io', status:'active', regTime:'2025-06-18', agents:4, activeSessions:2, totalSessions:28, tokens:'98.2K', cost:'$9.82', lastActive:'07-22 11:40', storagePct:18 },
+        '7': { account:'zhaoling', nickname:'赵玲', email:'zhaoling@cyberpal.io', status:'disabled', regTime:'2025-02-28', agents:3, activeSessions:0, totalSessions:19, tokens:'45.6K', cost:'$4.56', lastActive:'05-30 17:22', storagePct:5 },
+        '8': { account:'zhoujie', nickname:'周杰', email:'zhoujie@cyberpal.io', status:'active', regTime:'2025-07-01', agents:2, activeSessions:1, totalSessions:8, tokens:'12.3K', cost:'$1.23', lastActive:'07-22 08:55', storagePct:3 }
+      };
+
+      // Current selected user
+      var currentUserId = null;
+      var currentActionUser = null;
+
+      // ===== Drawer =====
+      function openDrawer(userId) {
+        var u = users[userId];
+        if (!u) return;
+
+        document.getElementById('drawer-account').textContent = u.account;
+        document.getElementById('drawer-nickname').textContent = u.nickname;
+        document.getElementById('drawer-email').textContent = u.email;
+        document.getElementById('drawer-status').innerHTML = u.status === 'active'
+          ? '<span class="badge badge-success">启用</span>'
+          : '<span class="badge badge-warning">禁用</span>';
+        document.getElementById('drawer-regtime').textContent = u.regTime;
+        document.getElementById('drawer-lastactive').textContent = u.lastActive;
+        document.getElementById('drawer-tokens').textContent = u.tokens;
+        document.getElementById('drawer-cost').textContent = u.cost;
+        document.getElementById('drawer-sessions').textContent = u.activeSessions;
+        document.getElementById('drawer-agents').textContent = u.agents;
+        document.getElementById('drawer-active-sessions').textContent = u.activeSessions;
+        document.getElementById('drawer-total-sessions').textContent = u.totalSessions;
+
+        // Storage warning
+        var warn = document.getElementById('drawer-storage-warn');
+        if (u.storagePct >= 80) {
+          warn.style.display = 'flex';
+          warn.querySelector('span').textContent = '存储已用 ' + u.storagePct + '%，接近触顶 (100GB 上限)';
+        } else {
+          warn.style.display = 'none';
+        }
+
+        currentUserId = userId;
+        document.getElementById('userDrawer').classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeDrawer() {
+        document.getElementById('userDrawer').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      // ===== Toggle Status =====
+      function toggleUserStatus(userId) {
+        var u = users[userId];
+        if (!u) return;
+        var newStatus = u.status === 'active' ? 'disabled' : 'active';
+        var action = newStatus === 'active' ? '启用' : '禁用';
+        var statusText = newStatus === 'active' ? '启用' : '禁用';
+
+        document.getElementById('toggleModalTitle').textContent = action + '用户';
+        document.getElementById('toggleModalBody').innerHTML = '确认' + action + '用户 <strong>' + u.account + '</strong>（' + u.nickname + '）？';
+
+        var confirmBtn = document.getElementById('toggleModalConfirm');
+        var newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        newBtn.addEventListener('click', function() {
+          u.status = newStatus;
+
+          // Update table row
+          var row = document.querySelector('tr[data-userid="' + userId + '"]');
+          if (row) {
+            row.setAttribute('data-status', newStatus);
+            var badge = row.querySelector('.badge');
+            if (badge) {
+              badge.className = newStatus === 'active' ? 'badge badge-success' : 'badge badge-warning';
+              badge.textContent = statusText;
+            }
+
+            // Update toggle button
+            var toggleBtn = row.querySelector('[data-action="toggle"]');
+            if (toggleBtn) {
+              if (newStatus === 'active') {
+                toggleBtn.className = 'action-btn success';
+                toggleBtn.title = '禁用';
+              } else {
+                toggleBtn.className = 'action-btn';
+                toggleBtn.title = '启用';
+              }
+            }
+          }
+
+          document.getElementById('toggleModal').style.display = 'none';
+          document.body.style.overflow = '';
+          CyberPal.Toast.show('用户 ' + action + '成功', 'success');
+
+          // Refresh filter
+          applyFilter(document.querySelector('.filter-chip.active').dataset.filter);
+        });
+
+        document.getElementById('toggleModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      // ===== Reset Password =====
+      function resetPassword(userId) {
+        var u = users[userId];
+        if (!u) return;
+        document.getElementById('resetPwUser').textContent = u.account + '（' + u.nickname + '）';
+
+        var confirmBtn = document.getElementById('resetPwModalConfirm');
+        var newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        newBtn.addEventListener('click', function() {
+          document.getElementById('resetPwModal').style.display = 'none';
+          document.body.style.overflow = '';
+          CyberPal.Toast.show('密码重置链接已生成', 'success');
+        });
+
+        document.getElementById('resetPwModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      // ===== Delete User =====
+      function deleteUser(userId) {
+        var u = users[userId];
+        if (!u) return;
+        document.getElementById('deleteUser').textContent = u.account + '（' + u.nickname + '）';
+
+        var confirmBtn = document.getElementById('deleteModalConfirm');
+        var newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        newBtn.addEventListener('click', function() {
+          document.getElementById('deleteModal').style.display = 'none';
+          document.body.style.overflow = '';
+          CyberPal.Toast.show('用户 ' + u.account + ' 已删除', 'success');
+        });
+
+        document.getElementById('deleteModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      // ===== Filter =====
+      function applyFilter(filter) {
+        document.querySelectorAll('#userTable tbody tr').forEach(function(row) {
+          var status = row.getAttribute('data-status');
+          if (filter === 'all') {
+            row.style.display = '';
+          } else {
+            row.style.display = status === filter ? '' : 'none';
+          }
+        });
+      }
+
+      // ===== Event Bindings =====
+
+      // Filter chips
+      document.querySelectorAll('.filter-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          document.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+          this.classList.add('active');
+          applyFilter(this.dataset.filter);
+        });
+      });
+
+      // Search
+      document.getElementById('userSearch').addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        document.querySelectorAll('#userTable tbody tr').forEach(function(row) {
+          var text = row.textContent.toLowerCase();
+          row.style.display = q ? (text.indexOf(q) !== -1 ? '' : 'none') : '';
+        });
+      });
+
+      // Table row click → open drawer
+      document.querySelectorAll('#userTable tbody tr.clickable').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+          // Don't open drawer if clicked on an action button
+          if (e.target.closest('[data-action]')) return;
+          openDrawer(this.dataset.userid);
+        });
+      });
+
+      // Action buttons
+      document.querySelectorAll('#userTable [data-action]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var row = this.closest('tr');
+          var userId = row.dataset.userid;
+          var action = this.dataset.action;
+
+          if (action === 'view') {
+            openDrawer(userId);
+          } else if (action === 'toggle') {
+            toggleUserStatus(userId);
+          } else if (action === 'resetpw') {
+            resetPassword(userId);
+          } else if (action === 'delete') {
+            // Only super admin can delete
+            if (!this.dataset.super) {
+              CyberPal.Toast.show('仅超管可执行此操作', 'warning');
+              return;
+            }
+            deleteUser(userId);
+          }
+        });
+      });
+
+      // Drawer close
+      document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+      document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
+      document.getElementById('userDrawer').addEventListener('click', function(e) {
+        if (e.target === this) closeDrawer();
+      });
+
+      // Modal overlay click to close
+      document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.style.display = 'none';
+            document.body.style.overflow = '';
+          }
+        });
+      });
+
+      // Nav placeholder
+      document.querySelectorAll('.nav-item:not(.active)').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+          var href = this.getAttribute('href');
+          if (!href || href === '#') {
+            CyberPal.placeholder();
+            e.preventDefault();
+          }
+        });
+      });
+
+      // Avatar click
+      document.querySelector('.user-avatar').addEventListener('click', function() {
+        CyberPal.placeholder();
+      });
+
+    })();
+  </script>
+
+</body>
+</html>

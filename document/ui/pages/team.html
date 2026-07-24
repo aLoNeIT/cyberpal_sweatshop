@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal - 团队协作</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>C</text></svg>">
+
+  <!-- CyberPal Styles -->
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    /* Empty state with card wrapper */
+    .empty-state-card {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--color-text-secondary);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+
+    .empty-state-card .empty-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      background: var(--color-primary-subtle);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty-state-card .empty-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--color-primary);
+      fill: none;
+      stroke-width: 1.6;
+    }
+
+    .empty-state-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 8px;
+    }
+
+    .empty-state-card p {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Dotted border placeholder for team structure */
+    .team-preview-card {
+      background: var(--color-surface);
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      margin-bottom: 24px;
+    }
+
+    .team-preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .team-name-skeleton {
+      width: 200px;
+      height: 22px;
+    }
+
+    .member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .member-skeleton-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+    }
+
+    .member-avatar-skeleton {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .member-info-skeleton {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .member-name-skeleton {
+      width: 120px;
+      height: 14px;
+    }
+
+    .member-role-skeleton {
+      width: 80px;
+      height: 10px;
+    }
+
+    .member-status-skeleton {
+      width: 56px;
+      height: 12px;
+      border-radius: var(--radius-pill);
+    }
+
+    .team-preview-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .team-preview-actions .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      pointer-events: auto;
+    }
+
+    .team-preview-hint {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      text-align: center;
+      margin-top: 12px;
+      font-style: italic;
+    }
+
+    /* Bottom tip */
+    .team-footer-tip {
+      text-align: center;
+      padding: 16px 20px;
+      background: var(--color-info-bg);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      color: var(--color-info);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .team-footer-tip svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== App Layout ===== -->
+  <div class="app-layout">
+
+    <!-- ===== Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">C</div>
+        <span class="sidebar-logo-text">CyberPal</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 导航分组 -->
+        <div class="nav-group">
+          <div class="nav-group-title">导航</div>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+            <span>Agent</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>会话</span>
+            <span class="badge">5</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>消费</span>
+          </a>
+        </div>
+
+        <!-- 系统分组 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="#" class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>团队</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <div class="topbar-breadcrumb">
+            <span>控制台</span>
+            <span>/</span>
+            <span class="current">团队协作</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>本月用量</span>
+            <strong>128.5K</strong>
+            <span>tokens</span>
+            <span style="margin:0 4px;color:var(--color-border);">|</span>
+            <span>费用</span>
+            <strong>$12.85</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="user-avatar" title="用户设置" onclick="CyberPal.placeholder()">王</div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>团队协作</h1>
+            <p>团队协作与成员管理（功能开发中）</p>
+          </div>
+          <div class="page-header-right">
+          </div>
+        </div>
+
+        <!-- Empty State Card -->
+        <div class="empty-state-card">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>团队功能即将上线</h3>
+          <p>敬请期待</p>
+        </div>
+
+        <!-- Team Structure Preview Placeholder -->
+        <div class="team-preview-card">
+          <div class="team-preview-header">
+            <div class="skeleton team-name-skeleton"></div>
+            <span class="placeholder-badge">预览</span>
+          </div>
+
+          <div class="member-list">
+            <!-- Member 1 -->
+            <div class="member-skeleton-card">
+              <div class="skeleton member-avatar-skeleton"></div>
+              <div class="member-info-skeleton">
+                <div class="skeleton member-name-skeleton"></div>
+                <div class="skeleton member-role-skeleton"></div>
+              </div>
+              <div class="skeleton member-status-skeleton"></div>
+            </div>
+            <!-- Member 2 -->
+            <div class="member-skeleton-card">
+              <div class="skeleton member-avatar-skeleton"></div>
+              <div class="member-info-skeleton">
+                <div class="skeleton member-name-skeleton"></div>
+                <div class="skeleton member-role-skeleton"></div>
+              </div>
+              <div class="skeleton member-status-skeleton"></div>
+            </div>
+            <!-- Member 3 -->
+            <div class="member-skeleton-card">
+              <div class="skeleton member-avatar-skeleton"></div>
+              <div class="member-info-skeleton">
+                <div class="skeleton member-name-skeleton"></div>
+                <div class="skeleton member-role-skeleton"></div>
+              </div>
+              <div class="skeleton member-status-skeleton"></div>
+            </div>
+          </div>
+
+          <div class="team-preview-actions">
+            <button class="btn btn-primary" disabled onclick="CyberPal.placeholder()">
+              <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              邀请成员
+            </button>
+          </div>
+          <p class="team-preview-hint">功能开发中，敬请期待</p>
+        </div>
+
+        <!-- Bottom Tip -->
+        <div class="team-footer-tip">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          团队协作、组织管理、跨 Agent 协作等功能将在后续版本中推出
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // Sidebar nav item click
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          if (!this.classList.contains('active')) {
+            CyberPal.placeholder();
+          }
+          e.preventDefault();
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>

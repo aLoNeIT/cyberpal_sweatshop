@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent 管理 - CyberPal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .agent-name { font-weight: 500; color: var(--color-text); }
+    .agent-desc { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); font-size: 13px; }
+    .skill-count { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 13px; }
+    .filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .quick-stats { display: flex; gap: 16px; align-items: center; }
+    .quick-stat { font-size: 13px; color: var(--color-text-secondary); }
+    .quick-stat span { color: var(--color-text); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">C</div>
+      <span class="sidebar-logo-text">CyberPal</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">主菜单</div>
+        <a class="nav-item" href="dashboard.html">
+          <span class="nav-item-icon">${Icon.get('dashboard')}</span>控制台
+        </a>
+        <a class="nav-item active" href="agents.html">
+          <span class="nav-item-icon">${Icon.get('agent')}</span>Agent 管理
+        </a>
+        <a class="nav-item" href="chat.html">
+          <span class="nav-item-icon">${Icon.get('chat')}</span>对话
+        </a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">系统</div>
+        <a class="nav-item" href="billing.html">
+          <span class="nav-item-icon">${Icon.get('billing')}</span>费用中心
+        </a>
+        <a class="nav-item" href="settings.html">
+          <span class="nav-item-icon">${Icon.get('settings')}</span>设置
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <!-- Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-trigger">${Icon.get('dashboard', 20)}</button>
+        <div class="topbar-breadcrumb">
+          <a href="dashboard.html">控制台</a><span>/</span><span class="current">Agent 管理</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="quick-stats">
+          <div class="quick-stat">Agent: <span>4</span>/10</div>
+          <div class="quick-stat">今日调用: <span>1,247</span></div>
+        </div>
+        <div class="topbar-usage">
+          <span>本月用量</span><strong>$42.50</strong><span>/ $500</span>
+        </div>
+        <button class="theme-toggle" title="切换主题">
+          <span class="icon-sun">${Icon.get('sun', 18)}</span>
+          <span class="icon-moon" style="display:none">${Icon.get('moon', 18)}</span>
+        </button>
+        <div class="user-avatar">WR</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="app-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>Agent 管理</h1>
+          <p>创建和管理你的 AI Agent，配置模型、工具和技能</p>
+        </div>
+        <div class="page-header-right">
+          <button class="btn btn-primary" onclick="location.href='agent-config.html'">
+            ${Icon.get('plus', 16)}创建 Agent
+          </button>
+        </div>
+      </div>
+
+      <!-- Card: Agent Table -->
+      <div class="card">
+        <div class="card-body">
+          <!-- Filter Bar -->
+          <div class="filter-bar">
+            <div class="table-toolbar-left">
+              <div class="search-wrap">
+                <span>${Icon.get('search', 16)}</span>
+                <input type="text" class="search-input" placeholder="搜索 Agent 名称..." oninput="filterAgents()" id="searchInput">
+              </div>
+              <div class="filter-chips" id="filterChips">
+                <span class="filter-chip active" data-filter="all">全部 <strong style="font-family:var(--font-mono)">6</strong></span>
+                <span class="filter-chip" data-filter="online">在线 <strong style="font-family:var(--font-mono)">4</strong></span>
+                <span class="filter-chip" data-filter="offline">离线 <strong style="font-family:var(--font-mono)">1</strong></span>
+                <span class="filter-chip" data-filter="error">错误 <strong style="font-family:var(--font-mono)">1</strong></span>
+              </div>
+            </div>
+            <div class="table-toolbar-right">
+              <button class="btn btn-ghost" onclick="CyberPal.placeholder()">${Icon.get('download', 16)}导入</button>
+              <button class="btn btn-ghost" onclick="CyberPal.placeholder()">${Icon.get('export', 16)}导出</button>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="agentTable">
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>描述</th>
+                  <th>模型 Provider</th>
+                  <th>状态</th>
+                  <th>Skill 数</th>
+                  <th>创建时间</th>
+                  <th class="col-actions">操作</th>
+                </tr>
+              </thead>
+              <tbody id="agentTableBody"></tbody>
+            </table>
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="emptyState">
+              <div class="empty-state-icon">${Icon.get('agent', 28)}</div>
+              <h3>暂无 Agent</h3>
+              <p>还没有创建任何 Agent，点击上方按钮创建第一个</p>
+              <button class="btn btn-primary" onclick="location.href='agent-config.html'">
+                ${Icon.get('plus', 16)}创建 Agent
+              </button>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination">
+            <div class="pagination-info">共 <strong id="totalCount">6</strong> 条，第 <strong>1</strong>/1 页</div>
+            <div class="pagination-btns">
+              <button class="pagination-btn" disabled>&laquo;</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn" disabled>&raquo;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/icons.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // Demo agent data
+  const agents = [
+    { id: 'agt-001', name: '代码审查助手', desc: '自动审查 PR 代码质量、安全漏洞和代码规范，提供修改建议', provider: 'Anthropic', model: 'claude-sonnet-4-20250514', status: 'online', skills: 5, created: '2026-06-15 10:30' },
+    { id: 'agt-002', name: '数据分析师', desc: '智能分析业务数据，生成可视化报表和洞察建议', provider: 'OpenAI', model: 'gpt-4o', status: 'online', skills: 3, created: '2026-06-20 14:22' },
+    { id: 'agt-003', name: '客服机器人', desc: '7x24 自动应答客户咨询，支持多语言和知识库检索', provider: 'Google', model: 'gemini-2.5-pro', status: 'online', skills: 4, created: '2026-07-01 09:15' },
+    { id: 'agt-004', name: '文档生成器', desc: '根据代码注释和接口定义自动生成 API 文档和用户手册', provider: 'OpenAI', model: 'gpt-4o-mini', status: 'error', skills: 2, created: '2026-07-05 16:48' },
+    { id: 'agt-005', name: '安全扫描 Agent', desc: '定期扫描系统漏洞，检测异常访问行为和潜在威胁', provider: 'Anthropic', model: 'claude-sonnet-4-20250514', status: 'online', skills: 6, created: '2026-07-10 11:03' },
+    { id: 'agt-006', name: '翻译助手', desc: '支持 50+ 语言实时翻译，保持专业术语一致性', provider: 'DeepSeek', model: 'deepseek-chat', status: 'offline', skills: 1, created: '2026-07-18 08:30' }
+  ];
+
+  const statusMap = {
+    online: { cls: 'badge-success', text: '在线', dot: 'online' },
+    offline: { cls: 'badge-default', text: '离线', dot: 'offline' },
+    error: { cls: 'badge-danger', text: '错误', dot: 'error' }
+  };
+
+  let currentFilter = 'all';
+
+  function renderTable(data) {
+    var tbody = document.getElementById('agentTableBody');
+    var empty = document.getElementById('emptyState');
+    var table = document.getElementById('agentTable');
+    var pagination = document.getElementById('pagination');
+
+    if (data.length === 0) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      table.querySelector('thead').style.display = 'none';
+      pagination.style.display = 'none';
+      return;
+    }
+
+    empty.classList.add('hidden');
+    table.querySelector('thead').style.display = '';
+    pagination.style.display = '';
+
+    tbody.innerHTML = data.map(function(a) {
+      var st = statusMap[a.status] || statusMap.offline;
+      return '<tr data-id="' + a.id + '">' +
+        '<td><div class="agent-name">' + a.name + '</div></td>' +
+        '<td><div class="agent-desc" title="' + a.desc + '">' + a.desc + '</div></td>' +
+        '<td><span class="badge badge-default">' + a.provider + '</span><span class="text-sm text-secondary" style="margin-left:6px;">' + a.model + '</span></td>' +
+        '<td><span class="badge ' + st.cls + '"><span class="badge-dot ' + st.dot + '"></span>' + st.text + '</span></td>' +
+        '<td><span class="skill-count">' + Icon.get('puzzle', 14) + ' ' + a.skills + '</span></td>' +
+        '<td class="col-time">' + a.created + '</td>' +
+        '<td class="col-actions">' +
+          '<button class="btn btn-ghost btn-sm" onclick="editAgent(\'' + a.id + '\')" title="编辑">' + Icon.get('edit', 14) + '</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="copyAgent(\'' + a.id + '\')" title="复制">' + Icon.get('copy', 14) + '</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="deleteAgent(\'' + a.id + '\',\'' + a.name + '\')" title="删除">' + Icon.get('trash', 14) + '</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function filterAgents() {
+    var keyword = (document.getElementById('searchInput').value || '').toLowerCase();
+    var filtered = agents.filter(function(a) {
+      var matchFilter = currentFilter === 'all' || a.status === currentFilter;
+      var matchSearch = !keyword || a.name.toLowerCase().includes(keyword) || a.desc.toLowerCase().includes(keyword);
+      return matchFilter && matchSearch;
+    });
+    document.getElementById('totalCount').textContent = filtered.length;
+    renderTable(filtered);
+  }
+
+  window.filterAgents = filterAgents;
+
+  // Filter chips
+  document.getElementById('filterChips').addEventListener('click', function(e) {
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    document.querySelectorAll('#filterChips .filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+    currentFilter = chip.getAttribute('data-filter');
+    filterAgents();
+  });
+
+  // Theme toggle icon swap
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.theme-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var sun = this.querySelector('.icon-sun');
+        var moon = this.querySelector('.icon-moon');
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) { sun.style.display = ''; moon.style.display = 'none'; }
+        else { sun.style.display = 'none'; moon.style.display = ''; }
+      });
+    });
+    // Init icon states
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.querySelectorAll('.icon-sun').forEach(function(el) { el.style.display = isDark ? 'none' : ''; });
+    document.querySelectorAll('.icon-moon').forEach(function(el) { el.style.display = isDark ? '' : 'none'; });
+  });
+
+  // Actions
+  window.editAgent = function(id) {
+    location.href = 'agent-config.html?id=' + id;
+  };
+
+  window.copyAgent = function(id) {
+    CyberPal.placeholder();
+  };
+
+  window.deleteAgent = function(id, name) {
+    CyberPal.confirm('确定要删除 Agent "<strong>' + name + '</strong>" 吗？<br><span class="warning-text">删除后数据将无法恢复，请谨慎操作。</span>', function() {
+      var idx = agents.findIndex(function(a) { return a.id === id; });
+      if (idx !== -1) agents.splice(idx, 1);
+      filterAgents();
+      CyberPal.Toast.show('Agent "' + name + '" 已删除', 'success');
+    });
+  };
+
+  // Initial render
+  renderTable(agents);
+})();
+</script>
+</body>
+</html>

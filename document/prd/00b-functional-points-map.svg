@@ -1,0 +1,202 @@
+<svg viewBox="0 0 1000 1130" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Pi-Agent SaaS 平台 · 功能点全景图（端→模块→功能点）</title>
+  <desc>用户端 8 模块 + 管理端 6 模块 + 跨端公共能力 7 项，逐层展开功能点（functional point），并标注设计/建表状态。绿=已设计/已建表，黄=仅占位/待建。</desc>
+
+  <text x="500" y="26" text-anchor="middle" font-size="16" font-weight="600" fill="#0C447C">Pi-Agent SaaS 平台 · 功能点全景图</text>
+  <text x="500" y="46" text-anchor="middle" font-size="12" fill="#5A6B7B">端 → 模块 → 功能点（functional point）· 单一 cs_user 按 usr_app_type 分区隔离 · 2026-07-22 更新</text>
+
+  <!-- Pillars -->
+  <rect x="20" y="62" width="470" height="34" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.8"/>
+  <text x="40" y="84" font-size="14" font-weight="600" fill="#0C447C">用户端 User End（app_type=4）</text>
+  <rect x="510" y="62" width="470" height="34" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.8"/>
+  <text x="530" y="84" font-size="14" font-weight="600" fill="#0C447C">管理端 Admin End（app_type=1）</text>
+
+  <!-- ============ USER END (x=20 w=470) ============ -->
+
+  <!-- L1 账号体系 -->
+  <rect x="20" y="108" width="470" height="114" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="36" y="128" font-size="13" font-weight="600" fill="#0C447C">账号体系</text>
+  <text x="430" y="128" font-size="10" fill="#7A8B99">R-001</text>
+  <circle cx="476" cy="123" r="4" fill="#2E7D32"/>
+  <text x="40" y="150" font-size="11" fill="#37474F">• 注册 / 登录（usr_app_type=4）</text>
+  <text x="40" y="166" font-size="11" fill="#37474F">• 个人资料（昵称 / 头像 / 主题）</text>
+  <text x="40" y="182" font-size="11" fill="#37474F">• 首次登录强制改密</text>
+  <text x="40" y="198" font-size="11" fill="#37474F">• 自助密码重置</text>
+  <text x="40" y="214" font-size="11" fill="#37474F">• 存储上限触顶提示（拦截）</text>
+
+  <!-- L2 Agent 管理 -->
+  <rect x="20" y="234" width="470" height="130" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="36" y="254" font-size="13" font-weight="600" fill="#0C447C">Agent 管理</text>
+  <text x="416" y="254" font-size="10" fill="#7A8B99">R-002/003/004/009/011/012</text>
+  <circle cx="476" cy="249" r="4" fill="#2E7D32"/>
+  <text x="40" y="276" font-size="11" fill="#37474F">• Agent 创建 / 编辑 / 删除</text>
+  <text x="40" y="292" font-size="11" fill="#37474F">• 启停状态切换（status）</text>
+  <text x="40" y="308" font-size="11" fill="#37474F">• 绑定 Skill（cs_agent_skill）</text>
+  <text x="40" y="324" font-size="11" fill="#37474F">• per-agent MCP 配置（cs_mcp_config）</text>
+  <text x="40" y="340" font-size="11" fill="#37474F">• 选择 Provider / Model</text>
+  <text x="40" y="356" font-size="11" fill="#37474F">• 工作目录隔离（闭环 C）</text>
+
+  <!-- L3 会话与聊天 -->
+  <rect x="20" y="376" width="470" height="146" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="36" y="396" font-size="13" font-weight="600" fill="#0C447C">会话与聊天</text>
+  <text x="430" y="396" font-size="10" fill="#7A8B99">R-005/006/008/017</text>
+  <circle cx="476" cy="391" r="4" fill="#2E7D32"/>
+  <text x="40" y="418" font-size="11" fill="#37474F">• 创建会话（绑定 Agent）</text>
+  <text x="40" y="434" font-size="11" fill="#37474F">• 流式对话（WebSocket 推送）</text>
+  <text x="40" y="450" font-size="11" fill="#37474F">• 消息 / Thinking / Tool 折叠（cs_messages / cs_events）</text>
+  <text x="40" y="466" font-size="11" fill="#37474F">• 会话历史列表（cs_sessions）</text>
+  <text x="40" y="482" font-size="11" fill="#37474F">• 自动归档（auto_archive_days）</text>
+  <text x="40" y="498" font-size="11" fill="#37474F">• 会话续写 / 分叉</text>
+  <text x="40" y="514" font-size="11" fill="#37474F">• 多设备会话安全</text>
+
+  <!-- L4 Skill 库 -->
+  <rect x="20" y="534" width="470" height="66" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="36" y="554" font-size="13" font-weight="600" fill="#0C447C">Skill 库</text>
+  <text x="446" y="554" font-size="10" fill="#7A8B99">R-003</text>
+  <circle cx="476" cy="549" r="4" fill="#2E7D32"/>
+  <text x="40" y="576" font-size="11" fill="#37474F">• 平台 Skill 浏览 / 挂载</text>
+  <text x="40" y="592" font-size="11" fill="#37474F">• 受 Admin 上下架控制</text>
+
+  <!-- L5 MCP 配置 -->
+  <rect x="20" y="612" width="470" height="66" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="36" y="632" font-size="13" font-weight="600" fill="#0C447C">MCP 配置</text>
+  <text x="446" y="632" font-size="10" fill="#7A8B99">R-004</text>
+  <circle cx="476" cy="627" r="4" fill="#2E7D32"/>
+  <text x="40" y="654" font-size="11" fill="#37474F">• stdio / http / sse 配置</text>
+  <text x="40" y="670" font-size="11" fill="#37474F">• 引用平台模板（cs_mcp_template）</text>
+
+  <!-- L6 计费与用量 -->
+  <rect x="20" y="690" width="470" height="82" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="36" y="710" font-size="13" font-weight="600" fill="#0C447C">计费与用量</text>
+  <text x="430" y="710" font-size="10" fill="#7A8B99">R-007/010</text>
+  <circle cx="476" cy="705" r="4" fill="#2E7D32"/>
+  <text x="40" y="732" font-size="11" fill="#37474F">• 个人用量看板（token / 费用）</text>
+  <text x="40" y="748" font-size="11" fill="#37474F">• 用量预警（R-015 → 通知体系）</text>
+  <text x="40" y="764" font-size="11" fill="#37474F">• 计费来源标注（usage / estimate）</text>
+
+  <!-- L7 用户设置 -->
+  <rect x="20" y="784" width="470" height="98" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="36" y="804" font-size="13" font-weight="600" fill="#0C447C">用户设置</text>
+  <circle cx="476" cy="799" r="4" fill="#2E7D32"/>
+  <text x="40" y="826" font-size="11" fill="#37474F">• 主题偏好（theme_pref）</text>
+  <text x="40" y="842" font-size="11" fill="#37474F">• 自动归档开关 / 天数</text>
+  <text x="40" y="858" font-size="11" fill="#37474F">• 通知中心（cs_notify_inbox）</text>
+  <text x="40" y="874" font-size="11" fill="#37474F">• 账号注销（软删 · 延后 Next）</text>
+
+  <!-- L8 协作/团队 占位 -->
+  <rect x="20" y="894" width="470" height="66" rx="8" fill="#FDF6E3" stroke="#F0B429" stroke-width="1"/>
+  <text x="36" y="914" font-size="13" font-weight="600" fill="#633806">协作 / 团队</text>
+  <text x="446" y="914" font-size="10" fill="#9A7B1F">4.8</text>
+  <circle cx="476" cy="909" r="4" fill="#F0B429"/>
+  <text x="40" y="936" font-size="11" fill="#6B5812">• 团队 / 共享 Agent（仅页面占位）</text>
+  <text x="40" y="952" font-size="11" fill="#6B5812">• 成员权限（仅页面占位）</text>
+
+  <!-- ============ ADMIN END (x=510 w=470) ============ -->
+
+  <!-- R1 账号与 RBAC -->
+  <rect x="510" y="108" width="470" height="162" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="526" y="128" font-size="13" font-weight="600" fill="#0C447C">账号与 RBAC</text>
+  <text x="930" y="128" font-size="10" fill="#7A8B99">PRD 07</text>
+  <circle cx="966" cy="123" r="4" fill="#2E7D32"/>
+  <text x="530" y="150" font-size="11" fill="#37474F">• Seed 初始超管（01-base.sql）</text>
+  <text x="530" y="166" font-size="11" fill="#37474F">• 首次登录强制改密</text>
+  <text x="530" y="182" font-size="11" fill="#37474F">• Admin 登录边界（app_type 隔离）</text>
+  <text x="530" y="198" font-size="11" fill="#37474F">• 角色集（超管 / 运营 / 客服）</text>
+  <text x="530" y="214" font-size="11" fill="#37474F">• 管理员 CRUD（DictCrudController）</text>
+  <text x="530" y="230" font-size="11" fill="#37474F">• 锁死最后超管</text>
+  <text x="530" y="246" font-size="11" fill="#37474F">• 权限鉴权（r_level=0 快路径）</text>
+  <text x="530" y="262" font-size="11" fill="#37474F">• 审计日志（cs_user_log）</text>
+
+  <!-- R2 用户管理+隐私 -->
+  <rect x="510" y="282" width="470" height="146" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="526" y="302" font-size="13" font-weight="600" fill="#0C447C">用户管理 + 隐私</text>
+  <text x="930" y="302" font-size="10" fill="#7A8B99">PRD 08</text>
+  <circle cx="966" cy="297" r="4" fill="#2E7D32"/>
+  <text x="530" y="324" font-size="11" fill="#37474F">• 用户列表 / 检索（app_type=4）</text>
+  <text x="530" y="340" font-size="11" fill="#37474F">• 用户详情（用量 / 资源概览）</text>
+  <text x="530" y="356" font-size="11" fill="#37474F">• 禁用 / 启用（usr_state）</text>
+  <text x="530" y="372" font-size="11" fill="#37474F">• 软删用户（delete_time）</text>
+  <text x="530" y="388" font-size="11" fill="#37474F">• 重置密码（不记明文）</text>
+  <text x="530" y="404" font-size="11" fill="#37474F">• 跨用户 Agent/Session 强制结束</text>
+  <text x="530" y="420" font-size="11" fill="#37474F">• 会话内容查看边界（独立权限 + 审计）</text>
+
+  <!-- R3 Skill 库治理 -->
+  <rect x="510" y="440" width="470" height="82" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="526" y="460" font-size="13" font-weight="600" fill="#0C447C">Skill 库治理</text>
+  <text x="930" y="460" font-size="10" fill="#7A8B99">PRD 09 FR-1</text>
+  <circle cx="966" cy="455" r="4" fill="#2E7D32"/>
+  <text x="530" y="482" font-size="11" fill="#37474F">• 上架 / 下架（控制 User 可选）</text>
+  <text x="530" y="498" font-size="11" fill="#37474F">• 新增 / 编辑 / 删除（软删）</text>
+  <text x="530" y="514" font-size="11" fill="#37474F">• 挂载次数统计（cs_agent_skill）</text>
+
+  <!-- R4 MCP 模板 -->
+  <rect x="510" y="534" width="470" height="66" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="526" y="554" font-size="13" font-weight="600" fill="#0C447C">MCP 模板</text>
+  <text x="930" y="554" font-size="10" fill="#7A8B99">PRD 09 FR-2</text>
+  <circle cx="966" cy="549" r="4" fill="#2E7D32"/>
+  <text x="530" y="576" font-size="11" fill="#37474F">• 模板新增 / 编辑 / 删除（cs_mcp_template 已建）</text>
+  <text x="530" y="592" font-size="11" fill="#37474F">• 启用 / 禁用</text>
+
+  <!-- R5 计费大盘 -->
+  <rect x="510" y="612" width="470" height="98" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="526" y="632" font-size="13" font-weight="600" fill="#0C447C">计费大盘</text>
+  <text x="930" y="632" font-size="10" fill="#7A8B99">PRD 09 FR-3</text>
+  <circle cx="966" cy="627" r="4" fill="#2E7D32"/>
+  <text x="530" y="654" font-size="11" fill="#37474F">• 全平台汇总卡（token / 费用）</text>
+  <text x="530" y="670" font-size="11" fill="#37474F">• token / 费用趋势（日 / 月）</text>
+  <text x="530" y="686" font-size="11" fill="#37474F">• 用户 Top N 排名（仅聚合）</text>
+  <text x="530" y="702" font-size="11" fill="#37474F">• 资源 Top（Agent / Skill / Provider）</text>
+
+  <!-- R6 全局配置 -->
+  <rect x="510" y="722" width="470" height="82" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="526" y="742" font-size="13" font-weight="600" fill="#0C447C">全局配置</text>
+  <text x="930" y="742" font-size="10" fill="#7A8B99">PRD 09 FR-4</text>
+  <circle cx="966" cy="737" r="4" fill="#2E7D32"/>
+  <text x="530" y="764" font-size="11" fill="#37474F">• 归档天数 / 存储上限（cs_system_config）</text>
+  <text x="530" y="780" font-size="11" fill="#37474F">• 邮件凭据（secret 加密 / 环境变量）</text>
+  <text x="530" y="796" font-size="11" fill="#37474F">• 配置变更审计（cs_system_record）</text>
+
+  <!-- ============ CROSS-CUTTING ============ -->
+  <text x="500" y="918" text-anchor="middle" font-size="13" font-weight="600" fill="#3C3489">平台公共能力 / 跨端</text>
+
+  <rect x="18" y="930" width="132" height="74" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="84" y="952" text-anchor="middle" font-size="12" font-weight="600" fill="#0C447C">RBAC 框架</text>
+  <text x="84" y="972" text-anchor="middle" font-size="10" fill="#2E7D32">已就绪</text>
+  <text x="84" y="988" text-anchor="middle" font-size="9" fill="#5A6B7B">cs_role/relation</text>
+
+  <rect x="154" y="930" width="132" height="74" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="220" y="952" text-anchor="middle" font-size="12" font-weight="600" fill="#0C447C">Agent Gateway</text>
+  <text x="220" y="972" text-anchor="middle" font-size="10" fill="#2E7D32">已设计 PRD 06</text>
+  <text x="220" y="988" text-anchor="middle" font-size="9" fill="#5A6B7B">WS+SQLite 三级隔离</text>
+
+  <rect x="290" y="930" width="132" height="74" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="356" y="952" text-anchor="middle" font-size="12" font-weight="600" fill="#0C447C">审计日志</text>
+  <text x="356" y="972" text-anchor="middle" font-size="10" fill="#2E7D32">已设计</text>
+  <text x="356" y="988" text-anchor="middle" font-size="9" fill="#5A6B7B">cs_user_log</text>
+
+  <rect x="426" y="930" width="132" height="74" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="492" y="952" text-anchor="middle" font-size="12" font-weight="600" fill="#0C447C">通知体系</text>
+  <text x="492" y="972" text-anchor="middle" font-size="10" fill="#2E7D32">已建表</text>
+  <text x="492" y="988" text-anchor="middle" font-size="9" fill="#5A6B7B">cs_notify_* 4 表</text>
+
+  <rect x="562" y="930" width="132" height="74" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="628" y="952" text-anchor="middle" font-size="12" font-weight="600" fill="#0C447C">指标体系</text>
+  <text x="628" y="972" text-anchor="middle" font-size="10" fill="#2E7D32">已建表</text>
+  <text x="628" y="988" text-anchor="middle" font-size="9" fill="#5A6B7B">cs_metrics_* 2 表</text>
+
+  <rect x="698" y="930" width="132" height="74" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="764" y="952" text-anchor="middle" font-size="12" font-weight="600" fill="#0C447C">系统配置</text>
+  <text x="764" y="972" text-anchor="middle" font-size="10" fill="#2E7D32">已建表</text>
+  <text x="764" y="988" text-anchor="middle" font-size="9" fill="#5A6B7B">cs_system_config</text>
+
+  <rect x="834" y="930" width="132" height="74" rx="8" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="900" y="952" text-anchor="middle" font-size="12" font-weight="600" fill="#0C447C">软删 / 合规</text>
+  <text x="900" y="972" text-anchor="middle" font-size="10" fill="#2E7D32">全表</text>
+  <text x="900" y="988" text-anchor="middle" font-size="9" fill="#5A6B7B">delete_time</text>
+
+  <!-- Legend -->
+  <rect x="60" y="1034" width="16" height="12" rx="3" fill="#F1F8E9" stroke="#7CB342" stroke-width="1"/>
+  <text x="82" y="1045" font-size="12" fill="#444441">已设计 / 已建表</text>
+  <rect x="320" y="1034" width="16" height="12" rx="3" fill="#FDF6E3" stroke="#F0B429" stroke-width="1"/>
+  <text x="342" y="1045" font-size="12" fill="#444441">仅占位 / 待建（协作团队）</text>
+</svg>

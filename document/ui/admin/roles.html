@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - 角色权限管理</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+    }
+
+    .role-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .role-card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .role-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .role-card-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .role-level-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: var(--radius-pill);
+    }
+
+    .role-level-0 {
+      background: rgba(22,163,74,.12);
+      color: var(--color-success);
+    }
+
+    .role-level-1 {
+      background: var(--color-info-bg);
+      color: var(--color-info);
+    }
+
+    .role-level-2 {
+      background: var(--color-surface-2);
+      color: var(--color-text-secondary);
+    }
+
+    .role-card-body {
+      padding: 20px 24px;
+    }
+
+    .role-card-desc {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .role-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+    }
+
+    .role-card-meta strong {
+      color: var(--color-text);
+      font-family: var(--font-mono);
+    }
+
+    .role-perm-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .perm-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      background: var(--color-primary-subtle);
+      color: var(--color-primary);
+    }
+
+    .perm-tag.warning {
+      background: var(--color-warning-bg);
+      color: var(--color-warning);
+    }
+
+    .role-card-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .role-card-actions .btn {
+      flex: 1;
+    }
+
+    .system-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      padding: 2px 8px;
+      background: var(--color-surface-2);
+      border-radius: var(--radius-pill);
+    }
+
+    .system-tag svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Permission Tree */
+    .perm-tree {
+      max-height: 440px;
+      overflow-y: auto;
+    }
+
+    .perm-group {
+      margin-bottom: 16px;
+    }
+
+    .perm-group-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .perm-group-children {
+      padding-left: 24px;
+    }
+
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+      font-size: 13px;
+      color: var(--color-text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .perm-item input[type="checkbox"] {
+      accent-color: var(--color-primary);
+      width: 15px;
+      height: 15px;
+    }
+
+    .perm-item.warning-item {
+      color: var(--color-warning);
+    }
+
+    .perm-item.warning-item .perm-warning-tag {
+      font-size: 11px;
+      background: var(--color-warning-bg);
+      color: var(--color-warning);
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+      margin-left: 4px;
+    }
+
+    .bottom-tip {
+      background: var(--color-info-bg);
+      border: 1px solid rgba(22,119,255,.2);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--color-info);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .bottom-tip svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="admins.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="roles.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="global-config.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">角色权限管理</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>角色数量</span>
+            <strong>3</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar" style="position:relative;">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span style="position:absolute;bottom:-3px;right:-6px;font-size:10px;background:var(--color-warning);color:#fff;padding:1px 5px;border-radius:var(--radius-pill);font-weight:600;line-height:1.2;border:1.5px solid var(--color-surface);">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>角色与权限管理</h1>
+            <p>管理 Admin 后台角色及其功能权限</p>
+          </div>
+        </div>
+
+        <!-- Role Cards -->
+        <div class="roles-grid">
+
+          <!-- 超级管理员 -->
+          <div class="role-card">
+            <div class="role-card-header">
+              <div class="role-card-title">
+                <span class="role-card-name">超级管理员</span>
+                <span class="role-level-badge role-level-0">r_level=0</span>
+              </div>
+              <span class="system-tag">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                系统角色
+              </span>
+            </div>
+            <div class="role-card-body">
+              <div class="role-card-desc">全功能权限，快路径全放行。拥有平台所有管理能力和系统级操作权限。</div>
+              <div class="role-card-meta">
+                <span>成员 <strong>1</strong></span>
+                <span>不可修改 · 不可删除</span>
+              </div>
+              <div class="role-perm-tags">
+                <span class="perm-tag">用户管理</span>
+                <span class="perm-tag">Agent/Session管理</span>
+                <span class="perm-tag">会话内容</span>
+                <span class="perm-tag">Skill库</span>
+                <span class="perm-tag">MCP模板</span>
+                <span class="perm-tag">计费大盘</span>
+                <span class="perm-tag">全局配置</span>
+                <span class="perm-tag">角色权限</span>
+                <span class="perm-tag">管理员管理</span>
+              </div>
+              <div class="role-card-actions">
+                <button class="btn btn-secondary btn-sm" disabled>编辑权限</button>
+                <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">成员管理</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 运营 -->
+          <div class="role-card" id="role-1">
+            <div class="role-card-header">
+              <div class="role-card-title">
+                <span class="role-card-name">运营</span>
+                <span class="role-level-badge role-level-1">r_level=1</span>
+              </div>
+            </div>
+            <div class="role-card-body">
+              <div class="role-card-desc">用户管理(查看/禁用/启用/重置密码)、全局Agent·Session查看与干预、Skill/MCP查看、计费大盘查看</div>
+              <div class="role-card-meta">
+                <span>成员 <strong>3</strong></span>
+              </div>
+              <div class="role-perm-tags">
+                <span class="perm-tag">用户管理</span>
+                <span class="perm-tag">Agent/Session</span>
+                <span class="perm-tag">Skill查看</span>
+                <span class="perm-tag">MCP查看</span>
+                <span class="perm-tag">计费大盘</span>
+              </div>
+              <div class="role-card-actions">
+                <button class="btn btn-primary btn-sm" onclick="openPermModal('1')">编辑权限</button>
+                <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">成员管理</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 客服 -->
+          <div class="role-card" id="role-2">
+            <div class="role-card-header">
+              <div class="role-card-title">
+                <span class="role-card-name">客服</span>
+                <span class="role-level-badge role-level-2">r_level=2</span>
+              </div>
+            </div>
+            <div class="role-card-body">
+              <div class="role-card-desc">用户查看、会话摘要查看。权限最小化，仅满足客服场景需求。</div>
+              <div class="role-card-meta">
+                <span>成员 <strong>5</strong></span>
+              </div>
+              <div class="role-perm-tags">
+                <span class="perm-tag">用户查看</span>
+                <span class="perm-tag">会话摘要</span>
+              </div>
+              <div class="role-card-actions">
+                <button class="btn btn-primary btn-sm" onclick="openPermModal('2')">编辑权限</button>
+                <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">成员管理</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Tip -->
+        <div class="bottom-tip">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>超级管理员(r_level=0)为系统角色，走全放行快路径，不可修改权限；运营/客服角色权限可自定义。</span>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- ===== 编辑权限 Modal ===== -->
+  <div class="modal-overlay" id="permModal" style="display:none;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="permModalTitle">编辑权限 - 运营</h3>
+        <button class="modal-close" onclick="closePermModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="perm-tree">
+          <!-- 用户管理 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-ugroup" checked onchange="toggleGroup('user', this)">
+              <label for="perm-ugroup" style="cursor:pointer;user-select:none;">用户管理</label>
+            </div>
+            <div class="perm-group-children" data-group="user">
+              <label class="perm-item"><input type="checkbox" class="perm-user" checked> 查看</label>
+              <label class="perm-item"><input type="checkbox" class="perm-user" checked> 禁用/启用</label>
+              <label class="perm-item"><input type="checkbox" class="perm-user" checked> 重置密码</label>
+              <label class="perm-item"><input type="checkbox" class="perm-user"> 删除用户</label>
+            </div>
+          </div>
+
+          <!-- Agent/Session管理 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-agroup" checked onchange="toggleGroup('agent', this)">
+              <label for="perm-agroup" style="cursor:pointer;user-select:none;">Agent/Session管理</label>
+            </div>
+            <div class="perm-group-children" data-group="agent">
+              <label class="perm-item"><input type="checkbox" class="perm-agent" checked> 查看</label>
+              <label class="perm-item"><input type="checkbox" class="perm-agent" checked> 干预/停止</label>
+              <label class="perm-item"><input type="checkbox" class="perm-agent"> 强制结束</label>
+            </div>
+          </div>
+
+          <!-- 会话内容 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-cgroup" onchange="toggleGroup('chat', this)">
+              <label for="perm-cgroup" style="cursor:pointer;user-select:none;">会话内容</label>
+            </div>
+            <div class="perm-group-children" data-group="chat">
+              <label class="perm-item warning-item">
+                <input type="checkbox" class="perm-chat">
+                查看会话内容
+                <span class="perm-warning-tag">默认关闭</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Skill库 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-sgroup" checked onchange="toggleGroup('skill', this)">
+              <label for="perm-sgroup" style="cursor:pointer;user-select:none;">Skill库</label>
+            </div>
+            <div class="perm-group-children" data-group="skill">
+              <label class="perm-item"><input type="checkbox" class="perm-skill" checked> 查看</label>
+              <label class="perm-item"><input type="checkbox" class="perm-skill"> 管理(CRUD)</label>
+            </div>
+          </div>
+
+          <!-- MCP模板 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-mgroup" checked onchange="toggleGroup('mcp', this)">
+              <label for="perm-mgroup" style="cursor:pointer;user-select:none;">MCP模板</label>
+            </div>
+            <div class="perm-group-children" data-group="mcp">
+              <label class="perm-item"><input type="checkbox" class="perm-mcp" checked> 查看</label>
+              <label class="perm-item"><input type="checkbox" class="perm-mcp"> 管理(CRUD)</label>
+            </div>
+          </div>
+
+          <!-- 计费大盘 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-bgroup" checked onchange="toggleGroup('billing', this)">
+              <label for="perm-bgroup" style="cursor:pointer;user-select:none;">计费大盘</label>
+            </div>
+            <div class="perm-group-children" data-group="billing">
+              <label class="perm-item"><input type="checkbox" class="perm-billing" checked> 查看</label>
+            </div>
+          </div>
+
+          <!-- 全局配置 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-gcgroup" onchange="toggleGroup('gconfig', this)">
+              <label for="perm-gcgroup" style="cursor:pointer;user-select:none;">全局配置</label>
+            </div>
+            <div class="perm-group-children" data-group="gconfig">
+              <label class="perm-item"><input type="checkbox" class="perm-gconfig"> 查看</label>
+              <label class="perm-item"><input type="checkbox" class="perm-gconfig"> 修改</label>
+            </div>
+          </div>
+
+          <!-- 角色权限 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-rgroup" onchange="toggleGroup('role', this)">
+              <label for="perm-rgroup" style="cursor:pointer;user-select:none;">角色权限</label>
+            </div>
+            <div class="perm-group-children" data-group="role">
+              <label class="perm-item"><input type="checkbox" class="perm-role"> 查看</label>
+              <label class="perm-item"><input type="checkbox" class="perm-role"> 管理</label>
+            </div>
+          </div>
+
+          <!-- 管理员管理 -->
+          <div class="perm-group">
+            <div class="perm-group-title">
+              <input type="checkbox" id="perm-adgroup" onchange="toggleGroup('admin', this)">
+              <label for="perm-adgroup" style="cursor:pointer;user-select:none;">管理员管理</label>
+            </div>
+            <div class="perm-group-children" data-group="admin">
+              <label class="perm-item"><input type="checkbox" class="perm-admin"> 查看</label>
+              <label class="perm-item"><input type="checkbox" class="perm-admin"> 管理</label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closePermModal()">取消</button>
+        <button class="btn btn-primary" id="savePermBtn">保存权限</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      var currentRoleId = null;
+
+      // Open permission modal
+      window.openPermModal = function(roleId) {
+        currentRoleId = roleId;
+        var title = roleId === '1' ? '编辑权限 - 运营' : '编辑权限 - 客服';
+        document.getElementById('permModalTitle').textContent = title;
+
+        // Reset checkboxes based on role
+        if (roleId === '1') {
+          // 运营 permissions
+          setCheckboxState('user', [true, true, true, false]);
+          setCheckboxState('agent', [true, true, false]);
+          setCheckboxState('chat', [false]);
+          setCheckboxState('skill', [true, false]);
+          setCheckboxState('mcp', [true, false]);
+          setCheckboxState('billing', [true]);
+          setCheckboxState('gconfig', [false, false]);
+          setCheckboxState('role', [false, false]);
+          setCheckboxState('admin', [false, false]);
+        } else {
+          // 客服 permissions
+          setCheckboxState('user', [true, false, false, false]);
+          setCheckboxState('agent', [false, false, false]);
+          setCheckboxState('chat', [false]);
+          setCheckboxState('skill', [false, false]);
+          setCheckboxState('mcp', [false, false]);
+          setCheckboxState('billing', [false]);
+          setCheckboxState('gconfig', [false, false]);
+          setCheckboxState('role', [false, false]);
+          setCheckboxState('admin', [false, false]);
+        }
+
+        updateGroupCheckboxes();
+
+        document.getElementById('permModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      };
+
+      window.closePermModal = function() {
+        document.getElementById('permModal').style.display = 'none';
+        document.body.style.overflow = '';
+      };
+
+      function setCheckboxState(group, states) {
+        var checkboxes = document.querySelectorAll('.perm-' + group);
+        checkboxes.forEach(function(cb, i) {
+          cb.checked = states[i] || false;
+        });
+      }
+
+      // Toggle group
+      window.toggleGroup = function(groupName, groupCheckbox) {
+        var children = document.querySelectorAll('.perm-' + groupName);
+        children.forEach(function(cb) {
+          cb.checked = groupCheckbox.checked;
+        });
+      };
+
+      // Update group checkboxes based on children
+      function updateGroupCheckboxes() {
+        var groups = ['user', 'agent', 'chat', 'skill', 'mcp', 'billing', 'gconfig', 'role', 'admin'];
+        groups.forEach(function(g) {
+          var children = document.querySelectorAll('.perm-' + g);
+          var allChecked = true;
+          children.forEach(function(cb) {
+            if (!cb.checked) allChecked = false;
+          });
+          var groupCb = document.getElementById('perm-' + (g === 'gconfig' ? 'gc' : g[0]) + 'group');
+          if (groupCb) groupCb.checked = allChecked && children.length > 0;
+        });
+      }
+
+      // Auto update group checkboxes when child changes
+      document.querySelectorAll('.perm-tree input[type="checkbox"]').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+          updateGroupCheckboxes();
+        });
+      });
+
+      // Save permissions
+      document.getElementById('savePermBtn').addEventListener('click', function() {
+        closePermModal();
+        CyberPal.Toast.show('权限已更新', 'success');
+      });
+
+      // Modal overlay click to close
+      document.getElementById('permModal').addEventListener('click', function(e) {
+        if (e.target === this) closePermModal();
+      });
+
+      // Nav placeholder
+      document.querySelectorAll('.nav-item:not(.active)').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+          var href = this.getAttribute('href');
+          if (!href || href === '#') {
+            CyberPal.placeholder();
+            e.preventDefault();
+          }
+        });
+      });
+
+      // Avatar click
+      document.querySelector('.user-avatar').addEventListener('click', function() {
+        CyberPal.placeholder();
+      });
+    })();
+  </script>
+
+</body>
+</html>

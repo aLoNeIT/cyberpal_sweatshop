@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - 计费大盘</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    /* Period Selector */
+    .period-selector {
+      display: flex;
+      gap: 4px;
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      padding: 3px;
+    }
+    .period-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      color: var(--color-text-secondary);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-family: var(--font-ui);
+    }
+    .period-btn:hover { color: var(--color-text); }
+    .period-btn.active {
+      background: var(--color-surface);
+      color: var(--color-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Chart */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 180px;
+      padding: 0 4px 28px;
+      border-bottom: 1px solid var(--color-border);
+      position: relative;
+    }
+    .bar-chart::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%;
+      border-top: 1px dashed var(--color-border);
+      opacity: 0.4;
+    }
+    .bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      position: relative;
+    }
+    .bar {
+      width: 100%;
+      max-width: 28px;
+      border-radius: 4px 4px 0 0;
+      transition: opacity var(--transition-fast);
+      min-height: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+    .bar:hover { opacity: 0.8; }
+    .bar.primary { background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); }
+    .bar.secondary { background: linear-gradient(180deg, var(--color-secondary) 0%, #a78bfa 100%); }
+    .bar-value {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: var(--color-text-tertiary);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+      display: none;
+    }
+    .bar:hover .bar-value { display: block; }
+    .bar-label {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      text-align: center;
+    }
+
+    /* Chart header */
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .chart-total {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+    .chart-change {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .chart-change.up { color: var(--color-success); }
+    .chart-change.down { color: var(--color-danger); }
+
+    /* Top Users Table */
+    .rank-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .rank-table th {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .rank-table td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-text);
+    }
+    .rank-table .col-mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .rank-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--color-text-tertiary);
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .rank-num.r1 { background: #FFD700; color: #333; }
+    .rank-num.r2 { background: #C0C0C0; color: #333; }
+    .rank-num.r3 { background: #CD7F32; }
+    .usage-bar-cell { min-width: 100px; }
+    .mini-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mini-progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--color-surface-2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .mini-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .mini-progress-fill.p1 { background: var(--color-primary); }
+    .mini-progress-fill.p2 { background: var(--color-primary-hover); }
+    .mini-progress-pct {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+      width: 40px;
+      text-align: right;
+    }
+
+    /* Provider Donut */
+    .donut-chart {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .donut {
+      width: 140px; height: 140px;
+      border-radius: 50%;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .donut-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .donut-center .total-label {
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+    }
+    .donut-center .total-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .donut-legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .donut-legend-dot.openai { background: var(--color-primary); }
+    .donut-legend-dot.anthropic { background: var(--color-secondary); }
+    .donut-legend-dot.google { background: var(--color-success); }
+    .donut-legend-dot.other { background: var(--color-text-tertiary); }
+    .donut-legend-info {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .donut-legend-name {
+      font-size: 13px;
+      color: var(--color-text);
+    }
+    .donut-legend-val {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    /* Agent Bar */
+    .agent-bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .agent-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .agent-bar-label {
+      width: 100px;
+      font-size: 13px;
+      color: var(--color-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+    .agent-bar-track {
+      flex: 1;
+      height: 22px;
+      background: var(--color-surface-2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .agent-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+    }
+    .agent-bar-fill.a1 { background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover)); }
+    .agent-bar-fill.a2 { background: linear-gradient(90deg, var(--color-secondary), #a78bfa); }
+    .agent-bar-fill.a3 { background: linear-gradient(90deg, var(--color-success), #22c55e); }
+    .agent-bar-fill.a4 { background: linear-gradient(90deg, var(--color-warning), #f59e0b); }
+    .agent-bar-fill.a5 { background: linear-gradient(90deg, var(--color-danger), #ef4444); }
+    .agent-bar-val {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: #fff;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* Two column grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .dashboard-grid-full {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    /* Footer note */
+    .dashboard-footer {
+      margin-top: 24px;
+      padding: 16px 0;
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+    .footer-tags {
+      display: flex;
+      gap: 8px;
+    }
+    .footer-tag {
+      padding: 2px 8px;
+      font-size: 11px;
+      border-radius: var(--radius-pill);
+      background: var(--color-surface-2);
+      color: var(--color-text-secondary);
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="billing-dashboard.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="mcp-templates.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">计费大盘</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span class="admin-badge-tag" style="position:absolute;bottom:-3px;right:-6px;font-size:10px;background:var(--color-warning);color:#fff;padding:1px 5px;border-radius:var(--radius-pill);font-weight:600;line-height:1.2;border:1.5px solid var(--color-surface);">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>计费统计大盘</h1>
+            <p>全平台用量聚合展示，仅展示不扣费</p>
+          </div>
+          <div class="page-header-right">
+            <div class="period-selector" id="periodSelector">
+              <button class="period-btn" data-period="today" onclick="switchPeriod('today', this)">今日</button>
+              <button class="period-btn active" data-period="week" onclick="switchPeriod('week', this)">本周</button>
+              <button class="period-btn" data-period="month" onclick="switchPeriod('month', this)">本月</button>
+              <button class="period-btn" data-period="custom" onclick="switchPeriod('custom', this)">自定义</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon blue">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">全平台总 Token</div>
+              <div class="stat-card-value">12,847,392</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>环比 +24.6%</span>
+              </div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon green">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">总费用 (USD)</div>
+              <div class="stat-card-value">$3,852.18</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>环比 +18.3%</span>
+              </div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon purple">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">总会话数</div>
+              <div class="stat-card-value">42,816</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>环比 +31.2%</span>
+              </div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-icon orange">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">活跃用户数</div>
+              <div class="stat-card-value">1,284</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>环比 +8.5%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Row: Token Trend + Cost Trend -->
+        <div class="dashboard-grid">
+          <!-- Token Usage Trend -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>Token 用量趋势</h3>
+                <div class="chart-header" style="margin-top:12px;">
+                  <span class="chart-total">12.85M</span>
+                  <span class="chart-change up">
+                    <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    +24.6%
+                  </span>
+                </div>
+              </div>
+              <span class="text-xs text-tertiary">近 12 个月</span>
+            </div>
+            <div class="card-body">
+              <div class="bar-chart" id="tokenChart"></div>
+            </div>
+          </div>
+
+          <!-- Cost Trend -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3>费用趋势 (USD)</h3>
+                <div class="chart-header" style="margin-top:12px;">
+                  <span class="chart-total">$3,852</span>
+                  <span class="chart-change up">
+                    <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    +18.3%
+                  </span>
+                </div>
+              </div>
+              <span class="text-xs text-tertiary">近 12 个月</span>
+            </div>
+            <div class="card-body">
+              <div class="bar-chart" id="costChart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Top 10 Users + Resource Distribution -->
+        <div class="dashboard-grid-full">
+          <!-- Top 10 Users -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Top 10 用量用户排名</h3>
+              <span class="text-xs text-tertiary">按 Token 用量降序</span>
+            </div>
+            <div class="card-body" style="padding:8px 0;">
+              <table class="rank-table">
+                <thead>
+                  <tr>
+                    <th>排名</th>
+                    <th>账号</th>
+                    <th>Token</th>
+                    <th>费用</th>
+                    <th>Agent数</th>
+                    <th class="usage-bar-cell">占比</th>
+                  </tr>
+                </thead>
+                <tbody id="topUsersTable">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Resource Distribution -->
+          <div class="card">
+            <div class="card-header">
+              <h3>资源用量分布</h3>
+              <span class="text-xs text-tertiary">本月累计</span>
+            </div>
+            <div class="card-body">
+              <!-- Provider Distribution -->
+              <div style="margin-bottom:24px;">
+                <div style="font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;">Provider 分布</div>
+                <div class="donut-chart">
+                  <div class="donut" style="background:conic-gradient(var(--color-primary) 0% 45%, var(--color-secondary) 45% 75%, var(--color-success) 75% 90%, var(--color-text-tertiary) 90% 100%);">
+                    <div class="donut-center">
+                      <div class="total-label">总 Token</div>
+                      <div class="total-value">12.85M</div>
+                    </div>
+                  </div>
+                  <div class="donut-legend">
+                    <div class="donut-legend-item">
+                      <span class="donut-legend-dot openai"></span>
+                      <div class="donut-legend-info">
+                        <span class="donut-legend-name">OpenAI</span>
+                        <span class="donut-legend-val">5.78M</span>
+                      </div>
+                      <span style="font-size:12px;color:var(--color-text-tertiary);width:36px;text-align:right;">45%</span>
+                    </div>
+                    <div class="donut-legend-item">
+                      <span class="donut-legend-dot anthropic"></span>
+                      <div class="donut-legend-info">
+                        <span class="donut-legend-name">Anthropic</span>
+                        <span class="donut-legend-val">3.85M</span>
+                      </div>
+                      <span style="font-size:12px;color:var(--color-text-tertiary);width:36px;text-align:right;">30%</span>
+                    </div>
+                    <div class="donut-legend-item">
+                      <span class="donut-legend-dot google"></span>
+                      <div class="donut-legend-info">
+                        <span class="donut-legend-name">Google</span>
+                        <span class="donut-legend-val">1.93M</span>
+                      </div>
+                      <span style="font-size:12px;color:var(--color-text-tertiary);width:36px;text-align:right;">15%</span>
+                    </div>
+                    <div class="donut-legend-item">
+                      <span class="donut-legend-dot other"></span>
+                      <div class="donut-legend-info">
+                        <span class="donut-legend-name">其他</span>
+                        <span class="donut-legend-val">1.29M</span>
+                      </div>
+                      <span style="font-size:12px;color:var(--color-text-tertiary);width:36px;text-align:right;">10%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Agent -->
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;">Top Agent (按 Token)</div>
+                <div class="agent-bar-list" id="topAgentList">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="dashboard-footer">
+          <span>数据来源：<strong>usage</strong> (原生) / <strong>estimate</strong> (估算) / <strong>provider_api</strong> (直连)</span>
+          <span>仅聚合展示，不涉及扣费</span>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ===== Period Switch =====
+      window.switchPeriod = function(period, btn) {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        CyberPal.Toast.show('已切换至：' + btn.textContent, 'info', 1500);
+      };
+
+      // ===== Token Trend Chart (12 months) =====
+      const months = ['8月','9月','10月','11月','12月','1月','2月','3月','4月','5月','6月','7月'];
+      const tokenData = [680, 750, 820, 790, 880, 950, 910, 1080, 1180, 1250, 1320, 1280]; // in K
+      const costData = [204, 225, 246, 237, 264, 285, 273, 324, 354, 375, 396, 384]; // in USD
+
+      function renderBarChart(containerId, data, type, maxVal) {
+        const container = document.getElementById(containerId);
+        const max = maxVal || Math.max(...data) * 1.1;
+        container.innerHTML = data.map((val, i) => {
+          const pct = (val / max * 100).toFixed(0);
+          const displayVal = type === 'token'
+            ? (val >= 1000 ? (val/1000).toFixed(1) + 'M' : val + 'K')
+            : '$' + val;
+          const barClass = type === 'token' ? 'primary' : 'secondary';
+          return `
+            <div class="bar-wrap">
+              <div class="bar ${barClass}" style="height:${pct}%" title="${months[i]}: ${displayVal}">
+                <span class="bar-value">${displayVal}</span>
+              </div>
+              <span class="bar-label">${months[i]}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderBarChart('tokenChart', tokenData, 'token', 1400);
+      renderBarChart('costChart', costData, 'cost', 420);
+
+      // ===== Top 10 Users =====
+      const topUsers = [
+        { rank:1,  name:'zhangwei',  token:1356800, cost:407.04, agents:12 },
+        { rank:2,  name:'liming',    token:1124500, cost:337.35, agents:8  },
+        { rank:3,  name:'wangfang',  token:987200,  cost:296.16, agents:10 },
+        { rank:4,  name:'chengyi',   token:845600,  cost:253.68, agents:6  },
+        { rank:5,  name:'liuqiang',  token:723400,  cost:217.02, agents:7  },
+        { rank:6,  name:'zhaoling',  token:612800,  cost:183.84, agents:5  },
+        { rank:7,  name:'sunhao',    token:534100,  cost:160.23, agents:9  },
+        { rank:8,  name:'zhoujie',   token:456900,  cost:137.07, agents:4  },
+        { rank:9,  name:'wubin',     token:389200,  cost:116.76, agents:6  },
+        { rank:10, name:'xulei',     token:312500,  cost:93.75,  agents:3  },
+      ];
+
+      const maxToken = topUsers[0].token;
+      const tbody = document.getElementById('topUsersTable');
+      tbody.innerHTML = topUsers.map(u => {
+        const rkClass = u.rank === 1 ? 'r1' : u.rank === 2 ? 'r2' : u.rank === 3 ? 'r3' : '';
+        const pct = (u.token / maxToken * 100).toFixed(1);
+        return `
+          <tr>
+            <td><span class="rank-num ${rkClass}">${u.rank}</span></td>
+            <td><strong>${u.name}</strong></td>
+            <td class="col-mono">${CyberPal.formatNumber(u.token)}</td>
+            <td class="col-mono">${CyberPal.costDisplay(u.cost)}</td>
+            <td class="col-mono">${u.agents}</td>
+            <td class="usage-bar-cell">
+              <div class="mini-progress">
+                <div class="mini-progress-bar">
+                  <div class="mini-progress-fill p${Math.min(u.rank, 2)}" style="width:${pct}%"></div>
+                </div>
+                <span class="mini-progress-pct">${pct}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // ===== Top Agent =====
+      const topAgents = [
+        { name:'智能编码助手 Pro', token:3680000, pct:100 },
+        { name:'数据分析 Agent',   token:2850000, pct:77 },
+        { name:'文档写作助手',     token:1920000, pct:52 },
+        { name:'代码审查 Agent',   token:1450000, pct:39 },
+        { name:'客服机器人 v2',    token:980000,  pct:27 },
+      ];
+
+      const agentList = document.getElementById('topAgentList');
+      agentList.innerHTML = topAgents.map((a, i) => {
+        return `
+          <div class="agent-bar-item">
+            <span class="agent-bar-label" title="${a.name}">${a.name}</span>
+            <div class="agent-bar-track">
+              <div class="agent-bar-fill a${i+1}" style="width:${a.pct}%">
+                <span class="agent-bar-val">${CyberPal.formatNumber(a.token)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // ===== Sidebar Links =====
+      document.querySelectorAll('.nav-item:not(.active)').forEach(item => {
+        item.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          if (!href || href === '#') { CyberPal.placeholder(); e.preventDefault(); }
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>

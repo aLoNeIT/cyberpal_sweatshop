@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - 全局配置</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .config-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+    }
+
+    .config-section-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .config-section-header svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--color-primary);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .config-section-body {
+      padding: 24px;
+    }
+
+    .config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+
+    .config-row + .config-row {
+      border-top: 1px solid var(--color-border);
+    }
+
+    .config-row-label {
+      flex: 1;
+      min-width: 0;
+      padding-right: 24px;
+    }
+
+    .config-row-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    .config-row-desc {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      margin-top: 2px;
+    }
+
+    .config-row-control {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .config-input-number {
+      width: 100px;
+      height: 32px;
+      padding: 0 10px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--color-text);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      outline: none;
+      text-align: center;
+      transition: all var(--transition-fast);
+    }
+
+    .config-input-number:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(22,119,255,.15);
+    }
+
+    .config-input-number:disabled {
+      opacity: 0.45;
+      background: var(--color-surface-2);
+      cursor: not-allowed;
+    }
+
+    .config-textarea {
+      width: 280px;
+      min-height: 80px;
+      padding: 8px 12px;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      color: var(--color-text);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      outline: none;
+      resize: vertical;
+      line-height: 1.6;
+      transition: all var(--transition-fast);
+    }
+
+    .config-textarea:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(22,119,255,.15);
+    }
+
+    .config-textarea::placeholder {
+      color: var(--color-text-tertiary);
+    }
+
+    .save-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .save-section-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+
+    .save-section-left svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .unit-suffix {
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+      margin-left: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="admins.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="roles.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="global-config.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">全局配置</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>配置版本</span>
+            <strong>v2.1.0</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar" style="position:relative;">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span style="position:absolute;bottom:-3px;right:-6px;font-size:10px;background:var(--color-warning);color:#fff;padding:1px 5px;border-radius:var(--radius-pill);font-weight:600;line-height:1.2;border:1.5px solid var(--color-surface);">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>全局配置</h1>
+            <p>设置全平台默认策略，用户端按「全局优先、默认兜底」读取</p>
+          </div>
+        </div>
+
+        <!-- 存储策略配置 -->
+        <div class="config-section">
+          <div class="config-section-header">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            存储策略配置
+          </div>
+          <div class="config-section-body">
+            <div class="config-row">
+              <div class="config-row-label">
+                <div class="config-row-title">活跃会话上限</div>
+                <div class="config-row-desc">超限后用户无法新建会话或分叉</div>
+              </div>
+              <div class="config-row-control">
+                <input type="number" class="config-input-number" id="activeSessionLimit" value="100" min="1" max="1000">
+                <span class="unit-suffix">个</span>
+              </div>
+            </div>
+            <div class="config-row">
+              <div class="config-row-label">
+                <div class="config-row-title">归档会话上限</div>
+                <div class="config-row-desc">超限后无法归档，需先清理归档区</div>
+              </div>
+              <div class="config-row-control">
+                <input type="number" class="config-input-number" id="archiveSessionLimit" value="50" min="1" max="500">
+                <span class="unit-suffix">个</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 自动归档策略 -->
+        <div class="config-section">
+          <div class="config-section-header">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            自动归档策略
+          </div>
+          <div class="config-section-body">
+            <div class="config-row">
+              <div class="config-row-label">
+                <div class="config-row-title">自动归档</div>
+                <div class="config-row-desc">开启后系统将按规则自动归档不活跃会话</div>
+              </div>
+              <div class="config-row-control">
+                <label class="toggle">
+                  <input type="checkbox" id="autoArchiveToggle" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+            </div>
+            <div class="config-row">
+              <div class="config-row-label">
+                <div class="config-row-title">归档阈值天数</div>
+                <div class="config-row-desc">超过该天数未活跃的会话将被自动归档，归档后不可恢复</div>
+              </div>
+              <div class="config-row-control">
+                <input type="number" class="config-input-number" id="archiveThresholdDays" value="30" min="1" max="365">
+                <span class="unit-suffix">天</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 其他配置 -->
+        <div class="config-section">
+          <div class="config-section-header">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            其他配置
+          </div>
+          <div class="config-section-body">
+            <div class="config-row">
+              <div class="config-row-label">
+                <div class="config-row-title">用户注册</div>
+                <div class="config-row-desc">关闭后新用户无法注册</div>
+              </div>
+              <div class="config-row-control">
+                <label class="toggle">
+                  <input type="checkbox" id="userRegToggle" checked>
+                  <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                </label>
+              </div>
+            </div>
+            <div class="config-row" style="align-items:flex-start;">
+              <div class="config-row-label">
+                <div class="config-row-title">系统公告</div>
+                <div class="config-row-desc">公告将在用户端顶栏显示 <span class="placeholder-badge" style="margin-left:4px;">功能开发中</span></div>
+              </div>
+              <div class="config-row-control">
+                <textarea class="config-textarea" id="systemNotice" placeholder="请输入系统公告内容..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 保存 + 审计 -->
+        <div class="save-section">
+          <div class="save-section-left">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>所有配置变更将被记录至 cs_system_record</span>
+          </div>
+          <button class="btn btn-primary" id="saveConfigBtn">保存配置</button>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // Update archive threshold input state based on auto-archive toggle
+      var autoArchiveToggle = document.getElementById('autoArchiveToggle');
+      var archiveThresholdDays = document.getElementById('archiveThresholdDays');
+
+      function updateArchiveThresholdState() {
+        archiveThresholdDays.disabled = !autoArchiveToggle.checked;
+      }
+
+      autoArchiveToggle.addEventListener('change', updateArchiveThresholdState);
+      updateArchiveThresholdState();
+
+      // Save config
+      document.getElementById('saveConfigBtn').addEventListener('click', function() {
+        CyberPal.Toast.show('配置已更新，用户端将按新策略生效', 'success');
+      });
+
+      // Track changes on all config inputs
+      var configInputs = document.querySelectorAll('.config-input-number, .config-textarea, #autoArchiveToggle, #userRegToggle');
+      configInputs.forEach(function(input) {
+        input.addEventListener('change', function() {
+          // Triggered on save, not on every change per spec
+        });
+      });
+
+      // Nav placeholder
+      document.querySelectorAll('.nav-item:not(.active)').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+          var href = this.getAttribute('href');
+          if (!href || href === '#') {
+            CyberPal.placeholder();
+            e.preventDefault();
+          }
+        });
+      });
+
+      // Avatar click
+      document.querySelector('.user-avatar').addEventListener('click', function() {
+        CyberPal.placeholder();
+      });
+    })();
+  </script>
+
+</body>
+</html>

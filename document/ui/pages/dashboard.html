@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal - 控制台</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>C</text></svg>">
+
+  <!-- CyberPal Styles -->
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    /* Quick Action Cards */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .quick-action-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px 12px;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-align: center;
+      color: var(--color-text);
+      text-decoration: none;
+    }
+
+    .quick-action-card:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-subtle);
+    }
+
+    .quick-action-card svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--color-primary);
+      fill: none;
+      stroke-width: 1.6;
+    }
+
+    .quick-action-card span {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+
+    /* Trend bars */
+    .trend-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 100px;
+      padding: 8px 0;
+    }
+
+    .trend-bar {
+      flex: 1;
+      background: var(--color-primary);
+      border-radius: 3px 3px 0 0;
+      opacity: .7;
+      transition: opacity var(--transition-fast);
+      min-height: 4px;
+      position: relative;
+    }
+
+    .trend-bar:hover {
+      opacity: 1;
+    }
+
+    .trend-bar-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: var(--color-text-tertiary);
+      white-space: nowrap;
+    }
+
+    .trend-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 28px;
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+
+    /* Session table name */
+    .session-name {
+      font-weight: 500;
+      color: var(--color-text);
+      margin-bottom: 2px;
+    }
+
+    .session-agent {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+
+    .session-name-link {
+      color: var(--color-primary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .session-name-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== App Layout ===== -->
+  <div class="app-layout">
+
+    <!-- ===== Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">C</div>
+        <span class="sidebar-logo-text">CyberPal</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 导航分组 -->
+        <div class="nav-group">
+          <div class="nav-group-title">导航</div>
+          <a href="#" class="nav-item active">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+            <span>Agent</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>会话</span>
+            <span class="badge">5</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>消费</span>
+          </a>
+        </div>
+
+        <!-- 系统分组 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>团队</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>设置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <div class="topbar-breadcrumb">
+            <span class="current">控制台</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>本月用量</span>
+            <strong>128.5K</strong>
+            <span>tokens</span>
+            <span style="margin:0 4px;color:var(--color-border);">|</span>
+            <span>费用</span>
+            <strong>$12.85</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="user-avatar" title="用户设置">王</div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>控制台</h1>
+            <p>欢迎回来，王小明</p>
+          </div>
+          <div class="page-header-right">
+            <button class="btn btn-primary btn-sm" onclick="CyberPal.placeholder()">创建 Agent</button>
+            <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">发起会话</button>
+          </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <!-- Agent 总数 -->
+          <div class="stat-card">
+            <div class="stat-card-icon blue">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">Agent 总数</div>
+              <div class="stat-card-value">12</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>较上月 +20%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 活跃会话 -->
+          <div class="stat-card">
+            <div class="stat-card-icon green">
+              <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">活跃会话</div>
+              <div class="stat-card-value">48</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>较上月 +12%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 本月 Token -->
+          <div class="stat-card">
+            <div class="stat-card-icon purple">
+              <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">本月 Token</div>
+              <div class="stat-card-value">128.5K</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>较上月 +35%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 本月费用 -->
+          <div class="stat-card">
+            <div class="stat-card-icon orange">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">本月费用</div>
+              <div class="stat-card-value">$12.85</div>
+              <div class="stat-card-change down">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+                <span>较上月 -8%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="two-col">
+
+          <!-- Left: Recent Sessions -->
+          <div class="card">
+            <div class="card-header">
+              <h3>最近会话</h3>
+              <a href="#" class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()">查看全部</a>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>会话名称</th>
+                    <th>Agent</th>
+                    <th>状态</th>
+                    <th>时间</th>
+                    <th>Token</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="session-name">
+                        <a class="session-name-link" onclick="CyberPal.placeholder()">代码审查 - 用户模块</a>
+                      </div>
+                      <div class="session-agent">针对用户登录模块进行安全检查</div>
+                    </td>
+                    <td>Code Review Agent</td>
+                    <td><span class="badge badge-success">已完成</span></td>
+                    <td class="col-time">07-22 14:30</td>
+                    <td class="col-id">2.4K</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="session-name">
+                        <a class="session-name-link" onclick="CyberPal.placeholder()">数据分析 - Q2 报表</a>
+                      </div>
+                      <div class="session-agent">分析第二季度销售数据</div>
+                    </td>
+                    <td>Data Analyst Agent</td>
+                    <td><span class="badge badge-warning">进行中</span></td>
+                    <td class="col-time">07-22 11:15</td>
+                    <td class="col-id">8.1K</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="session-name">
+                        <a class="session-name-link" onclick="CyberPal.placeholder()">文案生成 - 产品介绍</a>
+                      </div>
+                      <div class="session-agent">为新品发布会撰写产品文案</div>
+                    </td>
+                    <td>Content Writer</td>
+                    <td><span class="badge badge-success">已完成</span></td>
+                    <td class="col-time">07-21 16:45</td>
+                    <td class="col-id">5.7K</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="session-name">
+                        <a class="session-name-link" onclick="CyberPal.placeholder()">API 文档生成</a>
+                      </div>
+                      <div class="session-agent">根据 Swagger 生成接口文档</div>
+                    </td>
+                    <td>Doc Generator</td>
+                    <td><span class="badge badge-success">已完成</span></td>
+                    <td class="col-time">07-21 09:20</td>
+                    <td class="col-id">3.2K</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="session-name">
+                        <a class="session-name-link" onclick="CyberPal.placeholder()">故障排查 - 支付回调</a>
+                      </div>
+                      <div class="session-agent">排查微信支付回调异常问题</div>
+                    </td>
+                    <td>Debug Assistant</td>
+                    <td><span class="badge badge-danger">异常</span></td>
+                    <td class="col-time">07-20 18:30</td>
+                    <td class="col-id">1.9K</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div style="display:flex;flex-direction:column;gap:24px;">
+
+            <!-- Quick Actions -->
+            <div class="card">
+              <div class="card-header">
+                <h3>快捷入口</h3>
+              </div>
+              <div class="card-body">
+                <div class="quick-actions">
+                  <a class="quick-action-card" onclick="CyberPal.placeholder()">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>创建 Agent</span>
+                  </a>
+                  <a class="quick-action-card" onclick="CyberPal.placeholder()">
+                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>发起会话</span>
+                  </a>
+                  <a class="quick-action-card" onclick="CyberPal.placeholder()">
+                    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>查看用量</span>
+                  </a>
+                  <a class="quick-action-card" onclick="CyberPal.placeholder()">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>平台设置</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Usage Trend -->
+            <div class="card">
+              <div class="card-header">
+                <h3>用量趋势</h3>
+                <span class="text-xs text-tertiary">近 7 天 Token 消耗</span>
+              </div>
+              <div class="card-body">
+                <div class="trend-bars">
+                  <div class="trend-bar" style="height:40%;"><span class="trend-bar-label">7/16</span></div>
+                  <div class="trend-bar" style="height:55%;"><span class="trend-bar-label">7/17</span></div>
+                  <div class="trend-bar" style="height:70%;"><span class="trend-bar-label">7/18</span></div>
+                  <div class="trend-bar" style="height:35%;"><span class="trend-bar-label">7/19</span></div>
+                  <div class="trend-bar" style="height:85%;"><span class="trend-bar-label">7/20</span></div>
+                  <div class="trend-bar" style="height:60%;"><span class="trend-bar-label">7/21</span></div>
+                  <div class="trend-bar" style="height:90%;"><span class="trend-bar-label">7/22</span></div>
+                </div>
+                <div class="trend-legend">
+                  <span>7/16</span>
+                  <span style="color:var(--color-text-secondary);font-weight:500;">日均 18.4K tokens</span>
+                  <span>7/22</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // Sidebar nav item click
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          if (!this.classList.contains('active')) {
+            CyberPal.placeholder();
+          }
+          e.preventDefault();
+        });
+      });
+
+      // User avatar click
+      document.querySelector('.user-avatar').addEventListener('click', () => {
+        CyberPal.placeholder();
+      });
+    })();
+  </script>
+
+</body>
+</html>

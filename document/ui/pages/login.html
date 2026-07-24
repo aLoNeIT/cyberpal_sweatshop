@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal - 登录</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>C</text></svg>">
+
+  <!-- CyberPal Styles -->
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .login-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 24px;
+    }
+
+    .login-tab {
+      flex: 1;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-fast);
+      user-select: none;
+      text-align: center;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: var(--font-ui);
+    }
+
+    .login-tab:hover {
+      color: var(--color-primary);
+    }
+
+    .login-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+
+    .login-form {
+      display: none;
+    }
+
+    .login-form.active {
+      display: block;
+    }
+
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon .form-input {
+      padding-left: 38px;
+    }
+
+    .input-with-icon svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      stroke: var(--color-text-tertiary);
+      fill: none;
+      stroke-width: 1.6;
+      pointer-events: none;
+      transition: stroke var(--transition-fast);
+    }
+
+    .input-with-icon .form-input:focus + svg,
+    .input-with-icon .form-input:focus ~ svg {
+      stroke: var(--color-primary);
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      stroke: var(--color-text-tertiary);
+      fill: none;
+      stroke-width: 1.6;
+      pointer-events: none;
+    }
+
+    .btn-loading {
+      position: relative;
+      pointer-events: none;
+    }
+
+    .btn-loading .btn-text {
+      visibility: hidden;
+    }
+
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      stroke: var(--color-text-tertiary);
+      fill: none;
+      stroke-width: 1.6;
+      transition: stroke var(--transition-fast);
+    }
+
+    .password-toggle:hover {
+      stroke: var(--color-text-secondary);
+    }
+
+    .error-message {
+      font-size: 12px;
+      color: var(--color-danger);
+      margin-top: 4px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+  </style>
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="login-logo">
+      <div class="login-logo-icon">C</div>
+      <span class="login-logo-text">CyberPal</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="login-tabs">
+      <button class="login-tab active" data-tab="login">登录</button>
+      <button class="login-tab" data-tab="register">注册</button>
+    </div>
+
+    <!-- Login Form -->
+    <form class="login-form active" id="form-login" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="login-email">邮箱</label>
+        <div class="input-with-icon">
+          <input type="email" class="form-input" id="login-email" placeholder="请输入邮箱地址" autocomplete="email">
+          <svg viewBox="0 0 24 24" class="input-icon"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/><path d="M22 4L12 13 2 4" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="error-message" id="login-email-error"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="login-password">密码</label>
+        <div class="input-with-icon" style="position:relative;">
+          <input type="password" class="form-input" id="login-password" placeholder="请输入密码" autocomplete="current-password" style="padding-right:38px;">
+          <svg viewBox="0 0 24 24" class="input-icon"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg class="password-toggle" id="toggle-login-password" viewBox="0 0 24 24" style="right:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;cursor:pointer;stroke:var(--color-text-tertiary);fill:none;stroke-width:1.6;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="error-message" id="login-password-error"></div>
+      </div>
+      <a href="#" class="forgot-link login-card .forgot-link" style="display:block;text-align:right;font-size:13px;margin-top:4px;margin-bottom:20px;">忘记密码？</a>
+      <button type="submit" class="btn btn-primary btn-lg" id="btn-login" style="width:100%;height:44px;">
+        <span class="btn-text">登 录</span>
+      </button>
+    </form>
+
+    <!-- Register Form -->
+    <form class="login-form" id="form-register" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="register-email">邮箱</label>
+        <div class="input-with-icon">
+          <input type="email" class="form-input" id="register-email" placeholder="请输入邮箱地址" autocomplete="email">
+          <svg viewBox="0 0 24 24" class="input-icon"><rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/><path d="M22 4L12 13 2 4" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="error-message" id="register-email-error"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="register-password">密码</label>
+        <div class="input-with-icon" style="position:relative;">
+          <input type="password" class="form-input" id="register-password" placeholder="至少 8 位字符" autocomplete="new-password" style="padding-right:38px;">
+          <svg viewBox="0 0 24 24" class="input-icon"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg class="password-toggle" id="toggle-register-password" viewBox="0 0 24 24" style="right:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;cursor:pointer;stroke:var(--color-text-tertiary);fill:none;stroke-width:1.6;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="error-message" id="register-password-error"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="register-confirm">确认密码</label>
+        <div class="input-with-icon" style="position:relative;">
+          <input type="password" class="form-input" id="register-confirm" placeholder="请再次输入密码" autocomplete="new-password" style="padding-right:38px;">
+          <svg viewBox="0 0 24 24" class="input-icon"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <div class="error-message" id="register-confirm-error"></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" id="btn-register" style="width:100%;height:44px;">
+        <span class="btn-text">注 册</span>
+      </button>
+    </form>
+
+    <!-- Footer Switch -->
+    <div class="login-footer" id="login-footer">
+      <span>还没有账号？</span><a href="#" id="link-to-register">立即注册</a>
+    </div>
+    <div class="login-footer hidden" id="register-footer">
+      <span>已有账号？</span><a href="#" id="link-to-login">立即登录</a>
+    </div>
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ===== Tab Switching =====
+      const tabs = document.querySelectorAll('.login-tab');
+      const loginForm = document.getElementById('form-login');
+      const registerForm = document.getElementById('form-register');
+      const loginFooter = document.getElementById('login-footer');
+      const registerFooter = document.getElementById('register-footer');
+
+      function switchTab(tabName) {
+        tabs.forEach(t => t.classList.remove('active'));
+        loginForm.classList.remove('active');
+        registerForm.classList.remove('active');
+        loginFooter.classList.add('hidden');
+        registerFooter.classList.add('hidden');
+
+        if (tabName === 'login') {
+          document.querySelector('[data-tab="login"]').classList.add('active');
+          loginForm.classList.add('active');
+          loginFooter.classList.remove('hidden');
+          clearErrors('login');
+        } else {
+          document.querySelector('[data-tab="register"]').classList.add('active');
+          registerForm.classList.add('active');
+          registerFooter.classList.remove('hidden');
+          clearErrors('register');
+        }
+      }
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+      });
+
+      document.getElementById('link-to-register').addEventListener('click', e => {
+        e.preventDefault();
+        switchTab('register');
+      });
+
+      document.getElementById('link-to-login').addEventListener('click', e => {
+        e.preventDefault();
+        switchTab('login');
+      });
+
+      // ===== Password Toggle =====
+      function setupPasswordToggle(toggleId, inputId) {
+        const toggle = document.getElementById(toggleId);
+        const input = document.getElementById(inputId);
+        const eyeOpen = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        const eyeOff = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+        toggle.addEventListener('click', () => {
+          if (input.type === 'password') {
+            input.type = 'text';
+            toggle.innerHTML = eyeOff;
+          } else {
+            input.type = 'password';
+            toggle.innerHTML = eyeOpen;
+          }
+        });
+      }
+
+      setupPasswordToggle('toggle-login-password', 'login-password');
+      setupPasswordToggle('toggle-register-password', 'register-password');
+
+      // ===== Validation =====
+      function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
+      function showError(prefix, field, msg) {
+        const el = document.getElementById(prefix + '-' + field + '-error');
+        el.textContent = msg;
+        el.classList.add('show');
+        document.getElementById(prefix + '-' + field).classList.add('error');
+      }
+
+      function clearError(prefix, field) {
+        const el = document.getElementById(prefix + '-' + field + '-error');
+        el.textContent = '';
+        el.classList.remove('show');
+        document.getElementById(prefix + '-' + field).classList.remove('error');
+      }
+
+      function clearErrors(prefix) {
+        const fields = prefix === 'login' ? ['email', 'password'] : ['email', 'password', 'confirm'];
+        fields.forEach(f => clearError(prefix, f));
+      }
+
+      function setButtonLoading(btn, loading) {
+        if (loading) {
+          btn.classList.add('btn-loading');
+          btn.disabled = true;
+        } else {
+          btn.classList.remove('btn-loading');
+          btn.disabled = false;
+        }
+      }
+
+      // ===== Login Submit =====
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        clearErrors('login');
+
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+        let valid = true;
+
+        if (!email) {
+          showError('login', 'email', '请输入邮箱地址');
+          valid = false;
+        } else if (!isValidEmail(email)) {
+          showError('login', 'email', '邮箱格式不正确');
+          valid = false;
+        }
+
+        if (!password) {
+          showError('login', 'password', '请输入密码');
+          valid = false;
+        }
+
+        if (!valid) return;
+
+        const btn = document.getElementById('btn-login');
+        setButtonLoading(btn, true);
+
+        // Simulate API call
+        setTimeout(() => {
+          setButtonLoading(btn, false);
+          CyberPal.Toast.show('登录成功，欢迎回来！', 'success');
+        }, 1200);
+      });
+
+      // ===== Register Submit =====
+      registerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        clearErrors('register');
+
+        const email = document.getElementById('register-email').value.trim();
+        const password = document.getElementById('register-password').value;
+        const confirm = document.getElementById('register-confirm').value;
+        let valid = true;
+
+        if (!email) {
+          showError('register', 'email', '请输入邮箱地址');
+          valid = false;
+        } else if (!isValidEmail(email)) {
+          showError('register', 'email', '邮箱格式不正确');
+          valid = false;
+        }
+
+        if (!password) {
+          showError('register', 'password', '请输入密码');
+          valid = false;
+        } else if (password.length < 8) {
+          showError('register', 'password', '密码长度不能少于 8 位');
+          valid = false;
+        }
+
+        if (!confirm) {
+          showError('register', 'confirm', '请确认密码');
+          valid = false;
+        } else if (password && confirm !== password) {
+          showError('register', 'confirm', '两次输入的密码不一致');
+          valid = false;
+        }
+
+        if (!valid) return;
+
+        const btn = document.getElementById('btn-register');
+        setButtonLoading(btn, true);
+
+        // Simulate API call
+        setTimeout(() => {
+          setButtonLoading(btn, false);
+          CyberPal.Toast.show('注册成功！请登录', 'success');
+          switchTab('login');
+        }, 1200);
+      });
+
+      // ===== Real-time validation clear on input =====
+      document.getElementById('login-email').addEventListener('input', () => clearError('login', 'email'));
+      document.getElementById('login-password').addEventListener('input', () => clearError('login', 'password'));
+      document.getElementById('register-email').addEventListener('input', () => clearError('register', 'email'));
+      document.getElementById('register-password').addEventListener('input', () => clearError('register', 'password'));
+      document.getElementById('register-confirm').addEventListener('input', () => clearError('register', 'confirm'));
+
+      // ===== Forgot Password =====
+      document.querySelector('.forgot-link').addEventListener('click', function(e) {
+        e.preventDefault();
+        CyberPal.Toast.show('密码重置功能开发中，请联系管理员', 'info');
+      });
+
+    })();
+  </script>
+
+</body>
+</html>

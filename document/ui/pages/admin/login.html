@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - 管理后台登录</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%238B5CF6'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='18'>A</text></svg>">
+
+  <!-- CyberPal Styles -->
+  <link rel="stylesheet" href="../../css/style.css">
+
+  <style>
+    /* Admin top tag */
+    .admin-tag {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    .admin-tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-secondary);
+      background: rgba(139,92,246,.1);
+      border: 1px solid rgba(139,92,246,.2);
+      border-radius: var(--radius-pill);
+      letter-spacing: 0.5px;
+    }
+
+    .admin-tag-badge svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--color-secondary);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Input with icon */
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon .form-input {
+      padding-left: 38px;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      stroke: var(--color-text-tertiary);
+      fill: none;
+      stroke-width: 1.6;
+      pointer-events: none;
+    }
+
+    /* Password toggle */
+    .password-toggle {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      stroke: var(--color-text-tertiary);
+      fill: none;
+      stroke-width: 1.6;
+      transition: stroke var(--transition-fast);
+    }
+
+    .password-toggle:hover {
+      stroke: var(--color-text-secondary);
+    }
+
+    /* Button loading */
+    .btn-loading {
+      position: relative;
+      pointer-events: none;
+    }
+
+    .btn-loading .btn-text {
+      visibility: hidden;
+    }
+
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error message */
+    .error-message {
+      font-size: 12px;
+      color: var(--color-danger);
+      margin-top: 4px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+  </style>
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+
+    <!-- Admin Tag -->
+    <div class="admin-tag">
+      <span class="admin-tag-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Admin 管理后台
+      </span>
+    </div>
+
+    <!-- Logo -->
+    <div class="login-logo">
+      <div class="login-logo-icon" style="background:var(--color-secondary);">A</div>
+      <span class="login-logo-text">CyberPal Admin</span>
+    </div>
+
+    <p class="subtitle">平台管理后台</p>
+
+    <!-- Login Form -->
+    <form id="form-login" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="account">管理员账号</label>
+        <div class="input-with-icon">
+          <input type="text" class="form-input" id="account" placeholder="请输入管理员账号" autocomplete="username">
+          <svg class="input-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <div class="error-message" id="account-error"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">密码</label>
+        <div class="input-with-icon" style="position:relative;">
+          <input type="password" class="form-input" id="password" placeholder="请输入密码" autocomplete="current-password" style="padding-right:38px;">
+          <svg class="input-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg class="password-toggle" id="toggle-password" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="error-message" id="password-error"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" id="btn-login" style="width:100%;height:44px;">
+        <span class="btn-text">登 录</span>
+      </button>
+    </form>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <span>仅限管理员登录 · 用户请前往</span>
+      <a href="../login.html" style="margin-left:4px;">用户端</a>
+    </div>
+  </div>
+
+  <script src="../../js/icons.js"></script>
+  <script src="../../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ===== Password Toggle =====
+      const toggleBtn = document.getElementById('toggle-password');
+      const passwordInput = document.getElementById('password');
+      const eyeOpen = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      const eyeOff = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+      toggleBtn.addEventListener('click', function() {
+        if (passwordInput.type === 'password') {
+          passwordInput.type = 'text';
+          toggleBtn.innerHTML = eyeOff;
+        } else {
+          passwordInput.type = 'password';
+          toggleBtn.innerHTML = eyeOpen;
+        }
+      });
+
+      // ===== Validation =====
+      function showError(field, msg) {
+        var el = document.getElementById(field + '-error');
+        el.textContent = msg;
+        el.classList.add('show');
+        document.getElementById(field).classList.add('error');
+      }
+
+      function clearError(field) {
+        var el = document.getElementById(field + '-error');
+        el.textContent = '';
+        el.classList.remove('show');
+        document.getElementById(field).classList.remove('error');
+      }
+
+      function setButtonLoading(loading) {
+        var btn = document.getElementById('btn-login');
+        if (loading) {
+          btn.classList.add('btn-loading');
+          btn.disabled = true;
+        } else {
+          btn.classList.remove('btn-loading');
+          btn.disabled = false;
+        }
+      }
+
+      // ===== Form Submit =====
+      document.getElementById('form-login').addEventListener('submit', function(e) {
+        e.preventDefault();
+        clearError('account');
+        clearError('password');
+
+        var account = document.getElementById('account').value.trim();
+        var password = document.getElementById('password').value;
+        var valid = true;
+
+        if (!account) {
+          showError('account', '请输入管理员账号');
+          valid = false;
+        }
+
+        if (!password) {
+          showError('password', '请输入密码');
+          valid = false;
+        }
+
+        if (!valid) return;
+
+        setButtonLoading(true);
+
+        // Simulate API call
+        setTimeout(function() {
+          setButtonLoading(false);
+          CyberPal.Toast.show('登录成功，跳转至管理后台...', 'success');
+        }, 1200);
+      });
+
+      // ===== Real-time clear on input =====
+      document.getElementById('account').addEventListener('input', function() {
+        clearError('account');
+      });
+
+      document.getElementById('password').addEventListener('input', function() {
+        clearError('password');
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat - CyberPal</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  /* Agent Selector */
+  .agent-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--color-text);
+    transition: all var(--transition-fast);
+  }
+  .agent-selector:hover { border-color: var(--color-primary); }
+  .agent-selector .agent-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    flex-shrink: 0;
+  }
+  .agent-selector select {
+    border: none; background: transparent;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--color-text);
+    cursor: pointer; outline: none;
+  }
+  /* Chat Toolbar */
+  .chat-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 8px 0;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+  .chat-toolbar .agent-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .chat-toolbar .token-count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+  /* Message content list */
+  .message-content ul {
+    padding-left: 16px;
+    margin: 8px 0;
+  }
+  .message-content ul li {
+    margin-bottom: 4px;
+  }
+  /* Session list item time */
+  .session-time {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+  }
+  /* Streaming message */
+  .streaming .message-content {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px rgba(22,119,255,.15);
+  }
+  /* Toast fix */
+  .tool-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: var(--radius-pill);
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+  /* Mobile sidebar overlay */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 99;
+  }
+  @media (max-width: 1279px) {
+    .sidebar-overlay.show { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">C</div>
+      <span class="sidebar-logo-text">CyberPal</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">工作台</div>
+        <a href="dashboard.html" class="nav-item">
+          <span id="icon-dashboard"></span> 控制台
+        </a>
+        <a href="chat.html" class="nav-item active">
+          <span id="icon-chat"></span> 会话
+        </a>
+        <a href="agents.html" class="nav-item">
+          <span id="icon-agent"></span> Agent 市场
+        </a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">管理</div>
+        <a href="sessions.html" class="nav-item">
+          <span id="icon-sessions"></span> 会话历史
+        </a>
+        <a href="billing.html" class="nav-item">
+          <span id="icon-billing"></span> 计费
+        </a>
+        <a href="team.html" class="nav-item">
+          <span id="icon-team"></span> 团队
+        </a>
+        <a href="settings.html" class="nav-item">
+          <span id="icon-settings"></span> 设置
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+
+    <!-- Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-trigger" id="menuTrigger">
+          <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div class="topbar-breadcrumb">会话 <span>/</span> <span class="current">新对话</span></div>
+        <div class="agent-selector" style="margin-left:16px">
+          <span class="agent-dot"></span>
+          <select id="agentSelect">
+            <option>默认助手</option>
+            <option>代码审查专家</option>
+            <option>数据分析师</option>
+            <option>文档助手</option>
+          </select>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-usage">
+          本月用量 <strong>$2.48</strong> / $50.00
+        </div>
+        <button class="theme-toggle" title="切换主题">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <div class="user-avatar" title="用户">WR</div>
+      </div>
+    </header>
+
+    <!-- Chat Content -->
+    <div class="app-content" style="padding:0;overflow:hidden">
+
+      <div class="chat-layout">
+
+        <!-- Left: Session List -->
+        <div class="chat-sidebar" id="chatSidebar">
+          <div class="chat-sidebar-header">
+            <h3>会话</h3>
+            <button class="btn btn-primary btn-sm" id="newChatBtn">
+              <span id="icon-plus-header"></span> 新建
+            </button>
+          </div>
+          <div class="chat-session-list" id="sessionList">
+            <!-- Session items injected by JS -->
+          </div>
+        </div>
+
+        <!-- Right: Chat Main -->
+        <div class="chat-main">
+
+          <!-- Messages Area -->
+          <div class="chat-messages" id="chatMessages">
+            <!-- User message 1 -->
+            <div class="message user">
+              <div class="message-avatar">W</div>
+              <div class="message-content">请帮我写一个 Python 脚本来批量处理 CSV 文件，需要支持去重和排序功能。</div>
+            </div>
+
+            <!-- AI reply 1 -->
+            <div class="message assistant">
+              <div class="message-avatar">AI</div>
+              <div class="message-content">
+                <p>好的，我来为你编写一个支持去重和排序的 CSV 批量处理脚本。</p>
+                <p style="margin-top:8px">以下是完整的实现代码：</p>
+<pre><code>import pandas as pd
+import glob
+import os
+
+def process_csv_files(input_dir, output_dir):
+    """批量处理CSV文件：读取、去重、排序并保存"""
+    files = glob.glob(os.path.join(input_dir, "*.csv"))
+    os.makedirs(output_dir, exist_ok=True)
+
+    for file_path in files:
+        df = pd.read_csv(file_path)
+        # 去除完全重复的行
+        df = df.drop_duplicates()
+        # 按第一列排序
+        df = df.sort_values(by=df.columns[0])
+        # 保存到输出目录
+        out_path = os.path.join(output_dir, os.path.basename(file_path))
+        df.to_csv(out_path, index=False)
+        print(f"Processed: {file_path} -> {out_path}")</code></pre>
+                <p style="margin-top:8px">使用方法：</p>
+                <ul>
+                  <li>将 CSV 文件放入 <code>input/</code> 目录</li>
+                  <li>运行脚本后将自动去重并按第一列排序</li>
+                  <li>处理后文件保存在 <code>output/</code> 目录</li>
+                  <li>支持 UTF-8 和 GBK 编码自动检测</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- User message 2 -->
+            <div class="message user">
+              <div class="message-avatar">W</div>
+              <div class="message-content">能支持多线程并行处理吗？文件数量比较多的时候单线程太慢了。</div>
+            </div>
+
+            <!-- AI reply 2 with Thinking block -->
+            <div class="message assistant">
+              <div class="message-avatar">AI</div>
+              <div class="message-content">
+                <p>可以优化为多线程版本。让我先分析一下这个需求。</p>
+                <div class="thinking-block" onclick="this.classList.toggle('open')">
+                  <div class="thinking-header">
+                    <span class="thinking-arrow">▶</span>
+                    <span>💡 思考过程</span>
+                    <span style="font-size:11px;color:var(--color-text-tertiary);margin-left:auto">点击展开</span>
+                  </div>
+                  <div class="thinking-body">1. 用户需要多线程并行处理 CSV 文件
+2. pandas 的 drop_duplicates 和 sort_values 是 CPU 密集型操作
+3. Python GIL 对 pandas 操作影响有限（大部分在 C 层）
+4. 推荐使用 ThreadPoolExecutor，因为 pandas 底层是 C 扩展
+5. 需要控制并发数避免内存溢出——大文件并行可能导致 OOM
+6. 结论：使用线程池 + 信号量控制并发数 = 4</div>
+                </div>
+                <p style="margin-top:8px">这里是多线程版本：</p>
+<pre><code>from concurrent.futures import ThreadPoolExecutor
+
+def process_batch(input_dir, output_dir, max_workers=4):
+    files = glob.glob(os.path.join(input_dir, "*.csv"))
+    os.makedirs(output_dir, exist_ok=True)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(process_csv_files, f, output_dir): f
+            for f in files
+        }
+        for future in futures:
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Error: {futures[future]}: {e}")</code></pre>
+              </div>
+            </div>
+
+            <!-- User message 3 -->
+            <div class="message user">
+              <div class="message-avatar">W</div>
+              <div class="message-content">帮我查一下这个脚本能否处理 100 万行级别的 CSV 文件。</div>
+            </div>
+
+            <!-- AI reply 3 with Tool Call block -->
+            <div class="message assistant">
+              <div class="message-avatar">AI</div>
+              <div class="message-content">
+                <p>让我查询一下 pandas 在大文件处理方面的性能数据。</p>
+                <div class="tool-block" onclick="this.classList.toggle('open')">
+                  <div class="tool-header">
+                    <span class="thinking-arrow">▶</span>
+                    <span>🔧 search_performance</span>
+                    <span class="tool-badge">success</span>
+                    <span style="font-size:11px;color:var(--color-text-tertiary);margin-left:auto">点击展开</span>
+                  </div>
+                  <div class="tool-body">{
+  "tool": "search_performance",
+  "params": {
+    "query": "pandas CSV drop_duplicates sort_values 1 million rows performance",
+    "source": "web_search"
+  },
+  "result": {
+    "rows_processed": 1000000,
+    "columns": 12,
+    "file_size_mb": 84.3,
+    "read_time_sec": 2.1,
+    "drop_duplicates_time_sec": 0.8,
+    "sort_values_time_sec": 1.2,
+    "total_time_sec": 4.1,
+    "memory_peak_mb": 512,
+    "recommendation": "推荐使用 chunked reads + 增量处理策略"
+  }
+}</div>
+                </div>
+                <p style="margin-top:8px">根据查询结果，pandas 处理 100 万行 CSV 完全可行。单文件处理约需 4 秒，内存峰值约 512MB。建议：</p>
+                <ul>
+                  <li>确保机器至少有 2GB 可用内存</li>
+                  <li>大文件建议使用 <code>chunksize</code> 分块读取</li>
+                  <li>多线程时建议 <code>max_workers=2</code> 避免内存溢出</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Streaming message (initially hidden) -->
+            <div class="message assistant streaming" id="streamingMsg" style="display:none">
+              <div class="message-avatar">AI</div>
+              <div class="message-content" id="streamingContent"></div>
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <div class="chat-input-area">
+            <div class="chat-toolbar">
+              <span class="agent-label">
+                <span class="agent-dot" style="width:7px;height:7px;border-radius:50%;background:var(--color-primary)"></span>
+                默认助手
+              </span>
+              <span class="token-count">Tokens: 0</span>
+            </div>
+            <div class="chat-input-wrap">
+              <textarea class="chat-input" id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行..." rows="1"></textarea>
+              <button class="chat-send-btn" id="sendBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+
+        </div><!-- /chat-main -->
+
+      </div><!-- /chat-layout -->
+
+    </div><!-- /app-content -->
+
+  </main><!-- /app-main -->
+</div><!-- /app-layout -->
+
+<script src="../js/icons.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ===== Render Nav Icons =====
+  document.getElementById('icon-dashboard').innerHTML = Icon.get('dashboard');
+  document.getElementById('icon-chat').innerHTML = Icon.get('chat');
+  document.getElementById('icon-agent').innerHTML = Icon.get('agent');
+  document.getElementById('icon-sessions').innerHTML = Icon.get('chat');
+  document.getElementById('icon-billing').innerHTML = Icon.get('billing');
+  document.getElementById('icon-team').innerHTML = Icon.get('team');
+  document.getElementById('icon-settings').innerHTML = Icon.get('settings');
+  document.getElementById('icon-plus-header').innerHTML = Icon.get('plus', 14);
+
+  // ===== Session List Data =====
+  var sessions = [
+    { title: 'CSV 批量处理脚本开发', time: '5分钟前' },
+    { title: 'React 组件性能优化方案讨论', time: '23分钟前' },
+    { title: 'API 接口设计评审', time: '1小时前' },
+    { title: '数据库查询优化：索引策略分析', time: '2小时前' },
+    { title: 'Kubernetes 集群部署问题排查', time: '3小时前' },
+    { title: '日志系统架构设计讨论', time: '昨天 14:30' },
+    { title: '单元测试覆盖率提升方案', time: '昨天 10:15' },
+    { title: 'Git 工作流最佳实践', time: '前天 16:45' },
+    { title: '微服务通信协议选型：gRPC vs REST', time: '前天 09:20' },
+    { title: '前端状态管理方案调研', time: '3天前' }
+  ];
+
+  var activeSessionIndex = 0;
+
+  function renderSessionList() {
+    var list = document.getElementById('sessionList');
+    var html = '';
+    for (var i = 0; i < sessions.length; i++) {
+      html += '<div class="chat-session-item' + (i === activeSessionIndex ? ' active' : '') + '" data-index="' + i + '">';
+      html += '<div class="session-title">' + sessions[i].title + '</div>';
+      html += '<div class="session-time">' + sessions[i].time + '</div>';
+      html += '</div>';
+    }
+    list.innerHTML = html;
+
+    // Bind click
+    list.querySelectorAll('.chat-session-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-index'));
+        setActiveSession(idx);
+      });
+    });
+  }
+
+  function setActiveSession(idx) {
+    activeSessionIndex = idx;
+    document.querySelectorAll('.chat-session-item').forEach(function(item) {
+      item.classList.remove('active');
+    });
+    var target = document.querySelector('.chat-session-item[data-index="' + idx + '"]');
+    if (target) target.classList.add('active');
+  }
+
+  renderSessionList();
+
+  // ===== New Chat Button =====
+  document.getElementById('newChatBtn').addEventListener('click', function() {
+    var newTitle = '新会话 ' + (sessions.length + 1);
+    sessions.unshift({ title: newTitle, time: '刚刚' });
+    activeSessionIndex = 0;
+    renderSessionList();
+    CyberPal.Toast.show('已创建新会话', 'success');
+  });
+
+  // ===== Chat Input =====
+  var chatInput = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('sendBtn');
+  var chatMessages = document.getElementById('chatMessages');
+  var streamingMsg = document.getElementById('streamingMsg');
+  var streamingContent = document.getElementById('streamingContent');
+  var tokenCountEl = document.querySelector('.token-count');
+
+  // Auto-resize textarea
+  chatInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+    // Token count simulation
+    var chars = this.value.length;
+    var tokens = Math.ceil(chars / 2.5);
+    tokenCountEl.textContent = 'Tokens: ' + tokens;
+  });
+
+  // Enter to send, Shift+Enter for newline
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  function sendMessage() {
+    var text = chatInput.value.trim();
+    if (!text) return;
+
+    // Add user message
+    var userMsgDiv = document.createElement('div');
+    userMsgDiv.className = 'message user';
+    userMsgDiv.innerHTML = '<div class="message-avatar">W</div><div class="message-content">' + escapeHtml(text) + '</div>';
+    chatMessages.insertBefore(userMsgDiv, streamingMsg);
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    tokenCountEl.textContent = 'Tokens: 0';
+
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Simulate streaming response
+    simulateStreaming(text);
+  }
+
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function simulateStreaming(userText) {
+    var response = '收到你的消息：「' + userText.substring(0, 30) + (userText.length > 30 ? '...' : '') + '」。\n\n这是一个模拟的流式输出响应，展示了 AI 逐字输出的效果。在实际环境中，这里会通过 SSE 或 WebSocket 实时推送 AI 的生成结果。\n\n当前使用的模型会逐步生成每一个 token，带来更流畅的交互体验。';
+    streamingMsg.style.display = 'flex';
+    streamingContent.innerHTML = '';
+
+    var i = 0;
+    var interval = setInterval(function() {
+      if (i < response.length) {
+        streamingContent.textContent += response.charAt(i);
+        i++;
+        // Append cursor after each char
+        var cursor = streamingContent.querySelector('.cursor-blink');
+        if (!cursor) {
+          var span = document.createElement('span');
+          span.className = 'cursor-blink';
+          span.textContent = '\u258D';
+          streamingContent.appendChild(span);
+        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } else {
+        clearInterval(interval);
+        // Remove cursor and keep text
+        var c = streamingContent.querySelector('.cursor-blink');
+        if (c) c.remove();
+        streamingMsg.classList.remove('streaming');
+        // Create a new streaming placeholder for next message
+        streamingMsg = document.createElement('div');
+        streamingMsg.className = 'message assistant streaming';
+        streamingMsg.id = 'streamingMsg';
+        streamingMsg.style.display = 'none';
+        streamingMsg.innerHTML = '<div class="message-avatar">AI</div><div class="message-content" id="streamingContent"></div>';
+        chatMessages.appendChild(streamingMsg);
+        streamingContent = streamingMsg.querySelector('#streamingContent');
+      }
+    }, 30);
+  }
+
+  // ===== Mobile Sidebar Toggle =====
+  var menuTrigger = document.getElementById('menuTrigger');
+  var appSidebar = document.getElementById('appSidebar');
+  var sidebarOverlay = document.getElementById('sidebarOverlay');
+  var chatSidebar = document.getElementById('chatSidebar');
+
+  menuTrigger.addEventListener('click', function() {
+    appSidebar.classList.toggle('open');
+    sidebarOverlay.classList.toggle('show');
+  });
+
+  sidebarOverlay.addEventListener('click', function() {
+    appSidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('show');
+  });
+
+  // ===== Agent Select Change =====
+  document.getElementById('agentSelect').addEventListener('change', function() {
+    var label = document.querySelector('.agent-label');
+    label.innerHTML = '<span class="agent-dot" style="width:7px;height:7px;border-radius:50%;background:var(--color-primary)"></span>' + this.value;
+    CyberPal.Toast.show('已切换至「' + this.value + '」', 'info');
+  });
+
+  // ===== Scroll to bottom on load =====
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>消费明细 - CyberPal</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .source-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .source-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .source-card-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .source-card-icon.native { background: var(--color-success-bg); color: var(--color-success); }
+  .source-card-icon.estimate { background: rgba(139,92,246,.12); color: var(--color-secondary); }
+  .source-card-icon.api { background: var(--color-info-bg); color: var(--color-info); }
+  .source-card-info { flex: 1; min-width: 0; }
+  .source-card-label {
+    font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px;
+  }
+  .source-card-value {
+    font-size: 20px; font-weight: 700; color: var(--color-text);
+    font-family: var(--font-mono); margin-bottom: 4px;
+  }
+  .source-card-pct {
+    font-size: 12px; color: var(--color-text-tertiary);
+  }
+  .section-divider { margin-bottom: 24px; }
+  .balance-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .balance-icon {
+    width: 56px; height: 56px;
+    margin: 0 auto 16px;
+    background: var(--color-surface-2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .balance-icon svg { width: 28px; height: 28px; stroke: var(--color-text-tertiary); fill: none; stroke-width: 1.5; }
+  .balance-placeholder {
+    font-size: 14px; color: var(--color-text-tertiary);
+    margin-bottom: 16px;
+  }
+  .balance-actions { display: flex; gap: 8px; justify-content: center; }
+  .mono-cell { font-family: var(--font-mono); font-size: 13px; }
+  .source-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+  .source-badge.usage { background: var(--color-success-bg); color: var(--color-success); }
+  .source-badge.estimate { background: rgba(139,92,246,.12); color: var(--color-secondary); }
+  .source-badge.api { background: var(--color-info-bg); color: var(--color-info); }
+  @media (max-width: 767px) {
+    .source-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">CP</div>
+      <span class="sidebar-logo-text">CyberPal</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">主菜单</div>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          控制台
+        </a>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          Agent
+        </a>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          会话
+        </a>
+        <a class="nav-item active" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          消费明细
+        </a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">其他</div>
+        <a class="nav-item" href="settings.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          设置
+        </a>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          团队
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="app-main">
+    <!-- Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-trigger" aria-label="菜单">
+          <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-breadcrumb">
+          控制台 <span>/</span> <span class="current">消费明细</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-usage">
+          本月用量 <strong id="header-usage">128.5K</strong> tokens
+        </div>
+        <button class="theme-toggle" aria-label="切换主题">
+          <svg width="18" height="18" viewBox="0 0 24 24" class="icon-sun" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" class="icon-moon" style="display:none" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="user-avatar" title="用户">W</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="app-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>消费明细</h1>
+          <p>仅用量展示，不涉及扣费</p>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="filter-chips" id="period-chips">
+        <button class="filter-chip active" data-period="current">本月</button>
+        <button class="filter-chip" data-period="last">上月</button>
+        <button class="filter-chip" data-period="custom">自定义时间</button>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="stat-card-info">
+            <div class="stat-card-label">总 Token</div>
+            <div class="stat-card-value" id="stat-tokens">128,520</div>
+            <div class="stat-card-change up">+12.5% 较上月</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="stat-card-info">
+            <div class="stat-card-label">总费用 (USD)</div>
+            <div class="stat-card-value" id="stat-cost">$0.4285</div>
+            <div class="stat-card-change up">+8.3% 较上月</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="stat-card-info">
+            <div class="stat-card-label">会话数</div>
+            <div class="stat-card-value" id="stat-sessions">47</div>
+            <div class="stat-card-change up">+6 较上月</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billing Source Cards -->
+      <div class="card mb-3">
+        <div class="card-header"><h3>计费来源分布</h3></div>
+        <div class="card-body">
+          <div class="source-grid" id="source-grid">
+            <div class="source-card">
+              <div class="source-card-icon native">U</div>
+              <div class="source-card-info">
+                <div class="source-card-label">usage · 原生计费</div>
+                <div class="source-card-value" id="source-usage">$0.3250</div>
+                <div class="source-card-pct">占比 75.8%</div>
+              </div>
+            </div>
+            <div class="source-card">
+              <div class="source-card-icon estimate">E</div>
+              <div class="source-card-info">
+                <div class="source-card-label">estimate · 估算计费</div>
+                <div class="source-card-value" id="source-estimate">$0.0835</div>
+                <div class="source-card-pct">占比 19.5%</div>
+              </div>
+            </div>
+            <div class="source-card">
+              <div class="source-card-icon api">A</div>
+              <div class="source-card-info">
+                <div class="source-card-label">provider_api · 接口计费</div>
+                <div class="source-card-value" id="source-api">$0.0200</div>
+                <div class="source-card-pct">占比 4.7%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billing Details Table -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <h3>消费明细</h3>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto;">
+          <table class="data-table" id="billing-table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>会话标题</th>
+                <th>Model</th>
+                <th>Input Tokens</th>
+                <th>Output Tokens</th>
+                <th>Cache Read</th>
+                <th>Cache Write</th>
+                <th>估算费用 (USD)</th>
+                <th>数据来源</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer">
+          <div class="pagination">
+            <div class="pagination-info" id="page-info">共 6 条记录</div>
+            <div class="pagination-btns">
+              <button class="pagination-btn" disabled>&laquo;</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn" disabled>&raquo;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Balance / Recharge Placeholder -->
+      <div class="balance-card" id="balance-section">
+        <div class="balance-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="balance-placeholder">余额与充值功能开发中，敬请期待</div>
+        <div class="balance-actions">
+          <button class="btn btn-secondary" disabled onclick="CyberPal.placeholder()">充值</button>
+          <button class="btn btn-secondary" disabled onclick="CyberPal.placeholder()">查看账单</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Password Change Modal -->
+<div class="modal-overlay" id="password-modal" style="display:none;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>修改密码</h3>
+      <button class="modal-close" data-modal-close="password-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">旧密码</label>
+        <input type="password" class="form-input" placeholder="请输入旧密码">
+      </div>
+      <div class="form-group">
+        <label class="form-label">新密码</label>
+        <input type="password" class="form-input" placeholder="请输入新密码">
+      </div>
+      <div class="form-group">
+        <label class="form-label">确认新密码</label>
+        <input type="password" class="form-input" placeholder="请再次输入新密码">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="password-modal">取消</button>
+      <button class="btn btn-primary" onclick="CyberPal.placeholder()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/icons.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ===== Demo Data =====
+  var currentPeriodData = {
+    tokens: '128,520', cost: '$0.4285', sessions: '47',
+    sourceUsage: '$0.3250', sourceEstimate: '$0.0835', sourceApi: '$0.0200',
+    records: [
+      { time:'2026-07-21 14:30', title:'代码重构方案讨论', model:'Claude 4 Sonnet', input:'8,240', output:'3,120', cacheR:'2,100', cacheW:'0', cost:'$0.0280', source:'usage' },
+      { time:'2026-07-20 09:15', title:'API 接口设计评审', model:'GPT-4o', input:'12,500', output:'4,800', cacheR:'0', cacheW:'1,500', cost:'$0.0935', source:'usage' },
+      { time:'2026-07-19 16:42', title:'数据库迁移方案', model:'Claude 3.5 Sonnet', input:'6,800', output:'2,450', cacheR:'3,200', cacheW:'0', cost:'$0.0220', source:'usage' },
+      { time:'2026-07-18 11:08', title:'前端组件性能优化', model:'GPT-4o Mini', input:'18,200', output:'9,600', cacheR:'0', cacheW:'0', cost:'$0.0475', source:'estimate' },
+      { time:'2026-07-17 15:55', title:'安全漏洞修复方案', model:'Claude 4 Sonnet', input:'4,100', output:'1,800', cacheR:'0', cacheW:'800', cost:'$0.0835', source:'estimate' },
+      { time:'2026-07-16 08:20', title:'自动化部署脚本编写', model:'DeepSeek V3', input:'22,000', output:'11,500', cacheR:'5,000', cacheW:'2,000', cost:'$0.1540', source:'provider_api' }
+    ]
+  };
+
+  var lastPeriodData = {
+    tokens: '114,240', cost: '$0.3958', sessions: '41',
+    sourceUsage: '$0.3010', sourceEstimate: '$0.0775', sourceApi: '$0.0173',
+    records: [
+      { time:'2026-06-21 10:15', title:'微服务架构设计', model:'Claude 4 Sonnet', input:'7,500', output:'2,800', cacheR:'1,500', cacheW:'0', cost:'$0.0250', source:'usage' },
+      { time:'2026-06-18 14:30', title:'单元测试覆盖率提升', model:'GPT-4o', input:'11,200', output:'4,300', cacheR:'0', cacheW:'1,200', cost:'$0.0820', source:'usage' },
+      { time:'2026-06-15 09:00', title:'CI/CD 流水线优化', model:'Claude 3.5 Sonnet', input:'5,600', output:'2,100', cacheR:'2,800', cacheW:'0', cost:'$0.0185', source:'usage' },
+      { time:'2026-06-12 16:20', title:'用户权限模块重构', model:'GPT-4o Mini', input:'16,800', output:'8,200', cacheR:'0', cacheW:'0', cost:'$0.0400', source:'estimate' },
+      { time:'2026-06-09 11:45', title:'API 网关性能压测', model:'Claude 4 Sonnet', input:'3,800', output:'1,500', cacheR:'0', cacheW:'600', cost:'$0.0775', source:'estimate' },
+      { time:'2026-06-05 13:10', title:'数据仓库 ETL 脚本', model:'DeepSeek V3', input:'20,500', output:'10,200', cacheR:'4,500', cacheW:'1,800', cost:'$0.1528', source:'provider_api' }
+    ]
+  };
+
+  // ===== Render Table =====
+  function renderTable(data) {
+    var tbody = document.querySelector('#billing-table tbody');
+    tbody.innerHTML = '';
+    data.records.forEach(function(r) {
+      var sourceLabel = '', sourceClass = '';
+      if (r.source === 'usage') { sourceLabel = '原生计费'; sourceClass = 'usage'; }
+      else if (r.source === 'estimate') { sourceLabel = '估算计费'; sourceClass = 'estimate'; }
+      else { sourceLabel = '接口计费'; sourceClass = 'api'; }
+      tbody.innerHTML += '<tr>' +
+        '<td class="col-time">' + r.time + '</td>' +
+        '<td>' + r.title + '</td>' +
+        '<td>' + r.model + '</td>' +
+        '<td class="mono-cell">' + r.input + '</td>' +
+        '<td class="mono-cell">' + r.output + '</td>' +
+        '<td class="mono-cell">' + r.cacheR + '</td>' +
+        '<td class="mono-cell">' + r.cacheW + '</td>' +
+        '<td class="mono-cell">' + r.cost + '</td>' +
+        '<td><span class="source-badge ' + sourceClass + '">' + sourceLabel + '</span></td>' +
+        '</tr>';
+    });
+    document.getElementById('page-info').textContent = '共 ' + data.records.length + ' 条记录';
+  }
+
+  // ===== Update Stats =====
+  function updateStats(data) {
+    document.getElementById('stat-tokens').textContent = data.tokens;
+    document.getElementById('stat-cost').textContent = data.cost;
+    document.getElementById('stat-sessions').textContent = data.sessions;
+    document.getElementById('source-usage').textContent = data.sourceUsage;
+    document.getElementById('source-estimate').textContent = data.sourceEstimate;
+    document.getElementById('source-api').textContent = data.sourceApi;
+  }
+
+  // ===== Period Switch =====
+  function switchPeriod(name) {
+    var data = name === 'current' ? currentPeriodData : lastPeriodData;
+    updateStats(data);
+    renderTable(data);
+    document.querySelectorAll('#period-chips .filter-chip').forEach(function(c) {
+      c.classList.toggle('active', c.getAttribute('data-period') === name);
+    });
+  }
+
+  // ===== Theme Toggle Icon Update =====
+  function updateThemeIcon() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.querySelectorAll('.icon-sun').forEach(function(el) { el.style.display = isDark ? 'none' : ''; });
+    document.querySelectorAll('.icon-moon').forEach(function(el) { el.style.display = isDark ? '' : 'none'; });
+  }
+
+  // ===== Init =====
+  document.addEventListener('DOMContentLoaded', function() {
+    renderTable(currentPeriodData);
+    updateThemeIcon();
+
+    // Watch theme changes
+    var observer = new MutationObserver(updateThemeIcon);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Period chip clicks
+    document.querySelectorAll('#period-chips .filter-chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        var period = this.getAttribute('data-period');
+        if (period === 'custom') { CyberPal.placeholder(); return; }
+        switchPeriod(period);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

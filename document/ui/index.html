@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal SaaS - UI Demo 导航</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold' font-size='18'>C</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .demo-index {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+    .demo-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .demo-logo {
+      width: 56px; height: 56px;
+      background: var(--color-primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 26px;
+      margin: 0 auto 16px;
+    }
+    .demo-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .demo-header p {
+      color: var(--color-text-secondary);
+      font-size: 15px;
+    }
+    .demo-section {
+      margin-bottom: 32px;
+    }
+    .demo-section h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .page-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all var(--transition-normal);
+      cursor: pointer;
+    }
+    .page-card:hover {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    .page-card-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+    .page-card-icon.user { background: #e6f4ff; }
+    .page-card-icon.admin { background: rgba(139,92,246,.12); }
+    .page-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .page-card-info strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 2px;
+    }
+    .page-card-info span {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+    .page-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      margin-left: 6px;
+    }
+    .page-badge.mvp { background: var(--color-success-bg); color: var(--color-success); }
+    .page-badge.placeholder { background: var(--color-warning-bg); color: var(--color-warning); }
+    .page-badge.admin-tag { background: rgba(139,92,246,.12); color: var(--color-secondary); }
+  </style>
+</head>
+<body>
+
+<div class="demo-index">
+  <div class="demo-header">
+    <div class="demo-logo">C</div>
+    <h1>CyberPal SaaS · UI Demo</h1>
+    <p>基于 Ant Design 设计系统 | 覆盖用户端 + Admin 后台全部功能点</p>
+    <p style="margin-top:8px;font-size:13px;color:var(--color-text-tertiary);">
+      设计规范来源：<code>document/prd/03-ui-style-guide.md</code> |
+      需求来源：<code>document/prd/01-product-requirements.md</code>
+    </p>
+  </div>
+
+  <!-- 用户端页面 -->
+  <div class="demo-section">
+    <h2>🎯 用户端（User · app_type=4）</h2>
+    <div class="page-grid">
+      <a href="pages/login.html" class="page-card">
+        <div class="page-card-icon user">🔑</div>
+        <div class="page-card-info">
+          <strong>登录/注册 <span class="page-badge mvp">P0</span></strong>
+          <span>邮箱+密码，居中卡片式</span>
+        </div>
+      </a>
+      <a href="pages/dashboard.html" class="page-card">
+        <div class="page-card-icon user">📊</div>
+        <div class="page-card-info">
+          <strong>控制台首页 <span class="page-badge mvp">P0</span></strong>
+          <span>指标卡 + 最近会话 + 快捷入口</span>
+        </div>
+      </a>
+      <a href="pages/agents.html" class="page-card">
+        <div class="page-card-icon user">🤖</div>
+        <div class="page-card-info">
+          <strong>Agent 列表 <span class="page-badge mvp">P0</span></strong>
+          <span>CRUD + 状态指示 + 搜索筛选</span>
+        </div>
+      </a>
+      <a href="pages/agent-config.html" class="page-card">
+        <div class="page-card-icon user">⚙️</div>
+        <div class="page-card-info">
+          <strong>Agent 配置 <span class="page-badge mvp">P0</span></strong>
+          <span>基础配置 + Skill/MCP + 协作</span>
+        </div>
+      </a>
+      <a href="pages/chat.html" class="page-card">
+        <div class="page-card-icon user">💬</div>
+        <div class="page-card-info">
+          <strong>聊天页 <span class="page-badge mvp">P0</span></strong>
+          <span>SSE 流式 + Thinking/Tool + 会话列表</span>
+        </div>
+      </a>
+      <a href="pages/sessions.html" class="page-card">
+        <div class="page-card-icon user">📋</div>
+        <div class="page-card-info">
+          <strong>会话历史 <span class="page-badge mvp">P0</span></strong>
+          <span>筛选/续聊/分叉/归档/删除/存储上限</span>
+        </div>
+      </a>
+      <a href="pages/billing.html" class="page-card">
+        <div class="page-card-icon user">💰</div>
+        <div class="page-card-info">
+          <strong>消费明细 <span class="page-badge mvp">P0</span></strong>
+          <span>汇总卡 + 明细表 + 周期选择</span>
+        </div>
+      </a>
+      <a href="pages/settings.html" class="page-card">
+        <div class="page-card-icon user">🔧</div>
+        <div class="page-card-info">
+          <strong>设置页 <span class="page-badge mvp">P1</span></strong>
+          <span>资料/主题/归档偏好/安全</span>
+        </div>
+      </a>
+      <a href="pages/team.html" class="page-card">
+        <div class="page-card-icon user">👥</div>
+        <div class="page-card-info">
+          <strong>团队协作 <span class="page-badge placeholder">占位</span></strong>
+          <span>骨架占位，功能开发中</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Admin 端页面 -->
+  <div class="demo-section">
+    <h2>🛡️ 管理后台（Admin · app_type=1）</h2>
+    <div class="page-grid">
+      <a href="admin/login.html" class="page-card">
+        <div class="page-card-icon admin">🔐</div>
+        <div class="page-card-info">
+          <strong>Admin 登录 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>仅限管理员登录入口</span>
+        </div>
+      </a>
+      <a href="admin/dashboard.html" class="page-card">
+        <div class="page-card-icon admin">📈</div>
+        <div class="page-card-info">
+          <strong>管理控制台 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>运营概览 + 增长趋势 + 健康指标</span>
+        </div>
+      </a>
+      <a href="admin/users.html" class="page-card">
+        <div class="page-card-icon admin">👤</div>
+        <div class="page-card-info">
+          <strong>用户管理 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>列表/详情/禁用/删除/重置密码</span>
+        </div>
+      </a>
+      <a href="admin/agents-sessions.html" class="page-card">
+        <div class="page-card-icon admin">🌐</div>
+        <div class="page-card-info">
+          <strong>全局Agent/Session <span class="page-badge admin-tag">Admin</span></strong>
+          <span>跨用户 Agent/Session 管理干预</span>
+        </div>
+      </a>
+      <a href="admin/skills.html" class="page-card">
+        <div class="page-card-icon admin">🧩</div>
+        <div class="page-card-info">
+          <strong>Skill 库治理 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>平台 Skill 增删改/启用禁用</span>
+        </div>
+      </a>
+      <a href="admin/mcp-templates.html" class="page-card">
+        <div class="page-card-icon admin">🔌</div>
+        <div class="page-card-info">
+          <strong>MCP 模板管理 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>平台级 MCP 模板 CRUD</span>
+        </div>
+      </a>
+      <a href="admin/billing-dashboard.html" class="page-card">
+        <div class="page-card-icon admin">💵</div>
+        <div class="page-card-info">
+          <strong>计费大盘 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>全平台用量聚合 + 排名 + 趋势</span>
+        </div>
+      </a>
+      <a href="admin/global-config.html" class="page-card">
+        <div class="page-card-icon admin">🎛️</div>
+        <div class="page-card-info">
+          <strong>全局配置 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>存储上限/归档策略/系统开关</span>
+        </div>
+      </a>
+      <a href="admin/roles.html" class="page-card">
+        <div class="page-card-icon admin">🔐</div>
+        <div class="page-card-info">
+          <strong>角色权限管理 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>RBAC 角色与权限树配置</span>
+        </div>
+      </a>
+      <a href="admin/admins.html" class="page-card">
+        <div class="page-card-icon admin">👑</div>
+        <div class="page-card-info">
+          <strong>管理员管理 <span class="page-badge admin-tag">Admin</span></strong>
+          <span>后台管理员账号 CRUD</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 设计规范说明 -->
+  <div class="demo-section" style="margin-top:48px;">
+    <h2>📐 设计规范摘要</h2>
+    <div class="page-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+      <div class="page-card" style="cursor:default;pointer-events:none;">
+        <div class="page-card-icon user" style="font-size:14px;">🎨</div>
+        <div class="page-card-info">
+          <strong>主色 #1677ff</strong>
+          <span>Ant Design 企业蓝</span>
+        </div>
+      </div>
+      <div class="page-card" style="cursor:default;pointer-events:none;">
+        <div class="page-card-icon user" style="font-size:14px;">✍️</div>
+        <div class="page-card-info">
+          <strong>Plus Jakarta Sans</strong>
+          <span>主字体 + JetBrains Mono 等宽</span>
+        </div>
+      </div>
+      <div class="page-card" style="cursor:default;pointer-events:none;">
+        <div class="page-card-icon user" style="font-size:14px;">📏</div>
+        <div class="page-card-info">
+          <strong>4px 栅格系统</strong>
+          <span>间距 4/8/12/16/24/32</span>
+        </div>
+      </div>
+      <div class="page-card" style="cursor:default;pointer-events:none;">
+        <div class="page-card-icon user" style="font-size:14px;">♿</div>
+        <div class="page-card-info">
+          <strong>WCAG AA</strong>
+          <span>对比度 ≥ 4.5:1 · 触控 ≥ 40px</span>
+        </div>
+      </div>
+      <div class="page-card" style="cursor:default;pointer-events:none;">
+        <div class="page-card-icon user" style="font-size:14px;">🌓</div>
+        <div class="page-card-info">
+          <strong>浅色/深色主题</strong>
+          <span>localStorage 持久化 + 系统跟随</span>
+        </div>
+      </div>
+      <div class="page-card" style="cursor:default;pointer-events:none;">
+        <div class="page-card-icon user" style="font-size:14px;">📱</div>
+        <div class="page-card-info">
+          <strong>响应式</strong>
+          <span>Desktop / Tablet / Mobile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p style="text-align:center;margin-top:48px;color:var(--color-text-tertiary);font-size:13px;">
+    UI Demo v1.0 | CyberPal SaaS | document/ui/ | 2026-07-22
+  </p>
+</div>
+
+</body>
+</html>

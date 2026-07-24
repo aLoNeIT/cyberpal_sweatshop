@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent 配置 - CyberPal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .config-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+    .config-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); margin-bottom: 20px; }
+    .config-card-header { padding: 14px 20px; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; }
+    .config-card-header h3 { font-size: 15px; font-weight: 600; color: var(--color-text); }
+    .config-card-body { padding: 20px; }
+
+    .skill-list { max-height: 260px; overflow-y: auto; }
+    .skill-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-border); cursor: pointer; transition: background var(--transition-fast); }
+    .skill-item:last-child { border-bottom: none; }
+    .skill-item:hover { background: var(--color-surface-2); margin: 0 -20px; padding-left: 20px; padding-right: 20px; }
+    .skill-item input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; accent-color: var(--color-primary); width: 16px; height: 16px; }
+    .skill-item-info { flex: 1; min-width: 0; }
+    .skill-item-name { font-size: 13px; font-weight: 500; color: var(--color-text); }
+    .skill-item-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; line-height: 1.4; }
+    .skill-count-badge { font-size: 12px; color: var(--color-primary); font-weight: 500; }
+
+    .mcp-list { max-height: 300px; }
+    .mcp-item { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+    .mcp-item:last-child { border-bottom: none; }
+    .mcp-item-info { flex: 1; min-width: 0; }
+    .mcp-item-name { font-size: 13px; font-weight: 500; color: var(--color-text); }
+    .mcp-item-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; font-family: var(--font-mono); }
+    .mcp-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+    .collab-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+    .collab-placeholder-icon { width: 48px; height: 48px; background: var(--color-surface-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+    .collab-placeholder-icon svg { width: 24px; height: 24px; stroke: var(--color-text-tertiary); fill: none; stroke-width: 1.5; }
+    .collab-placeholder h4 { font-size: 14px; color: var(--color-text); margin-bottom: 4px; }
+    .collab-placeholder p { font-size: 13px; color: var(--color-text-secondary); }
+
+    .bottom-bar { position: sticky; bottom: 0; background: var(--color-surface); border-top: 1px solid var(--color-border); padding: 12px 24px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 0 -24px; z-index: 10; }
+    .bottom-bar-spacer { height: 24px; }
+
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--color-text-tertiary); pointer-events: none; }
+
+    @media (max-width: 1279px) {
+      .config-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">C</div>
+      <span class="sidebar-logo-text">CyberPal</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">主菜单</div>
+        <a class="nav-item" href="dashboard.html">
+          <span class="nav-item-icon">${Icon.get('dashboard')}</span>控制台
+        </a>
+        <a class="nav-item active" href="agents.html">
+          <span class="nav-item-icon">${Icon.get('agent')}</span>Agent 管理
+        </a>
+        <a class="nav-item" href="chat.html">
+          <span class="nav-item-icon">${Icon.get('chat')}</span>对话
+        </a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">系统</div>
+        <a class="nav-item" href="billing.html">
+          <span class="nav-item-icon">${Icon.get('billing')}</span>费用中心
+        </a>
+        <a class="nav-item" href="settings.html">
+          <span class="nav-item-icon">${Icon.get('settings')}</span>设置
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <!-- Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-trigger">${Icon.get('dashboard', 20)}</button>
+        <div class="topbar-breadcrumb">
+          <a href="dashboard.html">控制台</a><span>/</span><a href="agents.html">Agent 管理</a><span>/</span><span class="current">配置</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-usage">
+          <span>本月用量</span><strong>$42.50</strong><span>/ $500</span>
+        </div>
+        <button class="theme-toggle" title="切换主题">
+          <span class="icon-sun">${Icon.get('sun', 18)}</span>
+          <span class="icon-moon" style="display:none">${Icon.get('moon', 18)}</span>
+        </button>
+        <div class="user-avatar">WR</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="app-content" id="configContent">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>Agent 配置</h1>
+          <p>配置 Agent 的基础信息、模型参数、工具权限和技能</p>
+        </div>
+      </div>
+
+      <div class="config-layout">
+        <!-- Left Column -->
+        <div class="config-left">
+
+          <!-- Basic Config Card -->
+          <div class="config-card">
+            <div class="config-card-header"><h3>基础配置</h3></div>
+            <div class="config-card-body">
+              <div class="form-group">
+                <label class="form-label">Agent 名称 <span class="required">*</span></label>
+                <input type="text" class="form-input" placeholder="请输入 Agent 名称" value="代码审查助手" id="agentName">
+              </div>
+              <div class="form-group">
+                <label class="form-label">描述</label>
+                <textarea class="form-textarea" placeholder="简要描述 Agent 的功能和用途" style="min-height:70px;" id="agentDesc">自动审查 PR 代码质量、安全漏洞和代码规范，提供修改建议</textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">System Prompt <span class="required">*</span></label>
+                <textarea class="form-textarea" placeholder="定义 Agent 的系统角色和行为准则" style="min-height:130px;font-family:var(--font-mono);font-size:13px;" id="systemPrompt">你是一个资深的代码审查专家，负责对 GitHub PR 进行全面的代码审查。
+
+你的审查范围包括：
+1. 代码质量 - 命名规范、代码结构、可读性
+2. 安全漏洞 - SQL注入、XSS、敏感信息泄露
+3. 性能优化 - 算法效率、数据库查询、缓存策略
+4. 最佳实践 - 设计模式、错误处理、测试覆盖
+
+请以中文输出审查报告，按严重程度分级。</textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Append System Prompt</label>
+                <textarea class="form-textarea" placeholder="追加的 System Prompt，将附加在 System Prompt 之后" style="min-height:80px;" id="appendPrompt">审查时请特别注意 TypeScript 类型安全和 React 最佳实践。如发现安全问题，请给出 CWE 编号。</textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Provider <span class="required">*</span></label>
+                  <div class="select-wrap">
+                    <select class="form-select" id="provider">
+                      <option value="openai">OpenAI</option>
+                      <option value="anthropic" selected>Anthropic</option>
+                      <option value="google">Google</option>
+                      <option value="deepseek">DeepSeek</option>
+                      <option value="mistral">Mistral</option>
+                      <option value="cohere">Cohere</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Model <span class="required">*</span></label>
+                  <div class="select-wrap">
+                    <select class="form-select" id="model">
+                      <option value="">请先选择 Provider</option>
+                      <option value="claude-sonnet-4-20250514" selected>claude-sonnet-4-20250514</option>
+                      <option value="claude-opus-4-20250514">claude-opus-4-20250514</option>
+                      <option value="claude-3.5-haiku">claude-3.5-haiku</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thinking 强度</label>
+                <div class="filter-chips" id="thinkingChips" style="margin-bottom:0;">
+                  <span class="filter-chip" data-value="low">Low - 快速响应</span>
+                  <span class="filter-chip active" data-value="medium">Medium - 平衡</span>
+                  <span class="filter-chip" data-value="high">High - 深度思考</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tools Permission Card -->
+          <div class="config-card">
+            <div class="config-card-header"><h3>工具权限</h3></div>
+            <div class="config-card-body">
+              <div class="form-group">
+                <label class="form-label">Tools 白名单</label>
+                <input type="text" class="form-input" placeholder="多个工具用逗号分隔，留空表示不限制" value="read_file,search_code,grep,git_diff" id="toolsWhitelist">
+                <div class="form-hint">允许 Agent 调用的工具列表，逗号分隔</div>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Tools 黑名单</label>
+                <input type="text" class="form-input" placeholder="多个工具用逗号分隔" value="delete_file,execute_shell" id="toolsBlacklist">
+                <div class="form-hint">禁止 Agent 调用的工具列表，优先级高于白名单</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column -->
+        <div class="config-right">
+
+          <!-- Skill Library Card -->
+          <div class="config-card">
+            <div class="config-card-header">
+              <h3>Skill 库</h3>
+              <button class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()">${Icon.get('download', 14)}上传本地 Skill</button>
+            </div>
+            <div class="config-card-body" style="padding-top:8px;">
+              <div class="skill-count-badge" id="skillCount" style="margin-bottom:8px;">已选 3/6</div>
+              <div class="skill-list" id="skillList">
+                <label class="skill-item">
+                  <input type="checkbox" checked>
+                  <div class="skill-item-info">
+                    <div class="skill-item-name">code-reviewer</div>
+                    <div class="skill-item-desc">自动化代码审查，检测安全漏洞和代码异味</div>
+                  </div>
+                </label>
+                <label class="skill-item">
+                  <input type="checkbox" checked>
+                  <div class="skill-item-info">
+                    <div class="skill-item-name">web-search</div>
+                    <div class="skill-item-desc">实时网络搜索能力，获取最新技术文档和资讯</div>
+                  </div>
+                </label>
+                <label class="skill-item">
+                  <input type="checkbox" checked>
+                  <div class="skill-item-info">
+                    <div class="skill-item-name">pdf-reader</div>
+                    <div class="skill-item-desc">读取和解析 PDF 文档，提取文本和表格数据</div>
+                  </div>
+                </label>
+                <label class="skill-item">
+                  <input type="checkbox">
+                  <div class="skill-item-info">
+                    <div class="skill-item-name">diagram-generator</div>
+                    <div class="skill-item-desc">生成架构图、流程图和序列图（Mermaid/PlantUML）</div>
+                  </div>
+                </label>
+                <label class="skill-item">
+                  <input type="checkbox">
+                  <div class="skill-item-info">
+                    <div class="skill-item-name">test-generator</div>
+                    <div class="skill-item-desc">自动生成单元测试和集成测试用例</div>
+                  </div>
+                </label>
+                <label class="skill-item">
+                  <input type="checkbox">
+                  <div class="skill-item-info">
+                    <div class="skill-item-name">data-analyzer</div>
+                    <div class="skill-item-desc">CSV/JSON 数据分析，生成统计报表和可视化</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- MCP Config Card -->
+          <div class="config-card">
+            <div class="config-card-header">
+              <h3>MCP 配置</h3>
+              <button class="btn btn-ghost btn-sm" onclick="openMcpModal()">${Icon.get('plus', 14)}新增 MCP</button>
+            </div>
+            <div class="config-card-body" style="padding-top:8px;">
+              <div class="mcp-list" id="mcpList">
+                <div class="mcp-item">
+                  <div class="mcp-item-info">
+                    <div class="mcp-item-name">GitHub MCP</div>
+                    <div class="mcp-item-desc">npx -y @modelcontextprotocol/server-github</div>
+                  </div>
+                  <span class="badge badge-info">stdio</span>
+                  <label class="toggle" style="margin:0 4px;">
+                    <input type="checkbox" checked>
+                    <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  </label>
+                  <div class="mcp-item-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()" title="编辑">${Icon.get('edit', 14)}</button>
+                    <button class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()" title="删除">${Icon.get('trash', 14)}</button>
+                  </div>
+                </div>
+                <div class="mcp-item">
+                  <div class="mcp-item-info">
+                    <div class="mcp-item-name">Slack MCP</div>
+                    <div class="mcp-item-desc">https://slack-mcp.example.com/sse</div>
+                  </div>
+                  <span class="badge badge-success">sse</span>
+                  <label class="toggle" style="margin:0 4px;">
+                    <input type="checkbox" checked>
+                    <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  </label>
+                  <div class="mcp-item-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()" title="编辑">${Icon.get('edit', 14)}</button>
+                    <button class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()" title="删除">${Icon.get('trash', 14)}</button>
+                  </div>
+                </div>
+                <div class="mcp-item">
+                  <div class="mcp-item-info">
+                    <div class="mcp-item-name">Database MCP</div>
+                    <div class="mcp-item-desc">streamable-http://db-mcp.internal:8080</div>
+                  </div>
+                  <span class="badge badge-warning">streamable-http</span>
+                  <label class="toggle" style="margin:0 4px;">
+                    <input type="checkbox">
+                    <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                  </label>
+                  <div class="mcp-item-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()" title="编辑">${Icon.get('edit', 14)}</button>
+                    <button class="btn btn-ghost btn-sm" onclick="CyberPal.placeholder()" title="删除">${Icon.get('trash', 14)}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Collaboration Tab -->
+          <div class="config-card">
+            <div class="config-card-header"><h3>协作</h3></div>
+            <div class="config-card-body">
+              <div class="collab-placeholder">
+                <div class="collab-placeholder-icon">${Icon.get('users', 24)}</div>
+                <h4>敬请期待</h4>
+                <p>多人协作编辑 Agent 配置功能即将上线</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div class="bottom-bar-spacer"></div>
+    </div>
+
+    <!-- Bottom Fixed Bar -->
+    <div class="bottom-bar" id="bottomBar">
+      <button class="btn btn-secondary" onclick="location.href='agents.html'">取消</button>
+      <button class="btn btn-primary" onclick="saveConfig()">保存配置</button>
+    </div>
+  </main>
+</div>
+
+<!-- MCP Add Modal -->
+<div class="modal-overlay" id="mcpModal" style="display:none;">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>新增 MCP 配置</h3>
+      <button class="modal-close" data-modal-close="mcpModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">名称 <span class="required">*</span></label>
+        <input type="text" class="form-input" placeholder="MCP 服务名称" id="mcpName">
+      </div>
+      <div class="form-group">
+        <label class="form-label">传输类型 <span class="required">*</span></label>
+        <div class="select-wrap">
+          <select class="form-select" id="mcpType">
+            <option value="stdio">stdio</option>
+            <option value="sse">sse</option>
+            <option value="streamable-http">streamable-http</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="mcpCommandGroup">
+        <label class="form-label">命令 <span class="required">*</span></label>
+        <input type="text" class="form-input" placeholder="例如: npx -y @modelcontextprotocol/server-github" id="mcpCommand">
+      </div>
+      <div class="form-group" id="mcpArgsGroup">
+        <label class="form-label">参数</label>
+        <input type="text" class="form-input" placeholder="命令行参数，逗号分隔" id="mcpArgs">
+      </div>
+      <div class="form-group" id="mcpUrlGroup" style="display:none;">
+        <label class="form-label">URL <span class="required">*</span></label>
+        <input type="text" class="form-input" placeholder="https://your-mcp-server.example.com/sse" id="mcpUrl">
+      </div>
+      <div class="form-group">
+        <label class="form-label">环境变量</label>
+        <textarea class="form-textarea" placeholder="KEY=VALUE，每行一个" style="min-height:70px;font-family:var(--font-mono);font-size:13px;" id="mcpEnv"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="mcpModal">取消</button>
+      <button class="btn btn-primary" onclick="addMcp()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/icons.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // Thinking chips
+  document.getElementById('thinkingChips').addEventListener('click', function(e) {
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    this.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+  });
+
+  // Skill checkbox count
+  document.getElementById('skillList').addEventListener('change', function() {
+    var checked = this.querySelectorAll('input[type="checkbox"]:checked').length;
+    document.getElementById('skillCount').textContent = '已选 ' + checked + '/6';
+  });
+
+  // MCP type toggle
+  document.getElementById('mcpType').addEventListener('change', function() {
+    var isStdio = this.value === 'stdio';
+    document.getElementById('mcpCommandGroup').style.display = isStdio ? '' : 'none';
+    document.getElementById('mcpArgsGroup').style.display = isStdio ? '' : 'none';
+    document.getElementById('mcpUrlGroup').style.display = isStdio ? 'none' : '';
+  });
+
+  window.openMcpModal = function() {
+    document.getElementById('mcpName').value = '';
+    document.getElementById('mcpCommand').value = '';
+    document.getElementById('mcpArgs').value = '';
+    document.getElementById('mcpUrl').value = '';
+    document.getElementById('mcpEnv').value = '';
+    document.getElementById('mcpType').value = 'stdio';
+    document.getElementById('mcpCommandGroup').style.display = '';
+    document.getElementById('mcpArgsGroup').style.display = '';
+    document.getElementById('mcpUrlGroup').style.display = 'none';
+    CyberPal.Modal.open('mcpModal');
+  };
+
+  window.addMcp = function() {
+    var name = document.getElementById('mcpName').value.trim();
+    if (!name) { CyberPal.Toast.show('请输入 MCP 名称', 'warning'); return; }
+    CyberPal.Modal.close('mcpModal');
+    CyberPal.Toast.show('MCP "' + name + '" 已添加（Demo）', 'success');
+  };
+
+  // Save
+  window.saveConfig = function() {
+    var name = document.getElementById('agentName').value.trim();
+    if (!name) { CyberPal.Toast.show('请输入 Agent 名称', 'warning'); return; }
+    CyberPal.Toast.show('Agent "' + name + '" 配置已保存', 'success');
+  };
+
+  // Theme toggle icon swap
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.theme-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var sun = this.querySelector('.icon-sun');
+        var moon = this.querySelector('.icon-moon');
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) { sun.style.display = ''; moon.style.display = 'none'; }
+        else { sun.style.display = 'none'; moon.style.display = ''; }
+      });
+    });
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.querySelectorAll('.icon-sun').forEach(function(el) { el.style.display = isDark ? 'none' : ''; });
+    document.querySelectorAll('.icon-moon').forEach(function(el) { el.style.display = isDark ? '' : 'none'; });
+  });
+})();
+</script>
+</body>
+</html>

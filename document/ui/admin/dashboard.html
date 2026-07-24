@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - 控制台</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    /* Two-row grid */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .content-grid-full {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    /* Bar chart */
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      height: 160px;
+      padding: 0 4px 28px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .chart-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .chart-bar {
+      width: 100%;
+      max-width: 32px;
+      background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+      border-radius: 4px 4px 0 0;
+      transition: opacity var(--transition-fast);
+      min-height: 4px;
+      cursor: pointer;
+    }
+
+    .chart-bar:hover { opacity: 0.8; }
+
+    .chart-bar-label {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      text-align: center;
+    }
+
+    .chart-legend-inline {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .chart-legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .chart-legend-dot.primary { background: var(--color-primary); }
+    .chart-legend-dot.ghost { background: var(--color-text-tertiary); }
+
+    /* Top users table compact */
+    .top-users-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .top-users-table th {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-tertiary);
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .top-users-table td {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-text);
+    }
+
+    .top-users-table td.col-mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .top-users-table .rank {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--color-text-tertiary);
+      margin-right: 8px;
+    }
+
+    .top-users-table .rank.top { background: var(--color-warning); }
+    .top-users-table .rank.top-1 { background: #FFD700; color: #333; }
+    .top-users-table .rank.top-2 { background: #C0C0C0; color: #333; }
+    .top-users-table .rank.top-3 { background: #CD7F32; }
+
+    /* Health indicators */
+    .health-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+
+    .health-item + .health-item { border-top: 1px solid var(--color-border); }
+
+    .health-item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .health-item-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .health-item-icon.success { background: var(--color-success-bg); color: var(--color-success); }
+    .health-item-icon.warning { background: var(--color-warning-bg); color: var(--color-warning); }
+    .health-item-icon.danger { background: var(--color-danger-bg); color: var(--color-danger); }
+    .health-item-icon.info { background: var(--color-info-bg); color: var(--color-info); }
+
+    .health-item-icon svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none; stroke-width: 2;
+    }
+
+    .health-item-label {
+      font-size: 13px;
+      color: var(--color-text);
+      font-weight: 500;
+    }
+
+    .health-item-desc {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+
+    .health-item-value {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .health-item-value.good { color: var(--color-success); }
+    .health-item-value.high { color: var(--color-danger); }
+
+    /* Storage overview */
+    .storage-metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+
+    .storage-metric + .storage-metric { border-top: 1px solid var(--color-border); }
+
+    .storage-metric-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .storage-metric-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .storage-metric-desc {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      margin-left: 8px;
+    }
+
+    .admin-avatar {
+      position: relative;
+    }
+
+    .admin-badge-tag {
+      position: absolute;
+      bottom: -3px;
+      right: -6px;
+      font-size: 10px;
+      background: var(--color-warning);
+      color: #fff;
+      padding: 1px 5px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      line-height: 1.2;
+      border: 1.5px solid var(--color-surface);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">控制台</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>平台总Token</span>
+            <strong>2.4M</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span class="admin-badge-tag">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>管理控制台</h1>
+            <p>平台运营概览</p>
+          </div>
+          <div class="page-header-right">
+            <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">导出报表</button>
+            <button class="btn btn-primary btn-sm" onclick="CyberPal.placeholder()">运营概览</button>
+          </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon blue">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">平台总用户数</div>
+              <div class="stat-card-value">1,284</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>较上月 +8.5%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon purple">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">总 Agent 数</div>
+              <div class="stat-card-value">856</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>较上月 +15.2%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon green">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">本周活跃会话 WAAS</div>
+              <div class="stat-card-value">3,420</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>较上周 +22.1%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon orange">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="stat-card-info">
+              <div class="stat-card-label">总 Token 用量</div>
+              <div class="stat-card-value">2.4M</div>
+              <div class="stat-card-change up">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <span>较上月 +31.6%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 1: User Growth Chart + Top 5 Users -->
+        <div class="content-grid">
+          <!-- User Growth Trend -->
+          <div class="card">
+            <div class="card-header">
+              <h3>用户增长趋势</h3>
+              <span class="text-xs text-tertiary">近 12 个月</span>
+            </div>
+            <div class="card-body">
+              <div class="chart-bars">
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:35%" title="8月 · 450"></div><span class="chart-bar-label">8月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:42%" title="9月 · 540"></div><span class="chart-bar-label">9月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:50%" title="10月 · 642"></div><span class="chart-bar-label">10月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:45%" title="11月 · 578"></div><span class="chart-bar-label">11月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:55%" title="12月 · 706"></div><span class="chart-bar-label">12月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:62%" title="1月 · 796"></div><span class="chart-bar-label">1月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:58%" title="2月 · 745"></div><span class="chart-bar-label">2月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:70%" title="3月 · 898"></div><span class="chart-bar-label">3月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:78%" title="4月 · 1,001"></div><span class="chart-bar-label">4月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:85%" title="5月 · 1,091"></div><span class="chart-bar-label">5月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:92%" title="6月 · 1,181"></div><span class="chart-bar-label">6月</span></div>
+                <div class="chart-bar-wrap"><div class="chart-bar" style="height:100%" title="7月 · 1,284"></div><span class="chart-bar-label">7月</span></div>
+              </div>
+              <div class="chart-legend-inline">
+                <span><span class="chart-legend-dot primary"></span>新增用户</span>
+                <span style="color:var(--color-text-secondary);font-weight:500;">累计 1,284 人</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top 5 Users -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Top 5 用户用量排名</h3>
+              <a href="users.html" class="btn btn-ghost btn-sm">查看全部</a>
+            </div>
+            <div class="card-body" style="padding:8px 0;">
+              <table class="top-users-table">
+                <thead>
+                  <tr>
+                    <th>账号</th>
+                    <th>Token</th>
+                    <th>费用</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="rank top-1">1</span>zhangwei</td>
+                    <td class="col-mono">356.8K</td>
+                    <td class="col-mono">$35.68</td>
+                    <td><span class="badge badge-success">启用</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="rank top-2">2</span>liming</td>
+                    <td class="col-mono">298.4K</td>
+                    <td class="col-mono">$29.84</td>
+                    <td><span class="badge badge-success">启用</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="rank top-3">3</span>wangfang</td>
+                    <td class="col-mono">245.1K</td>
+                    <td class="col-mono">$24.51</td>
+                    <td><span class="badge badge-success">启用</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="rank">4</span>chengyi</td>
+                    <td class="col-mono">189.3K</td>
+                    <td class="col-mono">$18.93</td>
+                    <td><span class="badge badge-warning">禁用</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="rank">5</span>liuqiang</td>
+                    <td class="col-mono">156.7K</td>
+                    <td class="col-mono">$15.67</td>
+                    <td><span class="badge badge-success">启用</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Storage Overview + System Health -->
+        <div class="content-grid-full">
+          <!-- Storage Overview -->
+          <div class="card">
+            <div class="card-header">
+              <h3>存储使用概览</h3>
+            </div>
+            <div class="card-body">
+              <div class="storage-metric">
+                <span class="storage-metric-label">活跃会话总数</span>
+                <span>
+                  <span class="storage-metric-value">3,420</span>
+                  <span class="storage-metric-desc">本周</span>
+                </span>
+              </div>
+              <div class="storage-metric">
+                <span class="storage-metric-label">归档会话总数</span>
+                <span>
+                  <span class="storage-metric-value">28,156</span>
+                  <span class="storage-metric-desc">累计</span>
+                </span>
+              </div>
+              <div class="storage-metric">
+                <span class="storage-metric-label">存储触顶率</span>
+                <span>
+                  <span class="storage-metric-value">4.2%</span>
+                  <span class="storage-metric-desc">用户</span>
+                </span>
+              </div>
+              <div class="mt-2">
+                <div style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:4px;">平台存储使用率</div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill primary" style="width:62%"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--color-text-tertiary);">
+                  <span>已用 620 GB</span><span>总量 1 TB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Health -->
+          <div class="card">
+            <div class="card-header">
+              <h3>系统健康指标</h3>
+              <span class="text-xs text-tertiary">过去 24 小时</span>
+            </div>
+            <div class="card-body">
+              <div class="health-item">
+                <div class="health-item-left">
+                  <div class="health-item-icon info">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+                  </div>
+                  <div>
+                    <div class="health-item-label">Agent 启动失败率</div>
+                    <div class="health-item-desc">近 24h 启动失败 / 总启动</div>
+                  </div>
+                </div>
+                <span class="health-item-value good">0.8%</span>
+              </div>
+              <div class="health-item">
+                <div class="health-item-left">
+                  <div class="health-item-icon warning">
+                    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                  <div>
+                    <div class="health-item-label">会话错误率</div>
+                    <div class="health-item-desc">近 24h 错误 / 总会话</div>
+                  </div>
+                </div>
+                <span class="health-item-value high">2.3%</span>
+              </div>
+              <div class="health-item">
+                <div class="health-item-left">
+                  <div class="health-item-icon success">
+                    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  </div>
+                  <div>
+                    <div class="health-item-label">P95 延迟</div>
+                    <div class="health-item-desc">Agent 响应 P95 延迟</div>
+                  </div>
+                </div>
+                <span class="health-item-value">1.8s</span>
+              </div>
+              <div class="health-item">
+                <div class="health-item-left">
+                  <div class="health-item-icon success">
+                    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  </div>
+                  <div>
+                    <div class="health-item-label">通知送达率</div>
+                    <div class="health-item-desc">Webhook / Email 成功率</div>
+                  </div>
+                </div>
+                <span class="health-item-value good">99.7%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      document.querySelectorAll('.nav-item:not(.active)').forEach(item => {
+        item.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          if (!href || href === '#') {
+            CyberPal.placeholder();
+            e.preventDefault();
+          }
+        });
+      });
+
+      document.querySelector('.user-avatar').addEventListener('click', () => {
+        CyberPal.placeholder();
+      });
+    })();
+  </script>
+
+</body>
+</html>

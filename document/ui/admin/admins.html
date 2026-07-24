@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberPal Admin - 管理员管理</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>A</text></svg>">
+
+  <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .role-badge-super {
+      background: var(--color-success-bg);
+      color: var(--color-success);
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      display: inline-block;
+    }
+
+    .role-badge-ops {
+      background: var(--color-info-bg);
+      color: var(--color-info);
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      display: inline-block;
+    }
+
+    .role-badge-cs {
+      background: var(--color-surface-2);
+      color: var(--color-text-secondary);
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      display: inline-block;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .status-dot.active {
+      background: var(--color-success);
+    }
+
+    .status-dot.disabled {
+      background: var(--color-text-tertiary);
+    }
+
+    .action-link {
+      font-size: 13px;
+      color: var(--color-primary);
+      cursor: pointer;
+      text-decoration: none;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .action-link:hover {
+      background: var(--color-primary-subtle);
+    }
+
+    .action-link.danger {
+      color: var(--color-danger);
+    }
+
+    .action-link.danger:hover {
+      background: var(--color-danger-bg);
+    }
+
+    .action-link + .action-link {
+      margin-left: 2px;
+    }
+
+    .action-separator {
+      color: var(--color-border);
+      margin: 0 2px;
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .bottom-tip {
+      background: var(--color-info-bg);
+      border: 1px solid rgba(22,119,255,.2);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--color-info);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .bottom-tip svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+
+    .danger-text {
+      color: var(--color-danger);
+      font-weight: 500;
+    }
+
+    .text-muted {
+      color: var(--color-text-tertiary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- ===== Admin Sidebar ===== -->
+    <aside class="app-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">A</div>
+        <span class="sidebar-logo-text">CyberPal Admin</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 运营 -->
+        <div class="nav-group">
+          <div class="nav-group-title">运营</div>
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>控制台</span>
+          </a>
+          <a href="users.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>用户管理</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="8" r="2" fill="currentColor" opacity=".3"/></svg>
+            <span>全局Agent/Session</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>计费大盘</span>
+          </a>
+        </div>
+
+        <!-- 供给 -->
+        <div class="nav-group">
+          <div class="nav-group-title">供给</div>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>
+            <span>Skill 库</span>
+          </a>
+          <a href="#" class="nav-item" onclick="CyberPal.placeholder()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>MCP 模板</span>
+          </a>
+        </div>
+
+        <!-- 系统 -->
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <a href="admins.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>管理员管理</span>
+          </a>
+          <a href="roles.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>角色权限</span>
+          </a>
+          <a href="global-config.html" class="nav-item">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>全局配置</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <div class="app-main">
+
+      <!-- ===== Topbar ===== -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="menu-trigger">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-breadcrumb">
+            Admin <span>/</span> <span class="current">管理员管理</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-usage">
+            <span>管理员总数</span>
+            <strong>9</strong>
+          </div>
+          <button class="theme-toggle" title="切换主题">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+          <div class="admin-avatar" style="position:relative;">
+            <div class="user-avatar" title="超管 张三">张</div>
+            <span style="position:absolute;bottom:-3px;right:-6px;font-size:10px;background:var(--color-warning);color:#fff;padding:1px 5px;border-radius:var(--radius-pill);font-weight:600;line-height:1.2;border:1.5px solid var(--color-surface);">超管</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Content Area ===== -->
+      <main class="app-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-left">
+            <h1>管理员管理</h1>
+            <p>管理后台管理员账号，仅 app_type=1 账户</p>
+          </div>
+          <div class="page-header-right">
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">新建管理员</button>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="search-input" placeholder="搜索管理员账号或昵称..." id="adminSearch">
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Table -->
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table" id="adminTable">
+              <thead>
+                <tr>
+                  <th>账号</th>
+                  <th>昵称</th>
+                  <th>角色</th>
+                  <th>状态</th>
+                  <th>最后登录时间</th>
+                  <th>创建时间</th>
+                  <th class="col-actions">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-adminid="1" data-status="active" data-role="super" data-issuper="1">
+                  <td><span class="text-mono">zhangsan</span></td>
+                  <td>张三</td>
+                  <td><span class="role-badge-super">超级管理员</span></td>
+                  <td><span class="status-dot active"></span>启用</td>
+                  <td class="col-time">07-22 16:42</td>
+                  <td class="col-time">2025-01-15</td>
+                  <td class="col-actions">
+                    <a class="action-link" onclick="openEditRoleModal('1','张三','super')">编辑角色</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link" onclick="openToggleModal('1','张三','active')">禁用</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link danger" onclick="openDeleteModal('1','张三','1')">删除</a>
+                  </td>
+                </tr>
+                <tr data-adminid="2" data-status="active" data-role="ops">
+                  <td><span class="text-mono">lisi</span></td>
+                  <td>李四</td>
+                  <td><span class="role-badge-ops">运营</span></td>
+                  <td><span class="status-dot active"></span>启用</td>
+                  <td class="col-time">07-22 14:18</td>
+                  <td class="col-time">2025-03-08</td>
+                  <td class="col-actions">
+                    <a class="action-link" onclick="openEditRoleModal('2','李四','ops')">编辑角色</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link" onclick="openToggleModal('2','李四','active')">禁用</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link danger" onclick="openDeleteModal('2','李四','0')">删除</a>
+                  </td>
+                </tr>
+                <tr data-adminid="3" data-status="active" data-role="ops">
+                  <td><span class="text-mono">wangwu</span></td>
+                  <td>王五</td>
+                  <td><span class="role-badge-ops">运营</span></td>
+                  <td><span class="status-dot active"></span>启用</td>
+                  <td class="col-time">07-21 20:05</td>
+                  <td class="col-time">2025-04-22</td>
+                  <td class="col-actions">
+                    <a class="action-link" onclick="openEditRoleModal('3','王五','ops')">编辑角色</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link" onclick="openToggleModal('3','王五','active')">禁用</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link danger" onclick="openDeleteModal('3','王五','0')">删除</a>
+                  </td>
+                </tr>
+                <tr data-adminid="4" data-status="disabled" data-role="ops">
+                  <td><span class="text-mono">zhaoliu</span></td>
+                  <td>赵六</td>
+                  <td><span class="role-badge-ops">运营</span></td>
+                  <td><span class="status-dot disabled"></span>禁用</td>
+                  <td class="col-time">06-15 09:32</td>
+                  <td class="col-time">2025-02-10</td>
+                  <td class="col-actions">
+                    <a class="action-link" onclick="openEditRoleModal('4','赵六','ops')">编辑角色</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link" style="color:var(--color-success);" onclick="openToggleModal('4','赵六','disabled')">启用</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link danger" onclick="openDeleteModal('4','赵六','0')">删除</a>
+                  </td>
+                </tr>
+                <tr data-adminid="5" data-status="active" data-role="cs">
+                  <td><span class="text-mono">sunqi</span></td>
+                  <td>孙七</td>
+                  <td><span class="role-badge-cs">客服</span></td>
+                  <td><span class="status-dot active"></span>启用</td>
+                  <td class="col-time">07-22 11:40</td>
+                  <td class="col-time">2025-06-05</td>
+                  <td class="col-actions">
+                    <a class="action-link" onclick="openEditRoleModal('5','孙七','cs')">编辑角色</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link" onclick="openToggleModal('5','孙七','active')">禁用</a>
+                    <span class="action-separator">|</span>
+                    <a class="action-link danger" onclick="openDeleteModal('5','孙七','0')">删除</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bottom Tip -->
+        <div class="bottom-tip">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Admin 不能同时是 User，如需使用产品请注册独立 user 账号</span>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- ===== 新建管理员 Modal ===== -->
+  <div class="modal-overlay" id="createModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>新建管理员</h3>
+        <button class="modal-close" onclick="closeModal('createModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">账号 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="createAccount" placeholder="请输入管理员账号">
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码 <span class="required">*</span></label>
+          <input type="password" class="form-input" id="createPassword" placeholder="请输入密码">
+        </div>
+        <div class="form-group">
+          <label class="form-label">确认密码 <span class="required">*</span></label>
+          <input type="password" class="form-input" id="createPasswordConfirm" placeholder="请再次输入密码">
+        </div>
+        <div class="form-group">
+          <label class="form-label">角色</label>
+          <select class="form-select" id="createRole">
+            <option value="super">超级管理员</option>
+            <option value="ops">运营</option>
+            <option value="cs">客服</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('createModal')">取消</button>
+        <button class="btn btn-primary" id="createConfirmBtn">确认创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 编辑角色 Modal ===== -->
+  <div class="modal-overlay" id="editRoleModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>编辑角色</h3>
+        <button class="modal-close" onclick="closeModal('editRoleModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="editRoleAdminName" style="margin-bottom:16px;color:var(--color-text);"></p>
+        <div class="form-group">
+          <label class="form-label">角色</label>
+          <select class="form-select" id="editRoleSelect">
+            <option value="super">超级管理员</option>
+            <option value="ops">运营</option>
+            <option value="cs">客服</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('editRoleModal')">取消</button>
+        <button class="btn btn-primary" id="editRoleConfirmBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 禁用/启用确认 Modal ===== -->
+  <div class="modal-overlay" id="toggleModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="toggleModalTitle">确认操作</h3>
+        <button class="modal-close" onclick="closeModal('toggleModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="toggleModalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('toggleModal')">取消</button>
+        <button class="btn btn-primary" id="toggleConfirmBtn">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 删除确认 Modal ===== -->
+  <div class="modal-overlay" id="deleteModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>删除管理员</h3>
+        <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteModalBody"></p>
+        <div class="warning-text" id="deleteWarning">删除后该管理员无法登录</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('deleteModal')">取消</button>
+        <button class="btn btn-danger" id="deleteConfirmBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/icons.js"></script>
+  <script src="../js/common.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        document.body.style.overflow = '';
+      }
+
+      function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      // ===== 新建管理员 =====
+      window.openCreateModal = function() {
+        document.getElementById('createAccount').value = '';
+        document.getElementById('createPassword').value = '';
+        document.getElementById('createPasswordConfirm').value = '';
+        document.getElementById('createRole').value = 'ops';
+        openModal('createModal');
+      };
+
+      document.getElementById('createConfirmBtn').addEventListener('click', function() {
+        var account = document.getElementById('createAccount').value.trim();
+        var pwd = document.getElementById('createPassword').value;
+        var pwdConfirm = document.getElementById('createPasswordConfirm').value;
+
+        if (!account) { CyberPal.Toast.show('请输入账号', 'warning'); return; }
+        if (!pwd) { CyberPal.Toast.show('请输入密码', 'warning'); return; }
+        if (pwd !== pwdConfirm) { CyberPal.Toast.show('两次密码不一致', 'warning'); return; }
+
+        closeModal('createModal');
+        CyberPal.Toast.show('管理员 ' + account + ' 创建成功', 'success');
+      });
+
+      // ===== 编辑角色 =====
+      var editAdminId = null;
+
+      window.openEditRoleModal = function(adminId, adminName, currentRole) {
+        editAdminId = adminId;
+        document.getElementById('editRoleAdminName').innerHTML = '管理员：<strong>' + adminName + '</strong>';
+        document.getElementById('editRoleSelect').value = currentRole;
+        openModal('editRoleModal');
+      };
+
+      document.getElementById('editRoleConfirmBtn').addEventListener('click', function() {
+        var newRole = document.getElementById('editRoleSelect').value;
+        var roleLabels = { super: '超级管理员', ops: '运营', cs: '客服' };
+        var roleClasses = { super: 'role-badge-super', ops: 'role-badge-ops', cs: 'role-badge-cs' };
+
+        // Update table row
+        var row = document.querySelector('tr[data-adminid="' + editAdminId + '"]');
+        if (row) {
+          row.setAttribute('data-role', newRole);
+          if (newRole === 'super') {
+            row.setAttribute('data-issuper', '1');
+          } else {
+            row.removeAttribute('data-issuper');
+          }
+          var badgeCell = row.querySelector('.col-actions').parentElement.querySelector('td:nth-child(3)');
+          if (badgeCell) {
+            badgeCell.innerHTML = '<span class="' + (roleClasses[newRole] || 'role-badge-cs') + '">' + (roleLabels[newRole] || '客服') + '</span>';
+          }
+        }
+
+        closeModal('editRoleModal');
+        CyberPal.Toast.show('角色已更新为 ' + (roleLabels[newRole] || ''), 'success');
+      });
+
+      // ===== 禁用/启用 =====
+      var toggleAdminId = null;
+
+      window.openToggleModal = function(adminId, adminName, currentStatus) {
+        toggleAdminId = adminId;
+        var action = currentStatus === 'active' ? '禁用' : '启用';
+        document.getElementById('toggleModalTitle').textContent = action + '管理员';
+        document.getElementById('toggleModalBody').innerHTML = '确认' + action + '管理员 <strong>' + adminName + '</strong>？';
+
+        var confirmBtn = document.getElementById('toggleConfirmBtn');
+        var newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+        if (action === '禁用') {
+          newBtn.className = 'btn btn-danger';
+          newBtn.textContent = '确认禁用';
+        } else {
+          newBtn.className = 'btn btn-primary';
+          newBtn.textContent = '确认启用';
+        }
+
+        newBtn.addEventListener('click', function() {
+          var row = document.querySelector('tr[data-adminid="' + toggleAdminId + '"]');
+          var newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+          if (row) {
+            row.setAttribute('data-status', newStatus);
+
+            var statusCell = row.querySelector('td:nth-child(4)');
+            if (statusCell) {
+              statusCell.innerHTML = newStatus === 'active'
+                ? '<span class="status-dot active"></span>启用'
+                : '<span class="status-dot disabled"></span>禁用';
+            }
+
+            // Update action links
+            var actionsCell = row.querySelector('.col-actions');
+            if (actionsCell) {
+              var toggleLink = actionsCell.querySelector('a:nth-child(2)');
+              if (toggleLink) {
+                if (newStatus === 'active') {
+                  toggleLink.textContent = '禁用';
+                  toggleLink.style.color = '';
+                  toggleLink.onclick = function() { openToggleModal(toggleAdminId, adminName, 'active'); };
+                } else {
+                  toggleLink.textContent = '启用';
+                  toggleLink.style.color = 'var(--color-success)';
+                  toggleLink.onclick = function() { openToggleModal(toggleAdminId, adminName, 'disabled'); };
+                }
+              }
+            }
+          }
+
+          closeModal('toggleModal');
+          CyberPal.Toast.show('管理员' + adminName + '已' + (newStatus === 'active' ? '启用' : '禁用'), 'success');
+        });
+
+        openModal('toggleModal');
+      };
+
+      // ===== 删除 =====
+      var deleteAdminId = null;
+
+      window.openDeleteModal = function(adminId, adminName, isSuper) {
+        deleteAdminId = adminId;
+
+        // Check if this is the last super admin
+        if (isSuper === '1') {
+          var superCount = document.querySelectorAll('#adminTable tbody tr[data-issuper="1"]').length;
+          if (superCount <= 1) {
+            CyberPal.Toast.show('不能删除最后一个超级管理员', 'warning');
+            return;
+          }
+        }
+
+        document.getElementById('deleteModalBody').innerHTML = '确认删除管理员 <strong>' + adminName + '</strong>？';
+        document.getElementById('deleteWarning').textContent = '删除后该管理员无法登录';
+
+        var confirmBtn = document.getElementById('deleteConfirmBtn');
+        var newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+        newBtn.addEventListener('click', function() {
+          var row = document.querySelector('tr[data-adminid="' + deleteAdminId + '"]');
+          if (row) row.remove();
+
+          closeModal('deleteModal');
+          CyberPal.Toast.show('管理员' + adminName + '已删除', 'success');
+        });
+
+        openModal('deleteModal');
+      };
+
+      // ===== Search =====
+      document.getElementById('adminSearch').addEventListener('input', function() {
+        var q = this.value.toLowerCase();
+        document.querySelectorAll('#adminTable tbody tr').forEach(function(row) {
+          var text = row.textContent.toLowerCase();
+          row.style.display = q ? (text.indexOf(q) !== -1 ? '' : 'none') : '';
+        });
+      });
+
+      // ===== Modal overlay click to close =====
+      document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.style.display = 'none';
+            document.body.style.overflow = '';
+          }
+        });
+      });
+
+      // ===== Nav placeholder =====
+      document.querySelectorAll('.nav-item:not(.active)').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+          var href = this.getAttribute('href');
+          if (!href || href === '#') {
+            CyberPal.placeholder();
+            e.preventDefault();
+          }
+        });
+      });
+
+      // Avatar click
+      document.querySelector('.user-avatar').addEventListener('click', function() {
+        CyberPal.placeholder();
+      });
+    })();
+  </script>
+
+</body>
+</html>

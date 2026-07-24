@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设置 - CyberPal</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .settings-radio-group {
+    display: flex;
+    gap: 16px;
+  }
+  .settings-foot {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 16px;
+  }
+  .disabled-overlay {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .dev-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    background: var(--color-surface-2);
+    color: var(--color-text-tertiary);
+    border-radius: var(--radius-pill);
+    font-style: italic;
+  }
+  .archive-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+  }
+  .setting-row + .setting-row { border-top: 1px solid var(--color-border); }
+  .setting-info { flex: 1; }
+  .setting-ctrl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .setting-ctrl .form-input { width: 80px; }
+  .form-input-readonly {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: not-allowed;
+    outline: none;
+  }
+  .inline-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .inline-radio input[type="radio"] { accent-color: var(--color-primary); width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">CP</div>
+      <span class="sidebar-logo-text">CyberPal</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-title">主菜单</div>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          控制台
+        </a>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          Agent
+        </a>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          会话
+        </a>
+        <a class="nav-item" href="billing.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          消费明细
+        </a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">其他</div>
+        <a class="nav-item active" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          设置
+        </a>
+        <a class="nav-item" href="#">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          团队
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="app-main">
+    <!-- Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-trigger" aria-label="菜单">
+          <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-breadcrumb">
+          控制台 <span>/</span> <span class="current">设置</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="theme-toggle" aria-label="切换主题">
+          <svg width="18" height="18" viewBox="0 0 24 24" class="icon-sun" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" class="icon-moon" style="display:none" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="user-avatar" title="用户">W</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="app-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>设置</h1>
+        </div>
+      </div>
+
+      <!-- Profile Card -->
+      <div class="settings-section">
+        <div class="settings-section-header">个人资料</div>
+        <div class="settings-section-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">昵称</label>
+              <input type="text" class="form-input" id="nickname-input" value="CyberPal User">
+            </div>
+            <div class="form-group">
+              <label class="form-label">邮箱</label>
+              <input type="email" class="form-input-readonly" value="user@cyberpal.ai" readonly tabindex="-1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Theme Card -->
+      <div class="settings-section">
+        <div class="settings-section-header">外观主题</div>
+        <div class="settings-section-body">
+          <div class="settings-radio-group" id="theme-radio-group">
+            <label class="inline-radio">
+              <input type="radio" name="theme" value="system" checked>
+              跟随系统
+            </label>
+            <label class="inline-radio">
+              <input type="radio" name="theme" value="light">
+              浅色
+            </label>
+            <label class="inline-radio">
+              <input type="radio" name="theme" value="dark">
+              深色
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notification Card (Placeholder) -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          通知偏好
+          <span class="dev-badge">功能开发中</span>
+        </div>
+        <div class="settings-section-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-item-label">用量预警阈值</div>
+              <div class="setting-item-desc">当 Token 用量达到此阈值时发送通知</div>
+            </div>
+            <div class="setting-ctrl">
+              <input type="number" class="form-input" value="100000" disabled>
+              <label class="toggle">
+                <input type="checkbox" disabled>
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              </label>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <span class="alert alert-info">功能开发中，敬请期待</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto Archive Card -->
+      <div class="settings-section">
+        <div class="settings-section-header">自动归档偏好</div>
+        <div class="settings-section-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-item-label">自动归档</div>
+              <div class="setting-item-desc">开启后将自动归档超过指定天数的会话</div>
+            </div>
+            <div class="setting-ctrl">
+              <label class="toggle">
+                <input type="checkbox" id="archive-toggle" checked>
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-item-label">归档天数</div>
+              <div class="setting-item-desc">超过此天数的会话将被自动归档</div>
+            </div>
+            <div class="setting-ctrl">
+              <input type="number" class="form-input" id="archive-days" value="30" min="1" max="365">
+            </div>
+          </div>
+          <div class="archive-hint">归档后会话不可恢复，仅可只读查看</div>
+        </div>
+      </div>
+
+      <!-- Security Card -->
+      <div class="settings-section">
+        <div class="settings-section-header">安全设置</div>
+        <div class="settings-section-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-item-label">修改密码</div>
+              <div class="setting-item-desc">定期更换密码以保障账号安全</div>
+            </div>
+            <div class="setting-ctrl">
+              <button class="btn btn-secondary btn-sm" data-modal-open="password-modal">修改</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-item-label">邮箱修改</div>
+              <div class="setting-item-desc">更换账号绑定的邮箱地址</div>
+            </div>
+            <div class="setting-ctrl">
+              <button class="btn btn-secondary btn-sm" onclick="CyberPal.placeholder()">修改</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-item-label" style="color:var(--color-danger);">账号注销</div>
+              <div class="setting-item-desc">注销后所有数据将被永久删除</div>
+            </div>
+            <div class="setting-ctrl">
+              <button class="btn btn-danger btn-sm" onclick="CyberPal.placeholder()">注销账号</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div class="settings-foot">
+        <button class="btn btn-primary btn-lg" id="save-settings">保存设置</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Password Change Modal -->
+<div class="modal-overlay" id="password-modal" style="display:none;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3>修改密码</h3>
+      <button class="modal-close" data-modal-close="password-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">旧密码</label>
+        <input type="password" class="form-input" placeholder="请输入旧密码">
+      </div>
+      <div class="form-group">
+        <label class="form-label">新密码</label>
+        <input type="password" class="form-input" placeholder="请输入新密码">
+      </div>
+      <div class="form-group">
+        <label class="form-label">确认新密码</label>
+        <input type="password" class="form-input" placeholder="请再次输入新密码">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close="password-modal">取消</button>
+      <button class="btn btn-primary" onclick="CyberPal.placeholder()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/icons.js"></script>
+<script src="../js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ===== Theme Radio Group =====
+  function updateThemeIcon() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.querySelectorAll('.icon-sun').forEach(function(el) { el.style.display = isDark ? 'none' : ''; });
+    document.querySelectorAll('.icon-moon').forEach(function(el) { el.style.display = isDark ? '' : 'none'; });
+  }
+
+  function syncRadioFromActual() {
+    var current = document.documentElement.getAttribute('data-theme');
+    var value = current === 'dark' ? 'dark' : 'light';
+    var saved = localStorage.getItem('cyberpal-theme-radio');
+    if (saved === 'system') value = 'system';
+    else if (current === 'dark') value = 'dark';
+    else value = 'light';
+
+    var radio = document.querySelector('input[name="theme"][value="' + value + '"]');
+    if (radio) radio.checked = true;
+  }
+
+  // ===== Archive Toggle =====
+  function updateArchiveDays() {
+    var toggle = document.getElementById('archive-toggle');
+    var daysInput = document.getElementById('archive-days');
+    daysInput.disabled = !toggle.checked;
+    if (!toggle.checked) daysInput.value = '';
+    else if (!daysInput.value) daysInput.value = '30';
+  }
+
+  // ===== Init =====
+  document.addEventListener('DOMContentLoaded', function() {
+    updateThemeIcon();
+    syncRadioFromActual();
+    updateArchiveDays();
+
+    // Watch theme changes
+    var observer = new MutationObserver(function() {
+      updateThemeIcon();
+      syncRadioFromActual();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Theme radio change
+    document.querySelectorAll('input[name="theme"]').forEach(function(radio) {
+      radio.addEventListener('change', function() {
+        var val = this.value;
+        localStorage.setItem('cyberpal-theme-radio', val);
+        if (val === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('cyberpal-theme', 'dark');
+        } else if (val === 'light') {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('cyberpal-theme', '');
+        } else {
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (prefersDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('cyberpal-theme', 'dark');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('cyberpal-theme', '');
+          }
+        }
+      });
+    });
+
+    // Archive toggle
+    document.getElementById('archive-toggle').addEventListener('change', updateArchiveDays);
+
+    // Save button
+    document.getElementById('save-settings').addEventListener('click', function() {
+      CyberPal.Toast.show('设置已保存', 'success');
+    });
+  });
+})();
+</script>
+</body>
+</html>
