@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%238B5CF6'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='18'>A</text></svg>">
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="css/style.css">
 
   <style>
     .admin-tag {
@@ -128,20 +128,20 @@
 
     <div class="login-footer">
       <span>仅限管理员登录 · 用户请前往</span>
-      <a href="../pages/login.html" style="margin-left:4px;">用户端</a>
+      <a href="../user/login.html" style="margin-left:4px;">用户端</a>
     </div>
   </div>
 
-  <script src="../js/icons.js"></script>
-  <script src="../js/common.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/common.js"></script>
 
   <script>
     (function() {
       'use strict';
-      const toggleBtn = document.getElementById('toggle-password');
-      const passwordInput = document.getElementById('password');
-      const eyeOpen = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-      const eyeOff = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      var toggleBtn = document.getElementById('toggle-password');
+      var passwordInput = document.getElementById('password');
+      var eyeOpen = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      var eyeOff = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
       toggleBtn.addEventListener('click', function() {
         if (passwordInput.type === 'password') {
           passwordInput.type = 'text';
@@ -151,6 +151,7 @@
           toggleBtn.innerHTML = eyeOpen;
         }
       });
+
       function showError(field, msg) {
         var el = document.getElementById(field + '-error');
         el.textContent = msg;
@@ -173,6 +174,7 @@
           btn.disabled = false;
         }
       }
+
       document.getElementById('form-login').addEventListener('submit', function(e) {
         e.preventDefault();
         clearError('account');
@@ -186,9 +188,13 @@
         setButtonLoading(true);
         setTimeout(function() {
           setButtonLoading(false);
-          CyberPal.Toast.show('登录成功，跳转至管理后台...', 'success');
+          CyberPal.Toast.show('登录成功，跳转至管理控制台...', 'success');
+          setTimeout(function() {
+            window.location.href = 'dashboard.html';
+          }, 800);
         }, 1200);
       });
+
       document.getElementById('account').addEventListener('input', function() { clearError('account'); });
       document.getElementById('password').addEventListener('input', function() { clearError('password'); });
     })();

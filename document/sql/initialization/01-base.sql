@@ -1,4 +1,14 @@
 -- app_type  0-首页;1-管理后台;4-用户端;7-开放平台
+-- ============================================================================
+-- File: 01-base.sql（框架表 + seed 数据）
+-- 修订：数据库规范合规修正（2026-07）
+--   - 所有时间字段 BIGINT → BIGINT UNSIGNED（规范 §2）
+--   - 所有 NULL 字段 → NOT NULL + 默认值（规范 §5）
+--   - 索引命名修正（规范 §3）
+--   - cs_user 新增字段补齐 usr_ 前缀
+--   - 移除旧版 cs_system_config（与 02 冲突，保留 02 KV 版）
+-- ============================================================================
+
 -- ----------------------------
 -- Table structure for `cs_dict`
 -- 字典表
@@ -154,6 +164,12 @@ create table `cs_function_detail` (
 -- ----------------------------
 -- Table structure for `cs_user`
 -- 用户表  503
+-- 变更说明：
+--   - BIGINT → BIGINT UNSIGNED（规范 §2）
+--   - theme_pref/auto_archive_enabled/auto_archive_days → usr_ 前缀（框架命名风格）
+--   - 新增 usr_must_change_pwd（07 FR-1.5 首次登录强制改密）
+--   - 索引 un_uniq_usr_info → uniq_usr_info（规范 §3）
+--   - 新增 idx_usr_app_type_state（admin 用户列表查询）
 -- ----------------------------
 drop table if exists `cs_user`;
 create table `cs_user` (
@@ -166,28 +182,30 @@ create table `cs_user` (
     `usr_pwd` VARCHAR (80) not null default '68b6b4ab792a4476db8f6937bb4c4d12' comment '密码123456',
     `usr_salt` VARCHAR (4) not null default 'RzyL' comment '用户盐值',
     `usr_real_name` VARCHAR (50) not null default '' comment '真实姓名',
-    `theme_pref`            VARCHAR(16)  NOT NULL DEFAULT 'system' COMMENT '主题偏好 light|dark|system',
-    `auto_archive_enabled`  TINYINT      NOT NULL DEFAULT 1        COMMENT '自动归档开关 0/1',
-    `auto_archive_days`     INT UNSIGNED NOT NULL DEFAULT 30       COMMENT '自动归档天数阈值',
+    `usr_theme_pref`        VARCHAR(16)  NOT NULL DEFAULT 'system' COMMENT '主题偏好 light|dark|system',
+    `usr_auto_archive_enabled`  TINYINT      NOT NULL DEFAULT 1        COMMENT '自动归档开关 0/1',
+    `usr_auto_archive_days`     INT UNSIGNED NOT NULL DEFAULT 30       COMMENT '自动归档天数阈值',
     `usr_sex` VARCHAR (4) not null default '' comment '性别',
     `usr_remark` VARCHAR (255) not null default '' comment '用户备注',
-    `usr_login_time` BIGINT not null default 0 comment '登录时间',
+    `usr_login_time` BIGINT UNSIGNED not null default 0 comment '登录时间',
     `usr_login_num` INT not null default 0 comment '登录次数',
-    `usr_pwd_update_time` BIGINT not null default 0 comment '最后一次密码修改时间',
+    `usr_pwd_update_time` BIGINT UNSIGNED not null default 0 comment '最后一次密码修改时间',
+    `usr_must_change_pwd` TINYINT not null default 0 comment '是否强制改密 0=否 1=是（07 FR-1.5）',
     `usr_login_ip` VARCHAR (50) not null default '' comment '登录ip',
     `usr_img_head_file` INT not null default 0 comment '关联cs_file的最新头像的存储ID',
     `usr_img_head_url` VARCHAR (255) not null default '' comment '头像',
     `usr_state` TINYINT not null default 1 comment '状态 0=关闭 1=开启',
     `usr_create_user` INT not null default 0 comment '创建人',
-    `usr_create_time` BIGINT not null default 0 comment '创建时间',
-    `usr_update_time` BIGINT not null default 0 comment '修改时间',
-    `usr_delete_time` BIGINT not null default 0 comment '删除时间',
+    `usr_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `usr_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `usr_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`usr_id`),
     key `idx_usr_create_time` (`usr_create_time`) using BTREE,
     key `idx_usr_delete_time` (`usr_delete_time`) using BTREE,
     key `idx_usr_mp` (`usr_mp`) using BTREE,
     key `idx_usr_join` (`usr_join_table`, `usr_join_data`) using BTREE,
-    unique key `un_uniq_usr_info` (
+    key `idx_usr_app_type_state` (`usr_app_type`, `usr_state`) using BTREE,
+    unique key `uniq_usr_info` (
         `usr_app_type`,
         `usr_account`,
         `usr_delete_time`
@@ -204,9 +222,9 @@ create table `cs_user_enterprise` (
     `ue_join_table` varchar(50) NOT NULL DEFAULT '' COMMENT '关联组织表名',
     `ue_join_data` int NOT NULL DEFAULT 0 COMMENT '关联组织数据ID',
     `ue_user` int not null default 0 comment '用户id  关联user表',
-    `ue_create_time` BIGINT not null default 0 comment '创建时间',
-    `ue_update_time` BIGINT not null default 0 comment '修改时间',
-    `ue_delete_time` BIGINT not null default 0 comment '删除时间',
+    `ue_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `ue_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `ue_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`ue_id`) using BTREE,
     key `idx_ue_join` (`ue_join_table`, `ue_join_data`) using BTREE,
     key `idx_ue_user` (`ue_user`) using BTREE,
@@ -225,8 +243,8 @@ create table `cs_user_session` (
     `us_session` VARCHAR (32) not null default 0 comment '会话id',
     `us_ip` VARCHAR (50) not null default '' comment '登录ip',
     `us_expire_in` INT not null default 7200 comment '会话有效期',
-    `us_create_time` BIGINT not null default 0 comment '创建时间',
-    `us_delete_time` BIGINT not null default 0 comment '删除时间',
+    `us_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `us_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`us_id`),
     key `idx_us_app_type` (`us_app_type`) using BTREE,
     key `idx_us_user` (`us_user`) using BTREE,
@@ -236,6 +254,10 @@ create table `cs_user_session` (
 -- ----------------------------
 -- Table structure for cs_user_log
 -- 用户日志
+-- 变更说明：
+--   - BIGINT → BIGINT UNSIGNED（规范 §2）
+--   - ul_extend JSON default null → NOT NULL DEFAULT '{}'（规范 §5）
+--   - 新增 idx_ul_user、idx_ul_app_module（跨用户审计查询，08 FR-7.3）
 -- ----------------------------
 drop table if exists `cs_user_log`;
 create table `cs_user_log` (
@@ -245,16 +267,18 @@ create table `cs_user_log` (
     `ul_ip` VARCHAR (50) not null default '' comment '登录ip',
     `ul_module` VARCHAR (100) not null default '' comment '操作模块',
     `ul_controller` VARCHAR (100) not null default '' comment '操作控制器',
-    `ul_action` VARCHAR (255) not null default '' comment '操作函数',
+    `ul_action` VARCHAR (255) not null default '' comment '���作函数',
     `ul_remark` VARCHAR (255) not null default '' comment '备注',
-    `ul_extend` JSON default null comment '扩展信息存储的是本次修改的所有数据',
-    `ul_response_elapsed_time` BIGINT not null default 0 comment '响应时间',
-    `ul_create_time` BIGINT not null default 0 comment '创建时间',
-    `ul_update_time` BIGINT not null default 0 comment '修改时间',
-    `ul_delete_time` BIGINT not null default 0 comment '删除时间',
+    `ul_extend` JSON not null comment '扩展信息存储的是本次修改的所有数据',
+    `ul_response_elapsed_time` BIGINT UNSIGNED not null default 0 comment '响应时间',
+    `ul_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `ul_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `ul_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`ul_id`),
     key `idx_ul_create_time` (`ul_create_time`) using BTREE,
-    key `idx_ul_delete_time` (`ul_delete_time`) using BTREE
+    key `idx_ul_delete_time` (`ul_delete_time`) using BTREE,
+    key `idx_ul_user` (`ul_user`) using BTREE,
+    key `idx_ul_app_module` (`ul_app_type`, `ul_module`) using BTREE
 ) comment '用户日志';
 -- ----------------------------
 -- Table structure for cs_role
@@ -283,9 +307,9 @@ create table `cs_role` (
     `r_initialized` TINYINT not null default 0 comment '是否初始化  0=否,1=是',
     `r_state` TINYINT not null default 1 comment '状态 0=关闭 1=开启',
     `r_create_user` INT not null default 0 comment '新建人,关联user用户表id',
-    `r_create_time` BIGINT not null default 0 comment '创建时间',
-    `r_update_time` BIGINT not null default 0 comment '修改时间',
-    `r_delete_time` BIGINT not null default 0 comment '删除时间',
+    `r_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `r_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `r_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`r_id`),
     key `idx_r_create_time` (`r_create_time`) using BTREE
 ) comment '角色表';
@@ -328,7 +352,7 @@ create table `cs_relation` (
     `rel_role_level` TINYINT not null default 1 comment '角色层级，最高级管理员手动插入0',
     primary key (`rel_id`),
     key `un_idx_relation_info` (`rel_app_type`, `rel_role`, `rel_user`) using BTREE,
-    key `idx_user_info` (`rel_user`) using BTREE
+    key `idx_rel_user` (`rel_user`) using BTREE
 ) comment '用户角色关联表';
 -- ----------------------------
 -- Table structure for cs_file
@@ -353,9 +377,9 @@ create table `cs_file` (
     `f_size` bigint not null default 0 comment '文件大小，byte',
     `f_state` tinyint(4) not null default '0' comment '使用状态 0未使用 1正常',
     `f_create_user` int not null default 0 comment '创建人',
-    `f_create_time` bigint not null default 0 comment '创建时间',
-    `f_update_time` bigint not null default 0 comment '修改时间',
-    `f_delete_time` bigint not null default 0 comment '删除时间',
+    `f_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `f_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `f_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`f_id`) using BTREE,
     key `idx_f_app_type` (`f_app_type`) using BTREE,
     key `idx_f_state` (`f_state`) using BTREE,
@@ -369,88 +393,89 @@ create table `cs_file` (
 -- ----------------------------
 -- Table structure for `cs_api_communicant`
 -- 平台用户管理表 511
+-- 变更说明：
+--   - BIGINT → BIGINT UNSIGNED（规范 §2）
+--   - 所有 NULL 字段 → NOT NULL + 默认值（规范 §5）
+--   - uk_ac_appid → uniq_ac_appid（规范 §3）
 -- ----------------------------
 drop table if exists `cs_api_communicant`;
 CREATE TABLE `cs_api_communicant` (
   `ac_id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  
+
   -- 基础身份与归属信息
   `ac_type` tinyint(3) unsigned NOT NULL DEFAULT 3 COMMENT '接入类型：0-其他, 2-服务商, 3-开方机构',
   `ac_name` varchar(100) NOT NULL DEFAULT '' COMMENT '对接方/凭证名称',
   `ac_appid` varchar(100) NOT NULL DEFAULT '' COMMENT '应用标识(AppID/ClientID)',
   `ac_appsecret` varchar(255) NOT NULL DEFAULT '' COMMENT '应用密钥(AppSecret，需加密存储)',
-  
+
   -- 业务关联信息
   `ac_join_table` varchar(100) NOT NULL DEFAULT '' COMMENT '关联业务表名',
   `ac_join_field` varchar(100) NOT NULL DEFAULT '' COMMENT '关联业务表字段',
   `ac_join_data` int unsigned NOT NULL DEFAULT '0' COMMENT '关联业务表数据ID',
-  
+
   -- 核心：算法与用途配置
   `ac_algo_type` tinyint(3) unsigned NOT NULL DEFAULT 2 COMMENT '算法大类：0-无, 1-对称加密, 2-非对称加密, 3-摘要/哈希, 4-X509证书',
   `ac_algo_name` varchar(32) NOT NULL DEFAULT 'RSA' COMMENT '具体算法：RSA, SM2, AES, SM4, SHA256, SM3',
   `ac_key_len` int unsigned NOT NULL DEFAULT 2048 COMMENT '密钥长度(如: 1024, 2048, 128, 256)',
   `ac_key_usage` varchar(64) NOT NULL DEFAULT '' COMMENT '密钥用途：DATA_ENC, SIGN_VERIFY, AUTH, DIGEST',
-  
+
   -- 对接方（第三方）凭证信息
   `ac_peer_key_id` varchar(500) NOT NULL DEFAULT '' COMMENT '对接方唯一标识/KeyID',
-  `ac_peer_public_key` text COMMENT '对接方公钥(密文)',
-  `ac_peer_private_key` text COMMENT '对接方私钥(密文，极少见，通常仅存公钥)',
-  `ac_peer_cert` text COMMENT '对接方X.509证书内容(PEM/CER格式密文)',
-  `ac_peer_cert_thumbprint` varchar(500) DEFAULT '' COMMENT '对接方证书指纹(SHA-256哈希，用于快速校验)',
-  `ac_peer_key_pwd` varchar(500) DEFAULT '' COMMENT '对接方私钥/证书保护密码(密文)',
-  
+  `ac_peer_public_key` text NOT NULL COMMENT '对接方公钥(密文)',
+  `ac_peer_private_key` text NOT NULL COMMENT '对接方私钥(密文，极少见，通常仅存公钥)',
+  `ac_peer_cert` text NOT NULL COMMENT '对接方X.509证书内容(PEM/CER格式密文)',
+  `ac_peer_cert_thumbprint` varchar(500) NOT NULL DEFAULT '' COMMENT '对接方证书指纹(SHA-256哈希，用于快速校验)',
+  `ac_peer_key_pwd` varchar(500) NOT NULL DEFAULT '' COMMENT '对接方私钥/证书保护密码(密文)',
+
   -- 我方（己方）凭证信息
-  `ac_self_public_key` text COMMENT '我方公钥(密文)',
-  `ac_self_private_key` text COMMENT '我方私钥(密文)',
-  `ac_self_cert` text COMMENT '我方X.509证书内容(PEM/CER格式密文)',
-  `ac_self_cert_thumbprint` varchar(500) DEFAULT '' COMMENT '我方证书指纹(SHA-256哈希，用于快速校验)',
-  `ac_self_key_pwd` varchar(500) DEFAULT '' COMMENT '我方私钥/证书保护密码(密文)',
-  
+  `ac_self_public_key` text NOT NULL COMMENT '我方公钥(密文)',
+  `ac_self_private_key` text NOT NULL COMMENT '我方私钥(密文)',
+  `ac_self_cert` text NOT NULL COMMENT '我方X.509证书内容(PEM/CER格式密文)',
+  `ac_self_cert_thumbprint` varchar(500) NOT NULL DEFAULT '' COMMENT '我方证书指纹(SHA-256哈希，用于快速校验)',
+  `ac_self_key_pwd` varchar(500) NOT NULL DEFAULT '' COMMENT '我方私钥/证书保护密码(密文)',
+
   -- 证书生命周期管理
-  `ac_cert_expire_time` BIGINT not null default 0 COMMENT '证书/密钥过期时间(便于系统自动告警)',
-  
+  `ac_cert_expire_time` BIGINT UNSIGNED not null default 0 COMMENT '证书/密钥过期时间(便于系统自动告警)',
+
   -- 通信与驱动配置
   `ac_driver` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT '通讯密钥驱动：0-sichuan_wuhou(武侯V0.33);1-rsa;2-rsa_x509;3-sm2;4-aes(AES-256-CBC);5-aes_128_cbc;6-aes_192_cbc;7-aes_256_gcm;8-sm4(SM4-ECB);9-sm4_cbc;10-sha256;11-sm3',
-  `ac_server` varchar(500) DEFAULT NULL COMMENT '三方回调/通知服务器地址',
-  
+  `ac_server` varchar(500) NOT NULL DEFAULT '' COMMENT '三方回调/通知服务器地址',
+
   -- 状态与审计
   `ac_state` tinyint unsigned NOT NULL DEFAULT 1 COMMENT '状态：0-停用, 1-启用',
-  `ac_remark` varchar(500) DEFAULT '' COMMENT '备注说明',
-  `ac_create_time` BIGINT not null default 0 comment '创建时间',
-  `ac_update_time` BIGINT not null default 0 comment '更新时间',
-  `ac_delete_time` BIGINT not null default 0 comment '软删除时间',
-  
+  `ac_remark` varchar(500) NOT NULL DEFAULT '' COMMENT '备注说明',
+  `ac_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+  `ac_update_time` BIGINT UNSIGNED not null default 0 comment '更新时间',
+  `ac_delete_time` BIGINT UNSIGNED not null default 0 comment '软删除时间',
+
   PRIMARY KEY (`ac_id`) USING BTREE,
-  UNIQUE KEY `uk_ac_appid` (`ac_appid`) USING BTREE COMMENT 'AppID全局唯一',
-  
+  UNIQUE KEY `uniq_ac_appid` (`ac_appid`) USING BTREE COMMENT 'AppID全局唯一',
+
   -- 核心业务联合索引：根据接入类型+业务数据ID精准查询
   KEY `idx_type_join_data` (`ac_type`, `ac_join_data`) USING BTREE COMMENT '按接入类型和业务ID联合检索',
-  
+
   KEY `idx_ac_algo_type` (`ac_algo_type`) USING BTREE COMMENT '按算法大类检索',
   KEY `idx_ac_peer_key_id` (`ac_peer_key_id`) USING BTREE COMMENT '按对接方标识快速匹配',
   KEY `idx_ac_peer_thumbprint` (`ac_peer_cert_thumbprint`) USING BTREE COMMENT '按对接方证书指纹校验',
   KEY `idx_ac_self_thumbprint` (`ac_self_cert_thumbprint`) USING BTREE COMMENT '按我方证书指纹校验',
   KEY `idx_ac_cert_expire` (`ac_cert_expire_time`) USING BTREE COMMENT '证书过期预警定时任务检索',
   KEY `idx_ac_delete_time` (`ac_delete_time`) USING BTREE COMMENT '软删除记录清理检索'
-  
+
 ) COMMENT='API对接凭证与密钥管理表';
 
--- ----------------------------
--- Table structure for cs_system_config
--- 系统设置
--- ----------------------------
-drop table if exists `cs_system_config`;
-create table `cs_system_config` (
-    `sc_id` INT not null auto_increment comment 'id',
-    `sc_join_table` VARCHAR (50) not null default '' comment '关联组织表名',
-    `sc_join_data` INT not null default 0 comment '关联组织数据ID',
-    `sc_clean_rule` json default null comment '文件资源清理规则',
-    primary key (`sc_id`) using BTREE,
-    key `idx_sc_join` (`sc_join_table`, `sc_join_data`) using BTREE
-) comment = '系统配置';
+-- ============================================================================
+-- ⚠️ 旧版 cs_system_config 已移除
+-- 原因：与 02-cyberpal_sweatshop.sql 重复定义且结构冲突（D12 决策）
+-- 新版 KV 设计（cfg_id/cfg_key/cfg_value JSON/cfg_type/cfg_group/cfg_remark）
+-- 见 02-cyberpal_sweatshop.sql
+-- ============================================================================
+
 -- ----------------------------
 -- Table structure for cs_system_record
 -- 配置记录
+-- 变更说明：
+--   - INT unsigned → BIGINT UNSIGNED（规范 §2）
+--   - sr_extend JSON default null → NOT NULL DEFAULT '{}'（规范 §5）
 -- ----------------------------
 drop table if exists `cs_system_record`;
 create table `cs_system_record` (
@@ -458,33 +483,38 @@ create table `cs_system_record` (
     `sr_join_table` VARCHAR (11) not null default '' comment '关联表表名称',
     `sr_join_field` VARCHAR (50) not null default '' comment '关联表表字段',
     `sr_join_data` INT not null default 0 comment '关联表表数据',
-    -- `sr_hospital` INT NOT NULL DEFAULT 0 COMMENT '医院，关联cs_hospital',
     `sr_title` VARCHAR (100) not null default '' comment '标题',
     `sr_field` VARCHAR (100) not null default '' comment '字段',
     `sr_value` VARCHAR (20) not null default '' comment '修改的值',
     `sr_remark` VARCHAR (20) not null default '' comment '备注',
-    `sr_extend` json default null comment '扩展信息存储的是本次修改的所有数据',
+    `sr_extend` JSON not null comment '扩展信息存储的是本次修改的所有数据',
     `sr_create_user` INT not null default 0 comment '修改人',
-    `sr_create_time` INT unsigned not null default 0 comment '创建时间',
-    `sr_update_time` INT unsigned not null default 0 comment '修改时间',
-    `sr_delete_time` INT unsigned not null default 0 comment '删除时间',
+    `sr_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `sr_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `sr_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`sr_id`),
     key `idx_sr_create_user` (`sr_create_user`) using BTREE,
     key `idx_sr_create_time` (`sr_create_time`) using BTREE
 ) comment = '配置修改记录';
+-- ----------------------------
+-- Table structure for cs_task_record
+-- 变更说明：
+--   - int → BIGINT UNSIGNED（规范 §2）
+--   - tr_extend JSON default null → NOT NULL DEFAULT '{}'（规范 §5）
+-- ----------------------------
 drop table if exists `cs_task_record`;
 create table `cs_task_record` (
     `tr_id` int unsigned not null auto_increment comment '主键',
     `tr_date` int not null default 0 comment '执行日期',
     `tr_name` varchar(100) not null default '' comment '进程类名',
-    `tr_begin_time` int not null default 0 comment '开始执行时间',
-    `tr_end_time` int not null default 0 comment '结束执行时间',
+    `tr_begin_time` BIGINT UNSIGNED not null default 0 comment '开始执行时间',
+    `tr_end_time` BIGINT UNSIGNED not null default 0 comment '结束执行时间',
     `tr_execute_num` int not null default 1 comment '执行次数',
-    `tr_extend` json default null comment '执行后扩展信息',
+    `tr_extend` JSON not null comment '执行后扩展信息',
     `tr_state` tinyint not null default 1 comment '执行状态，1执行中，2执行完成',
-    `tr_create_time` int not null default 0 comment '创建时间',
-    `tr_update_time` int not null default 0 comment '修改时间',
-    `tr_delete_time` int not null default 0 comment '删除时间',
+    `tr_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `tr_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `tr_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`tr_id`),
     key `idx_tr_date` (`tr_date`) using BTREE,
     key `idx_tr_name` (`tr_name`) using BTREE,
@@ -493,6 +523,9 @@ create table `cs_task_record` (
 -- ----------------------------
 -- Table structure for `cs_provider`
 -- 服务商
+-- 变更说明：
+--   - BIGINT → BIGINT UNSIGNED（规范 §2）
+--   - idx_name → idx_p_name（规范 §3）
 -- ----------------------------
 drop table if exists `cs_provider`;
 create table `cs_provider` (
@@ -501,15 +534,19 @@ create table `cs_provider` (
     `p_name` VARCHAR (100) not null default '' comment '服务商名称',
     `p_state` TINYINT not null default 1 comment '服务商状态 1正常 0禁用',
     `p_remark` VARCHAR (1000) not null default '' comment '备注',
-    `p_create_time` BIGINT not null default 0 comment '创建时间',
-    `p_update_time` BIGINT not null default 0 comment '更新时间',
-    `p_delete_time` BIGINT not null default 0 comment '删除时间',
+    `p_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `p_update_time` BIGINT UNSIGNED not null default 0 comment '更新时间',
+    `p_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`p_id`) using BTREE,
-    key `idx_name` (`p_name`) using BTREE
+    key `idx_p_name` (`p_name`) using BTREE
 ) comment = '服务商';
 -- ----------------------------
 -- Table structure for `cs_provider_application`
 -- 服务商应用
+-- 变更说明：
+--   - BIGINT → BIGINT UNSIGNED（规范 §2）
+--   - NULL 字段 → NOT NULL + 默认值（规范 §5）
+--   - un_uniq_code_info → uniq_pa_code_info（规范 §3）
 -- ----------------------------
 drop table if exists `cs_provider_application`;
 create table `cs_provider_application` (
@@ -520,14 +557,14 @@ create table `cs_provider_application` (
     `pa_name` VARCHAR(50) not null default '' comment '应用别名',
     `pa_state` TINYINT not null default 1 comment '应用状态，0关闭；1开启',
     `pa_api_communicant` INT not null default 0 comment '关联的秘钥表数据',
-    `pa_remark` VARCHAR(255) default '' comment '备注 ',
-    `pa_param` JSON comment '应用配置所需参数',
-    `pa_extend` JSON comment '扩展',
-    `pa_create_time` BIGINT not null default 0 comment '创建时间',
-    `pa_update_time` BIGINT not null default 0 comment '修改时间',
-    `pa_delete_time` BIGINT not null default 0 comment '删除时间',
+    `pa_remark` VARCHAR(255) not null default '' comment '备注 ',
+    `pa_param` JSON not null comment '应用配置所需参数',
+    `pa_extend` JSON not null comment '扩展',
+    `pa_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `pa_update_time` BIGINT UNSIGNED not null default 0 comment '修改时间',
+    `pa_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`pa_id`) using BTREE,
-    unique key `un_uniq_code_info` (
+    unique key `uniq_pa_code_info` (
         `pa_provider_code`,
         `pa_code`,
         `pa_delete_time`
@@ -538,6 +575,9 @@ create table `cs_provider_application` (
 -- ----------------------------
 -- Table structure for `cs_provider_application_subscriber`
 -- 服务商应用被订阅的关联表
+-- 变更说明：
+--   - BIGINT → BIGINT UNSIGNED（规范 §2）
+--   - NULL 字段 → NOT NULL + 默认值（规范 §5）
 -- ----------------------------
 drop table if exists `cs_provider_application_subscriber`;
 create table `cs_provider_application_subscriber` (
@@ -550,13 +590,13 @@ create table `cs_provider_application_subscriber` (
     `pas_provider_application` INT not null default 0 comment '关联服务商应用',
     `pas_provider_application_code` VARCHAR(50) not null default '1' comment '应用类型',
     `pas_code` VARCHAR(32) not null default '' comment '应用内标识码',
-    `pas_extend` JSON default null comment '自定义扩展信息',
+    `pas_extend` JSON not null comment '自定义扩展信息',
     `pas_state` TINYINT not null default 1 comment '订阅状态 1正常 0禁用',
-    `pas_remark` VARCHAR(255) default '' comment '备注',
+    `pas_remark` VARCHAR(255) not null default '' comment '备注',
     `pas_api_communicant` INT not null default 0 comment '关联的秘钥表数据（可无）',
-    `pas_create_time` BIGINT not null default 0 comment '创建时间',
-    `pas_update_time` BIGINT not null default 0 comment '更新时间',
-    `pas_delete_time` BIGINT not null default 0 comment '删除时间',
+    `pas_create_time` BIGINT UNSIGNED not null default 0 comment '创建时间',
+    `pas_update_time` BIGINT UNSIGNED not null default 0 comment '更新时间',
+    `pas_delete_time` BIGINT UNSIGNED not null default 0 comment '删除时间',
     primary key (`pas_id`) using BTREE,
     key `idx_pas_provider_application` (`pas_provider_application`) using BTREE,
     key `idx_pas_provider` (`pas_provider`) using BTREE,
@@ -576,9 +616,10 @@ create table `cs_provider_application_subscriber` (
 
 -- ----------------------------
 -- 种子：超级管理员账号（app_type=1）
+-- 变更：新增 usr_must_change_pwd=1（07 FR-1.5 首次登录强制改密）
 -- ----------------------------
-INSERT INTO `cs_user` (`usr_id`, `usr_app_type`, `usr_account`, `usr_pwd`, `usr_salt`, `usr_real_name`, `usr_state`, `usr_create_time`, `usr_update_time`)
-VALUES (1, 1, 'admin', '68b6b4ab792a4476db8f6937bb4c4d12', 'RzyL', '超级管理员', 1, 0, 0);
+INSERT INTO `cs_user` (`usr_id`, `usr_app_type`, `usr_account`, `usr_pwd`, `usr_salt`, `usr_real_name`, `usr_state`, `usr_must_change_pwd`, `usr_create_time`, `usr_update_time`)
+VALUES (1, 1, 'admin', '68b6b4ab792a4476db8f6937bb4c4d12', 'RzyL', '超级管理员', 1, 1, 0, 0);
 
 -- ----------------------------
 -- 种子：Admin 三档角色（超管 / 运营 / 客服）
@@ -594,3 +635,10 @@ VALUES
 -- ----------------------------
 INSERT INTO `cs_relation` (`rel_user`, `rel_role`, `rel_app_type`, `rel_role_level`)
 VALUES (1, 1, 1, 0);
+
+-- ----------------------------
+-- 种子：全局配置默认值（cs_system_config KV 版，见 02-cyberpal_sweatshop.sql）
+-- 以下 INSERT 依赖 02 脚本先创建 cs_system_config 表，因此移至 02 脚本末尾
+-- 或作为独立 seed 在 02 之后执行。
+-- 配置键：auto_archive_days / active_session_limit / archived_session_limit
+-- ----------------------------

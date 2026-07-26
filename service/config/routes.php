@@ -24,66 +24,66 @@ use Hyperf\HttpServer\Router\Router;
 // ===================================================================
 
 // 聊天页面
-Router::addRoute(['GET', 'HEAD'], '/', 'App\Controller\ChatController@index');
+Router::addRoute(['GET', 'HEAD'], '/', 'app\http\user\controller\v1\ChatController@index');
 
 // SSE 聊天端点
-Router::addRoute(['GET', 'POST'], '/chat', 'App\Controller\ChatController@chat');
+Router::addRoute(['GET', 'POST'], '/chat', 'app\http\user\controller\v1\ChatController@chat');
 
 // Auth API
 Router::addGroup('/api/auth', function () {
-    Router::post('/register', 'App\Controller\AuthController@register');
-    Router::post('/login', 'App\Controller\AuthController@login');
-    Router::post('/logout', 'App\Controller\AuthController@logout');
-    Router::get('/me', 'App\Controller\AuthController@me');
+    Router::post('/register', 'app\http\user\controller\v1\AuthController@register');
+    Router::post('/login', 'app\http\user\controller\v1\AuthController@login');
+    Router::post('/logout', 'app\http\user\controller\v1\AuthController@logout');
+    Router::get('/me', 'app\http\user\controller\v1\AuthController@me');
 });
 
 // Agent CRUD
 Router::addGroup('/api/agents', function () {
-    Router::get('', 'App\Controller\AgentController@index');
-    Router::post('', 'App\Controller\AgentController@store');
-    Router::get('/{id}', 'App\Controller\AgentController@show');
-    Router::put('/{id}', 'App\Controller\AgentController@update');
-    Router::delete('/{id}', 'App\Controller\AgentController@destroy');
-    Router::get('/{id}/skills', 'App\Controller\AgentController@listSkills');
-    Router::post('/{id}/skills', 'App\Controller\AgentController@mountSkills');
-    Router::get('/{id}/mcp', 'App\Controller\McpController@index');
-    Router::post('/{id}/mcp', 'App\Controller\McpController@store');
-    Router::put('/{id}/mcp/{mid}', 'App\Controller\McpController@update');
-    Router::delete('/{id}/mcp/{mid}', 'App\Controller\McpController@destroy');
+    Router::get('', 'app\http\user\controller\v1\AgentController@index');
+    Router::post('', 'app\http\user\controller\v1\AgentController@store');
+    Router::get('/{id}', 'app\http\user\controller\v1\AgentController@show');
+    Router::put('/{id}', 'app\http\user\controller\v1\AgentController@update');
+    Router::delete('/{id}', 'app\http\user\controller\v1\AgentController@destroy');
+    Router::get('/{id}/skills', 'app\http\user\controller\v1\AgentController@listSkills');
+    Router::post('/{id}/skills', 'app\http\user\controller\v1\AgentController@mountSkills');
+    Router::get('/{id}/mcp', 'app\http\user\controller\v1\McpController@index');
+    Router::post('/{id}/mcp', 'app\http\user\controller\v1\McpController@store');
+    Router::put('/{id}/mcp/{mid}', 'app\http\user\controller\v1\McpController@update');
+    Router::delete('/{id}/mcp/{mid}', 'app\http\user\controller\v1\McpController@destroy');
 });
 
 // Skill 库浏览
 Router::addGroup('/api/skills', function () {
-    Router::get('', 'App\Controller\SkillLibraryController@index');
-    Router::get('/{id}', 'App\Controller\SkillLibraryController@show');
+    Router::get('', 'app\http\user\controller\v1\SkillLibraryController@index');
+    Router::get('/{id}', 'app\http\user\controller\v1\SkillLibraryController@show');
 });
 
 // SSE 聊天端点（正式版）
-Router::addRoute(['GET'], '/api/chat/stream', 'App\Controller\ChatController@stream');
+Router::addRoute(['GET'], '/api/chat/stream', 'app\http\user\controller\v1\ChatController@stream');
 
 // Session 管理
 Router::addGroup('/api/sessions', function () {
-    Router::get('', 'App\Controller\SessionController@index');
-    Router::post('', 'App\Controller\SessionController@store');
-    Router::get('/history', 'App\Controller\SessionController@history');
-    Router::get('/{id}', 'App\Controller\SessionController@show');
-    Router::get('/{id}/detail', 'App\Controller\SessionController@detail');
-    Router::post('/{id}/resume', 'App\Controller\SessionController@resume');
-    Router::post('/{id}/fork', 'App\Controller\SessionController@fork');
-    Router::post('/{id}/archive', 'App\Controller\SessionController@archive');
-    Router::delete('/{id}', 'App\Controller\SessionController@destroy');
+    Router::get('', 'app\http\user\controller\v1\SessionController@index');
+    Router::post('', 'app\http\user\controller\v1\SessionController@store');
+    Router::get('/history', 'app\http\user\controller\v1\SessionController@history');
+    Router::get('/{id}', 'app\http\user\controller\v1\SessionController@show');
+    Router::get('/{id}/detail', 'app\http\user\controller\v1\SessionController@detail');
+    Router::post('/{id}/resume', 'app\http\user\controller\v1\SessionController@resume');
+    Router::post('/{id}/fork', 'app\http\user\controller\v1\SessionController@fork');
+    Router::post('/{id}/archive', 'app\http\user\controller\v1\SessionController@archive');
+    Router::delete('/{id}', 'app\http\user\controller\v1\SessionController@destroy');
 });
 
 // Billing
 Router::addGroup('/api/billing', function () {
-    Router::get('/summary', 'App\Controller\BillingController@summary');
-    Router::get('/records', 'App\Controller\BillingController@records');
+    Router::get('/summary', 'app\http\user\controller\v1\BillingController@summary');
+    Router::get('/records', 'app\http\user\controller\v1\BillingController@records');
 });
 
 // Profile
 Router::addGroup('/api/profile', function () {
-    Router::get('', 'App\Controller\ProfileController@show');
-    Router::put('', 'App\Controller\ProfileController@update');
+    Router::get('', 'app\http\user\controller\v1\ProfileController@show');
+    Router::put('', 'app\http\user\controller\v1\ProfileController@update');
 });
 
 // ===================================================================
@@ -93,21 +93,21 @@ Router::addGroup('/api/profile', function () {
 // 管理后台路由
 Router::addGroup('/admin', function () {
     // Session 登录
-    Router::post('/v1/session/login', 'App\http\admin\controller\v1\SessionController@login');
-    Router::get('/v1/session/logout', 'App\http\admin\controller\v1\SessionController@logout');
-    Router::get('/v1/session/profile', 'App\http\admin\controller\v1\SessionController@profile');
+    Router::post('/v1/session/login', 'app\http\admin\controller\v1\SessionController@login');
+    Router::get('/v1/session/logout', 'app\http\admin\controller\v1\SessionController@logout');
+    Router::get('/v1/session/profile', 'app\http\admin\controller\v1\SessionController@profile');
 });
 
 // 用户端路由
 Router::addGroup('/user', function () {
     // Session 登录
-    Router::post('/v1/session/login', 'App\http\user\controller\v1\SessionController@login');
-    Router::get('/v1/session/logout', 'App\http\user\controller\v1\SessionController@logout');
+    Router::post('/v1/session/login', 'app\http\user\controller\v1\SessionController@login');
+    Router::get('/v1/session/logout', 'app\http\user\controller\v1\SessionController@logout');
 });
 
 // 公共路由
 Router::addGroup('/home', function () {
-    Router::get('/v1/index', 'App\http\home\controller\v1\IndexController@index');
+    Router::get('/v1/index', 'app\http\home\controller\v1\IndexController@index');
 });
 
 Router::get('/favicon.ico', function () {

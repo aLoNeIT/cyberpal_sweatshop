@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent 管理 - CyberPal</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231677ff'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700' font-size='20'>C</text></svg>">
+
+  <!-- CyberPal Styles -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    .agent-name { font-weight: 500; color: var(--color-text); }
+    .agent-desc { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); font-size: 13px; }
+    .skill-count { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 13px; }
+    .filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .quick-stats { display: flex; gap: 16px; align-items: center; }
+    .quick-stat { font-size: 13px; color: var(--color-text-secondary); }
+    .quick-stat span { color: var(--color-text); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="app-sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">C</div>
+      <span class="sidebar-logo-text">CyberPal</span>
+    </div>
+    <nav class="sidebar-nav">
+      <!-- 导航分组 -->
+      <div class="nav-group">
+        <div class="nav-group-title">导航</div>
+        <a href="dashboard.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <span>控制台</span>
+        </a>
+        <a href="agents.html" class="nav-item active">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+          <span>Agent</span>
+        </a>
+        <a href="chat.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>对话</span>
+        </a>
+        <a href="sessions.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>会话</span>
+        </a>
+      </div>
+      <!-- 系统分组 -->
+      <div class="nav-group">
+        <div class="nav-group-title">系统</div>
+        <a href="billing.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>消费</span>
+        </a>
+        <a href="team.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>团队</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>设置</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ===== Main Content ===== -->
+  <div class="app-main">
+
+    <!-- ===== Topbar ===== -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-trigger">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-breadcrumb">
+          <span class="current">Agent 管理</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="quick-stats">
+          <div class="quick-stat">Agent: <span>4</span>/10</div>
+          <div class="quick-stat">今日调用: <span>1,247</span></div>
+        </div>
+        <div class="topbar-usage">
+          <span>本月用量</span><strong>$42.50</strong><span>/ $500</span>
+        </div>
+        <button class="theme-toggle" title="切换主题">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <div class="user-avatar" title="用户设置">王</div>
+      </div>
+    </header>
+
+    <!-- ===== Content Area ===== -->
+    <main class="app-content">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>Agent 管理</h1>
+          <p>创建和管理你的 AI Agent，配置模型、工具和技能</p>
+        </div>
+        <div class="page-header-right">
+          <button class="btn btn-primary" onclick="location.href='agent-config.html'">
+            <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            创建 Agent
+          </button>
+        </div>
+      </div>
+
+      <!-- Card: Agent Table -->
+      <div class="card">
+        <div class="card-body">
+          <!-- Filter Bar -->
+          <div class="filter-bar">
+            <div class="table-toolbar-left">
+              <div class="search-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="search-input" placeholder="搜索 Agent 名称..." oninput="filterAgents()" id="searchInput">
+              </div>
+              <div class="filter-chips" id="filterChips">
+                <span class="filter-chip active" data-filter="all">全部 <strong style="font-family:var(--font-mono)">6</strong></span>
+                <span class="filter-chip" data-filter="online">在线 <strong style="font-family:var(--font-mono)">4</strong></span>
+                <span class="filter-chip" data-filter="offline">离线 <strong style="font-family:var(--font-mono)">1</strong></span>
+                <span class="filter-chip" data-filter="error">错误 <strong style="font-family:var(--font-mono)">1</strong></span>
+              </div>
+            </div>
+            <div class="table-toolbar-right">
+              <button class="btn btn-ghost" onclick="CyberPal.placeholder()">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                导入
+              </button>
+              <button class="btn btn-ghost" onclick="CyberPal.placeholder()">
+                <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                导出
+              </button>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="agentTable">
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>描述</th>
+                  <th>模型 Provider</th>
+                  <th>状态</th>
+                  <th>Skill 数</th>
+                  <th>创建时间</th>
+                  <th class="col-actions">操作</th>
+                </tr>
+              </thead>
+              <tbody id="agentTableBody"></tbody>
+            </table>
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="emptyState">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+              </div>
+              <h3>暂无 Agent</h3>
+              <p>还没有创建任何 Agent，点击上方按钮创建第一个</p>
+              <button class="btn btn-primary" onclick="location.href='agent-config.html'">
+                <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                创建 Agent
+              </button>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination">
+            <div class="pagination-info">共 <strong id="totalCount">6</strong> 条，第 <strong>1</strong>/1 页</div>
+            <div class="pagination-btns">
+              <button class="pagination-btn" disabled>&laquo;</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn" disabled>&raquo;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/common.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // Demo agent data
+  var agents = [
+    { id: 'agt-001', name: '代码审查助手', desc: '自动审查 PR 代码质量、安全漏洞和代码规范，提供修改建议', provider: 'Anthropic', model: 'claude-sonnet-4-20250514', status: 'online', skills: 5, created: '2026-06-15 10:30' },
+    { id: 'agt-002', name: '数据分析师', desc: '智能分析业务数据，生成可视化报表和洞察建议', provider: 'OpenAI', model: 'gpt-4o', status: 'online', skills: 3, created: '2026-06-20 14:22' },
+    { id: 'agt-003', name: '客服机器人', desc: '7x24 自动应答客户咨询，支持多语言和知识库检索', provider: 'Google', model: 'gemini-2.5-pro', status: 'online', skills: 4, created: '2026-07-01 09:15' },
+    { id: 'agt-004', name: '文档生成器', desc: '根据代码注释和接口定义自动生成 API 文档和用户手册', provider: 'OpenAI', model: 'gpt-4o-mini', status: 'error', skills: 2, created: '2026-07-05 16:48' },
+    { id: 'agt-005', name: '安全扫描 Agent', desc: '定期扫描系统漏洞，检测异常访问行为和潜在威胁', provider: 'Anthropic', model: 'claude-sonnet-4-20250514', status: 'online', skills: 6, created: '2026-07-10 11:03' },
+    { id: 'agt-006', name: '翻译助手', desc: '支持 50+ 语言实时翻译，保持专业术语一致性', provider: 'DeepSeek', model: 'deepseek-chat', status: 'offline', skills: 1, created: '2026-07-18 08:30' }
+  ];
+
+  var statusMap = {
+    online: { cls: 'badge-success', text: '在线', dot: 'online' },
+    offline: { cls: 'badge-default', text: '离线', dot: 'offline' },
+    error: { cls: 'badge-danger', text: '错误', dot: 'error' }
+  };
+
+  var currentFilter = 'all';
+
+  function renderTable(data) {
+    var tbody = document.getElementById('agentTableBody');
+    var empty = document.getElementById('emptyState');
+    var table = document.getElementById('agentTable');
+    var pagination = document.getElementById('pagination');
+
+    if (data.length === 0) {
+      tbody.innerHTML = '';
+      empty.classList.remove('hidden');
+      table.querySelector('thead').style.display = 'none';
+      pagination.style.display = 'none';
+      return;
+    }
+
+    empty.classList.add('hidden');
+    table.querySelector('thead').style.display = '';
+    pagination.style.display = '';
+
+    var puzzleSvg = '<svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.59V7.41a2 2 0 0 0-1.45-1.9L12 3 5.45 5.51A2 2 0 0 0 4 7.41v9.18a2 2 0 0 0 1.45 1.9L12 21l6.55-2.51A2 2 0 0 0 20 16.59z"/></svg>';
+    var editSvg = '<svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    var copySvg = '<svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    var trashSvg = '<svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+
+    tbody.innerHTML = data.map(function(a) {
+      var st = statusMap[a.status] || statusMap.offline;
+      return '<tr data-id="' + a.id + '">' +
+        '<td><div class="agent-name">' + a.name + '</div></td>' +
+        '<td><div class="agent-desc" title="' + a.desc + '">' + a.desc + '</div></td>' +
+        '<td><span class="badge badge-default">' + a.provider + '</span><span class="text-sm text-secondary" style="margin-left:6px;">' + a.model + '</span></td>' +
+        '<td><span class="badge ' + st.cls + '"><span class="badge-dot ' + st.dot + '"></span>' + st.text + '</span></td>' +
+        '<td><span class="skill-count">' + puzzleSvg + ' ' + a.skills + '</span></td>' +
+        '<td class="col-time">' + a.created + '</td>' +
+        '<td class="col-actions">' +
+          '<button class="btn btn-ghost btn-sm" onclick="editAgent(\'' + a.id + '\')" title="编辑">' + editSvg + '</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="copyAgent(\'' + a.id + '\')" title="复制">' + copySvg + '</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="deleteAgent(\'' + a.id + '\',\'' + a.name + '\')" title="删除">' + trashSvg + '</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function filterAgents() {
+    var keyword = (document.getElementById('searchInput').value || '').toLowerCase();
+    var filtered = agents.filter(function(a) {
+      var matchFilter = currentFilter === 'all' || a.status === currentFilter;
+      var matchSearch = !keyword || a.name.toLowerCase().indexOf(keyword) !== -1 || a.desc.toLowerCase().indexOf(keyword) !== -1;
+      return matchFilter && matchSearch;
+    });
+    document.getElementById('totalCount').textContent = filtered.length;
+    renderTable(filtered);
+  }
+
+  window.filterAgents = filterAgents;
+
+  // Filter chips
+  document.getElementById('filterChips').addEventListener('click', function(e) {
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    document.querySelectorAll('#filterChips .filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+    currentFilter = chip.getAttribute('data-filter');
+    filterAgents();
+  });
+
+  // Actions
+  window.editAgent = function(id) {
+    location.href = 'agent-config.html?id=' + id;
+  };
+
+  window.copyAgent = function(id) {
+    CyberPal.placeholder();
+  };
+
+  window.deleteAgent = function(id, name) {
+    CyberPal.confirm('确定要删除 Agent "<strong>' + name + '</strong>" 吗？<br><span class="warning-text">删除后数据将无法恢复，请谨慎操作。</span>', function() {
+      var idx = agents.findIndex(function(a) { return a.id === id; });
+      if (idx !== -1) agents.splice(idx, 1);
+      filterAgents();
+      CyberPal.Toast.show('Agent "' + name + '" 已删除', 'success');
+    });
+  };
+
+  // Initial render
+  renderTable(agents);
+})();
+</script>
+</body>
+</html>

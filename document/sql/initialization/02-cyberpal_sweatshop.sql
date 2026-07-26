@@ -25,11 +25,17 @@
 --     * 新增通知体系：`cs_notify_channel` / `cs_notify_template` / `cs_notify_inbox`
 --       / `cs_notify_log`（闭环 01 R-015 用量预警，详见 10 §4）。
 --     * 新增指标体系：`cs_metrics_definition` / `cs_metrics_daily`（详见 10 §5）。
+-- - 2026-07（数据库规范合规修正）：
+--     * NULL 字段修正：cs_sessions.parent_session_id、cs_events.message_id → NOT NULL + DEFAULT
+--     * cs_skill_library 新增 category 字段（09 FR-1.1）
+--     * 补充索引支持 UI 查询（dashboard 统计、计费大盘、消息分页、通知未读计数）
+--     * cs_system_config 新增 seed 默认值（auto_archive_days/session limits）
 -- ============================================================================
 
 -- ----------------------------
 -- Table structure for `cs_agents`
 -- Agent 定义。user_id → cs_user.usr_id（单一用户表，usr_app_type=4 为用户端账户）。
+-- 新增索引：idx_user_status（dashboard Agent 数统计）、idx_user_delete（用户 Agent 列表）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_agents`;
 CREATE TABLE `cs_agents` (
@@ -53,12 +59,18 @@ CREATE TABLE `cs_agents` (
     KEY `idx_user_id` (`user_id`),
     KEY `idx_status` (`status`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_user_status` (`user_id`, `status`),
+    KEY `idx_user_delete` (`user_id`, `delete_time`),
     CONSTRAINT `fk_cs_agents_user` FOREIGN KEY (`user_id`) REFERENCES `cs_user` (`usr_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Agent 定义表';
 
 -- ----------------------------
 -- Table structure for `cs_sessions`
--- 会话。user_id → cs_user.usr_id；agent_id → cs_agents.id。状态机用 status，不硬删。
+-- 会话。user_id → cs_user.usr_id；agent_id → cs_agents.id。状态机用 status��不硬删。
+-- 变更：
+--   - parent_session_id: NULL DEFAULT NULL → NOT NULL DEFAULT ''（规范 §5）
+--   - 新增索引：idx_user_status（dashboard 活跃会话统计）
+--   - 新增索引：idx_user_agent_status（跨用户 Agent/Session 管理，08 FR-6.1）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_sessions`;
 CREATE TABLE `cs_sessions` (
@@ -69,9 +81,9 @@ CREATE TABLE `cs_sessions` (
     `omp_session_id`     VARCHAR(255)  NOT NULL DEFAULT '' COMMENT 'OMP 原生 session 文件 id',
     `status`             VARCHAR(32)   NOT NULL DEFAULT 'active' COMMENT 'active|archived|deleted',
     `mode`               VARCHAR(32)   NOT NULL DEFAULT 'normal' COMMENT 'normal|resumed|forked',
-    `parent_session_id`  VARCHAR(36)   NULL     DEFAULT NULL COMMENT 'fork 来源会话（可选外键，NULL=无）',
+    `parent_session_id`  VARCHAR(36)   NOT NULL DEFAULT '' COMMENT 'fork 来源会话（空=无父会话）',
     `message_count`      INT UNSIGNED  NOT NULL DEFAULT 0 COMMENT '消息计数',
-    `last_usage`         JSON          NOT NULL DEFAULT '{}' COMMENT '最近一次 usage 快照',
+    `last_usage`         JSON NOT NULL COMMENT '最近一次 usage 快照',
     `archived_time`      BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '归档时间（秒级时间戳，0=未归档）',
     `create_time`        BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time`        BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
@@ -81,6 +93,9 @@ CREATE TABLE `cs_sessions` (
     KEY `idx_agent_id` (`agent_id`),
     KEY `idx_status` (`status`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_user_status` (`user_id`, `status`),
+    KEY `idx_user_agent_status` (`user_id`, `agent_id`, `status`),
+    KEY `idx_parent_session` (`parent_session_id`),
     CONSTRAINT `fk_cs_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `cs_user` (`usr_id`),
     CONSTRAINT `fk_cs_sessions_agent` FOREIGN KEY (`agent_id`) REFERENCES `cs_agents` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话表';
@@ -88,6 +103,7 @@ CREATE TABLE `cs_sessions` (
 -- ----------------------------
 -- Table structure for `cs_messages`
 -- 消息。session_id → cs_sessions.id。消息不可变，无 update_time 语义（update_time 保留为 0）。
+-- 新增索引：idx_session_seq（消息分页查询）、idx_session_delete（会话消息列表）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_messages`;
 CREATE TABLE `cs_messages` (
@@ -104,21 +120,26 @@ CREATE TABLE `cs_messages` (
     KEY `idx_session_id` (`session_id`),
     KEY `idx_seq` (`seq`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_session_seq` (`session_id`, `seq`),
+    KEY `idx_session_delete` (`session_id`, `delete_time`),
     CONSTRAINT `fk_cs_messages_session` FOREIGN KEY (`session_id`) REFERENCES `cs_sessions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息表';
 
 -- ----------------------------
 -- Table structure for `cs_events`
--- 结构化事件落库。session_id → cs_sessions.id；message_id → cs_messages.id（可选）。
+-- 结构化事件落库。session_id → cs_sessions.id；message_id → cs_messages.id。
+-- 变更：
+--   - message_id: NULL DEFAULT NULL → NOT NULL DEFAULT 0（规范 §5，0=无关联消息）
+--   - 新增索引：idx_session_type（按会话+类型查询事件）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_events`;
 CREATE TABLE `cs_events` (
     `id`         INT UNSIGNED  NOT NULL AUTO_INCREMENT,
     `session_id` VARCHAR(36)   NOT NULL DEFAULT '' COMMENT '所属会话（cs_sessions.id）',
-    `message_id` INT UNSIGNED  NULL     DEFAULT NULL COMMENT '关联消息（cs_messages.id，可选外键）',
+    `message_id` INT UNSIGNED  NOT NULL DEFAULT 0 COMMENT '关联消息（cs_messages.id，0=无关联）',
     `event_type` VARCHAR(32)   NOT NULL DEFAULT '' COMMENT 'tool_call|usage|error|meta',
     `seq`        INT UNSIGNED  NOT NULL DEFAULT 0 COMMENT '会话内顺序',
-    `payload`    JSON          NOT NULL DEFAULT '{}' COMMENT '结构化数据',
+    `payload`    JSON NOT NULL COMMENT '结构化数据',
     `create_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
     `delete_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '删除时间（软删，秒级时间戳）',
@@ -127,6 +148,7 @@ CREATE TABLE `cs_events` (
     KEY `idx_message_id` (`message_id`),
     KEY `idx_event_type` (`event_type`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_session_type` (`session_id`, `event_type`),
     CONSTRAINT `fk_cs_events_session` FOREIGN KEY (`session_id`) REFERENCES `cs_sessions` (`id`),
     CONSTRAINT `fk_cs_events_message` FOREIGN KEY (`message_id`) REFERENCES `cs_messages` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='事件表（结构化事件落库）';
@@ -134,12 +156,14 @@ CREATE TABLE `cs_events` (
 -- ----------------------------
 -- Table structure for `cs_skill_library`
 -- 平台托管 Skill 库。Admin FR-1 治理对象。
+-- 变更：新增 category 字段（09 FR-1.1/FR-1.2 Skill 分类治理）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_skill_library`;
 CREATE TABLE `cs_skill_library` (
     `id`          VARCHAR(36)   NOT NULL DEFAULT '' COMMENT 'UUID 主键',
     `name`        VARCHAR(255)  NOT NULL DEFAULT '' COMMENT 'Skill 名称',
     `description` TEXT          NOT NULL COMMENT '描述',
+    `category`    VARCHAR(64)   NOT NULL DEFAULT '' COMMENT '分类（09 FR-1.1，如 coding|data|productivity）',
     `path`        VARCHAR(512)  NOT NULL DEFAULT '' COMMENT '磁盘目录路径',
     `enabled`     TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否启用 0/1',
     `create_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
@@ -147,6 +171,8 @@ CREATE TABLE `cs_skill_library` (
     `delete_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '删除时间（软删，秒级时间戳）',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uniq_name` (`name`),
+    KEY `idx_category` (`category`),
+    KEY `idx_enabled` (`enabled`),
     KEY `idx_delete_time` (`delete_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='平台托管 Skill 库';
 
@@ -162,10 +188,10 @@ CREATE TABLE `cs_mcp_config` (
     `name`         VARCHAR(255)  NOT NULL DEFAULT '' COMMENT 'MCP Server 名称',
     `transport`    VARCHAR(32)   NOT NULL DEFAULT '' COMMENT 'stdio|http|sse',
     `command`      VARCHAR(512)  NOT NULL DEFAULT '' COMMENT 'stdio: 可执行文件',
-    `args_json`    JSON          NOT NULL DEFAULT '{}' COMMENT 'stdio: 参数数组',
+    `args_json`    JSON NOT NULL COMMENT 'stdio: 参数数组',
     `url`          VARCHAR(512)  NOT NULL DEFAULT '' COMMENT 'http/sse: 地址',
-    `env_json`     JSON          NOT NULL DEFAULT '{}' COMMENT '环境变量',
-    `headers_json` JSON          NOT NULL DEFAULT '{}' COMMENT 'http/sse 鉴权头',
+    `env_json`     JSON NOT NULL COMMENT '环境变量',
+    `headers_json` JSON NOT NULL COMMENT 'http/sse 鉴权头',
     `enabled`      TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否启用 0/1',
     `create_time`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
@@ -179,6 +205,7 @@ CREATE TABLE `cs_mcp_config` (
 -- ----------------------------
 -- Table structure for `cs_agent_skill`
 -- Agent-Skill 多对多关联。
+-- 变更：un_idx_agent_skill（唯一索引命名修正 → uniq_agent_skill）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_agent_skill`;
 CREATE TABLE `cs_agent_skill` (
@@ -189,7 +216,7 @@ CREATE TABLE `cs_agent_skill` (
     `update_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
     `delete_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '删除时间（软删，秒级时间戳）',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `un_idx_agent_skill` (`agent_id`, `skill_id`),
+    UNIQUE KEY `uniq_agent_skill` (`agent_id`, `skill_id`),
     KEY `idx_skill_id` (`skill_id`),
     KEY `idx_delete_time` (`delete_time`),
     CONSTRAINT `fk_cs_agent_skill_agent` FOREIGN KEY (`agent_id`) REFERENCES `cs_agents` (`id`),
@@ -201,6 +228,8 @@ CREATE TABLE `cs_agent_skill` (
 -- 计费记录。user_id → cs_user.usr_id。
 -- cost_estimate 为 USD 估算费用，使用 DECIMAL(12,6) 以保留 sub-cent token 成本精度，
 -- 偏离《数据库规范》§5 的 decimal(10,2) 金额约定（由 token 成本特性决定）。
+-- 新增索引：idx_user_create（用户消费明细）、idx_provider_model（计费大盘 Top Provider）
+-- 新增索引：idx_create_source（计费大盘时间趋势+来源筛选）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_billing_records`;
 CREATE TABLE `cs_billing_records` (
@@ -225,6 +254,9 @@ CREATE TABLE `cs_billing_records` (
     KEY `idx_agent_id` (`agent_id`),
     KEY `idx_create_time` (`create_time`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_user_create` (`user_id`, `create_time`),
+    KEY `idx_provider_model` (`provider`, `model`),
+    KEY `idx_create_source` (`create_time`, `source`),
     CONSTRAINT `fk_cs_billing_user` FOREIGN KEY (`user_id`) REFERENCES `cs_user` (`usr_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计费记录表';
 
@@ -242,10 +274,10 @@ CREATE TABLE `cs_mcp_template` (
     `description`  TEXT          NOT NULL COMMENT '描述',
     `transport`    VARCHAR(32)   NOT NULL DEFAULT '' COMMENT 'stdio|http|sse',
     `command`      VARCHAR(512)  NOT NULL DEFAULT '' COMMENT 'stdio: 可执行文件',
-    `args_json`    JSON          NOT NULL DEFAULT '{}' COMMENT 'stdio: 参数数组',
+    `args_json`    JSON NOT NULL COMMENT 'stdio: 参数数组',
     `url`          VARCHAR(512)  NOT NULL DEFAULT '' COMMENT 'http/sse: 地址',
-    `env_json`     JSON          NOT NULL DEFAULT '{}' COMMENT '环境变量模板',
-    `headers_json` JSON          NOT NULL DEFAULT '{}' COMMENT 'http/sse 鉴权头模板',
+    `env_json`     JSON NOT NULL COMMENT '环境变量模板',
+    `headers_json` JSON NOT NULL COMMENT 'http/sse 鉴权头模板',
     `enabled`      TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否上架 0/1',
     `create_time`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
@@ -271,7 +303,7 @@ CREATE TABLE `cs_notify_channel` (
     `code`       VARCHAR(32)   NOT NULL DEFAULT '' COMMENT '渠道编码 inapp|email|webhook',
     `name`       VARCHAR(64)   NOT NULL DEFAULT '' COMMENT '渠道名称',
     `type`       VARCHAR(32)   NOT NULL DEFAULT '' COMMENT 'inapp|email|webhook',
-    `config_json` JSON         NOT NULL DEFAULT '{}' COMMENT '渠道配置（SMTP/Webhook URL/密钥引用）',
+    `config_json` JSON NOT NULL COMMENT '渠道配置（SMTP/Webhook URL/密钥引用）',
     `enabled`    TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否启用 0/1',
     `create_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
@@ -292,7 +324,7 @@ CREATE TABLE `cs_notify_template` (
     `channel`     VARCHAR(32)   NOT NULL DEFAULT '' COMMENT '默认渠道 inapp|email|webhook',
     `title`       VARCHAR(255)  NOT NULL DEFAULT '' COMMENT '标题模板（支持 {var} 占位）',
     `body`        TEXT          NOT NULL COMMENT '正文模板（支持 {var} 占位）',
-    `variables_json` JSON       NOT NULL DEFAULT '{}' COMMENT '变量定义/示例',
+    `variables_json` JSON NOT NULL COMMENT '变量定义/示例',
     `enabled`     TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '是否启用 0/1',
     `create_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
@@ -305,6 +337,7 @@ CREATE TABLE `cs_notify_template` (
 -- ----------------------------
 -- Table structure for `cs_notify_inbox`
 -- 站内信收件箱。前端「消息中心」读取。read_time=0 表示未读。
+-- 新增索引：idx_user_read（未读消息计数，设置页消息角标）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_notify_inbox`;
 CREATE TABLE `cs_notify_inbox` (
@@ -314,7 +347,7 @@ CREATE TABLE `cs_notify_inbox` (
     `channel`      VARCHAR(32)   NOT NULL DEFAULT 'inapp' COMMENT '投递渠道',
     `title`        VARCHAR(255)  NOT NULL DEFAULT '' COMMENT '实际标题',
     `content`      TEXT          NOT NULL COMMENT '实际正文',
-    `payload_json` JSON          NOT NULL DEFAULT '{}' COMMENT '业务负载（关联实体/变量值）',
+    `payload_json` JSON NOT NULL COMMENT '业务负载（关联实体/变量值）',
     `read_time`    BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '已读时间（秒级时间戳，0=未读）',
     `create_time`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time`  BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
@@ -324,12 +357,14 @@ CREATE TABLE `cs_notify_inbox` (
     KEY `idx_read_time` (`read_time`),
     KEY `idx_template_id` (`template_id`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_user_read` (`user_id`, `read_time`),
     CONSTRAINT `fk_cs_notify_inbox_user` FOREIGN KEY (`user_id`) REFERENCES `cs_user` (`usr_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='站内信收件箱';
 
 -- ----------------------------
 -- Table structure for `cs_notify_log`
 -- 发送日志：投递状态、重试次数、失败原因。用于送达率统计（10 §5 健康指标）。
+-- 新增索引：idx_status_create（发送状态+时间，健康指标查询）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_notify_log`;
 CREATE TABLE `cs_notify_log` (
@@ -349,6 +384,7 @@ CREATE TABLE `cs_notify_log` (
     KEY `idx_status` (`status`),
     KEY `idx_template_code` (`template_code`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_status_create` (`status`, `create_time`),
     CONSTRAINT `fk_cs_notify_log_user` FOREIGN KEY (`user_id`) REFERENCES `cs_user` (`usr_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知发送日志表';
 
@@ -380,6 +416,8 @@ CREATE TABLE `cs_metrics_definition` (
 -- Table structure for `cs_metrics_daily`
 -- 日聚合指标事实表：单表承载全部指标（避免 per-metric 表爆炸），按 metric_key + 维度聚合。
 -- date 用 YYYYMMDD 整数（秒级时间戳语义下的日期键）；user_id/agent_id 为可选维度（0/空=平台级）。
+-- 变更：un_idx_metric_date_dim（唯一索引命名修正 → uniq_metric_date_dim）
+-- 新增索引：idx_metric_date（指标+日期快速聚合）
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_metrics_daily`;
 CREATE TABLE `cs_metrics_daily` (
@@ -389,15 +427,16 @@ CREATE TABLE `cs_metrics_daily` (
     `user_id`     INT           NOT NULL DEFAULT 0 COMMENT '用户维度（0=平台级/不区分）',
     `agent_id`    VARCHAR(36)   NOT NULL DEFAULT '' COMMENT 'Agent 维度（空=不区分）',
     `value`       DECIMAL(20,4) NOT NULL DEFAULT 0.0000 COMMENT '指标值',
-    `dim_json`    JSON          NOT NULL DEFAULT '{}' COMMENT '多维标签（provider/skill 等）',
+    `dim_json`    JSON NOT NULL COMMENT '多维标签（provider/skill 等）',
     `create_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间（秒级时间戳）',
     `update_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间（秒级时间戳）',
     `delete_time` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '删除时间（软删，秒级时间戳）',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `un_idx_metric_date_dim` (`metric_key`, `date`, `user_id`, `agent_id`),
+    UNIQUE KEY `uniq_metric_date_dim` (`metric_key`, `date`, `user_id`, `agent_id`),
     KEY `idx_date` (`date`),
     KEY `idx_user_id` (`user_id`),
     KEY `idx_delete_time` (`delete_time`),
+    KEY `idx_metric_date` (`metric_key`, `date`),
     CONSTRAINT `fk_cs_metrics_daily_def` FOREIGN KEY (`metric_key`) REFERENCES `cs_metrics_definition` (`metric_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='日聚合指标事实表';
 
@@ -407,12 +446,15 @@ CREATE TABLE `cs_metrics_daily` (
 -- cfg_value 用 JSON 承载任意结构（标量也包成 JSON）；cfg_type 标识语义类型用于应用层校验/转换：
 --   1=string 2=int 3=bool 4=json 5=secret（密文，不透明，应用层解密后使用，禁止明文落库/日志）
 -- cfg_group 用于分组查询（email/switch/provider...）；cfg_remark 备注。
+--
+-- ⚠️ 注意：01-base.sql 中的旧版 cs_system_config（sc_id/sc_clean_rule）已移除。
+--    本表为唯一 cs_system_config 定义（D12 决策）。
 -- ----------------------------
 DROP TABLE IF EXISTS `cs_system_config`;
 CREATE TABLE `cs_system_config` (
     `cfg_id`      INT UNSIGNED  NOT NULL AUTO_INCREMENT,
     `cfg_key`     VARCHAR(64)   NOT NULL DEFAULT '' COMMENT '配置键（全局唯一，如 smtp_host / feature_x_switch）',
-    `cfg_value`   JSON          NOT NULL DEFAULT '{}' COMMENT '配置值（JSON；secret 类型存密文）',
+    `cfg_value`   JSON NOT NULL COMMENT '配置值（JSON；secret 类型存密文）',
     `cfg_type`    TINYINT       NOT NULL DEFAULT 1 COMMENT '语义类型 1=string 2=int 3=bool 4=json 5=secret',
     `cfg_group`   VARCHAR(32)   NOT NULL DEFAULT '' COMMENT '分组（email/switch/provider...）',
     `cfg_remark`  VARCHAR(255)  NOT NULL DEFAULT '' COMMENT '配置说明',
@@ -424,3 +466,15 @@ CREATE TABLE `cs_system_config` (
     KEY `idx_cfg_group` (`cfg_group`),
     KEY `idx_delete_time` (`delete_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='全局配置 KV 表';
+
+-- ============================================================================
+-- 种子数据：全局配置默认值（09 FR-4）
+-- 依赖：cs_system_config 表已创建
+-- ============================================================================
+
+INSERT INTO `cs_system_config` (`cfg_key`, `cfg_value`, `cfg_type`, `cfg_group`, `cfg_remark`)
+VALUES
+    ('auto_archive_enabled',    'true',   3, 'session',  '自动归档全局开关（bool）'),
+    ('auto_archive_days',       '30',     2, 'session',  '自动归档天数阈值（int，默认 30 天）'),
+    ('active_session_limit',    '100',    2, 'session',  '活跃会话上限（int，默认 100）'),
+    ('archived_session_limit',  '50',     2, 'session',  '归档会话上限（int，默认 50）');
