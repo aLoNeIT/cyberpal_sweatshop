@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8329f79a49d46cdffaedf41ee5eff86a",
+    "content-hash": "feeb0a8a8dfbae4fa7cb247dc07dc77a",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -1189,6 +1189,65 @@
                 "hyperf",
                 "php",
                 "swoole"
+            ],
+            "funding": [
+                {
+                    "url": "https://hyperf.wiki/#/zh-cn/donate",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://opencollective.com/hyperf",
+                    "type": "open_collective"
+                }
+            ],
+            "time": "2024-09-25T02:54:12+00:00"
+        },
+        {
+            "name": "hyperf/constants",
+            "version": "v3.1.42",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hyperf/constants.git",
+                "reference": "e1e1184779cd163f9603ce234e1ecccb6fe382ae"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://repo.huaweicloud.com/repository/php/hyperf/constants/v3.1.42/hyperf-constants-v3.1.42.zip",
+                "reference": "e1e1184779cd163f9603ce234e1ecccb6fe382ae",
+                "shasum": ""
+            },
+            "require": {
+                "hyperf/di": "~3.1.0",
+                "hyperf/support": "~3.1.0",
+                "hyperf/utils": "~3.1.0",
+                "php": ">=8.1"
+            },
+            "suggest": {
+                "hyperf/translation": "Required to use translation."
+            },
+            "type": "library",
+            "extra": {
+                "hyperf": {
+                    "config": "Hyperf\\Constants\\ConfigProvider"
+                },
+                "branch-alias": {
+                    "dev-master": "3.1-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Hyperf\\Constants\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "A constants component for hyperf.",
+            "homepage": "https://hyperf.io",
+            "keywords": [
+                "constants",
+                "hyperf",
+                "php"
             ],
             "funding": [
                 {
@@ -8565,12 +8624,12 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": ">=8.1"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }
