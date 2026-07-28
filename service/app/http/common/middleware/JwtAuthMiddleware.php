@@ -37,9 +37,31 @@ class JwtAuthMiddleware implements MiddlewareInterface
         '/api/auth/login',
     ];
 
+    /**
+     * 仅 User 端 API 需要 JWT 鉴权（/api/* 路径），
+     * Admin 端 / 公共端不需要 JWT。
+     */
+    private const JWT_REQUIRED_PREFIXES = [
+        '/api/',
+    ];
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $path = $request->getUri()->getPath();
+
+        // 仅对 user 端 API 路径启用 JWT
+        $requiresJwt = false;
+        foreach (self::JWT_REQUIRED_PREFIXES as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                $requiresJwt = true;
+                break;
+            }
+        }
+
+        // 非 user 端 API 直接放行
+        if (! $requiresJwt) {
+            return $handler->handle($request);
+        }
 
         // 白名单路径直接放行
         foreach (self::PUBLIC_PATHS as $publicPath) {

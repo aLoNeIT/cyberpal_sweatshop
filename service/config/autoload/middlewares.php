@@ -6,6 +6,7 @@ return [
     'http' => [
         \app\http\common\middleware\RequestMiddleware::class,
         \app\http\common\middleware\TokenSessionMiddleware::class,
+        \app\http\common\middleware\JwtAuthMiddleware::class,
         \app\http\common\middleware\PermissionMiddleware::class,
     ],
 ];

@@ -26,9 +26,9 @@ namespace app\http\user\model;
  * @property string $usr_salt            盐值（用户端登录未使用）
  * @property string $usr_real_name       显示名称
  * @property int    $usr_state           0=关闭 1=开启
- * @property string $theme_pref          light|dark|system
- * @property int    $auto_archive_enabled 0|1
- * @property int    $auto_archive_days
+ * @property string $usr_theme_pref          light|dark|system
+ * @property int    $usr_auto_archive_enabled 0|1
+ * @property int    $usr_auto_archive_days
  * @property int    $usr_create_time
  * @property int    $usr_update_time
  */
@@ -38,6 +38,11 @@ class CsUser extends Model
      * 表名（DB_PREFIX=cs_ 时解析为 cs_user）。
      */
     protected ?string $table = 'user';
+
+    /**
+     * 主键列名。
+     */
+    protected string $primaryKey = 'usr_id';
 
     /**
      * cs_user 使用 BIGINT 时间列，关闭 Eloquent 自动时间戳，手动维护。
@@ -51,9 +56,11 @@ class CsUser extends Model
         'usr_salt',
         'usr_real_name',
         'usr_state',
-        'theme_pref',
-        'auto_archive_enabled',
-        'auto_archive_days',
+        'usr_theme_pref',
+        'usr_auto_archive_enabled',
+        'usr_auto_archive_days',
+        'usr_create_time',
+        'usr_update_time',
     ];
 
     protected array $hidden = [
@@ -62,20 +69,20 @@ class CsUser extends Model
     ];
 
     protected array $casts = [
-        'usr_app_type'         => 'integer',
-        'usr_state'            => 'integer',
-        'auto_archive_enabled' => 'integer',
-        'auto_archive_days'    => 'integer',
-        'usr_create_time'      => 'integer',
-        'usr_update_time'      => 'integer',
+        'usr_app_type'              => 'integer',
+        'usr_state'                 => 'integer',
+        'usr_auto_archive_enabled'  => 'integer',
+        'usr_auto_archive_days'     => 'integer',
+        'usr_create_time'           => 'integer',
+        'usr_update_time'           => 'integer',
     ];
 
     protected array $attributes = [
-        'usr_app_type'         => 4,
-        'usr_state'            => 1,
-        'usr_salt'             => '',
-        'theme_pref'           => 'system',
-        'auto_archive_enabled' => 1,
-        'auto_archive_days'    => 30,
+        'usr_app_type'              => 4,
+        'usr_state'                 => 1,
+        'usr_salt'                  => '',
+        'usr_theme_pref'            => 'system',
+        'usr_auto_archive_enabled'  => 1,
+        'usr_auto_archive_days'     => 30,
     ];
 }

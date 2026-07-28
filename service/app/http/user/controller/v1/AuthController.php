@@ -171,9 +171,9 @@ class AuthController extends AbstractController
             'id'                   => $user->usr_id,
             'email'                => $user->usr_account,
             'display_name'         => $user->usr_real_name ?? '',
-            'theme_pref'           => $user->theme_pref ?? 'system',
-            'auto_archive_enabled' => (bool) ($user->auto_archive_enabled ?? true),
-            'auto_archive_days'    => (int) ($user->auto_archive_days ?? 30),
+            'theme_pref'           => $user->usr_theme_pref ?? 'system',
+            'auto_archive_enabled' => (bool) ($user->usr_auto_archive_enabled ?? true),
+            'auto_archive_days'    => (int) ($user->usr_auto_archive_days ?? 30),
             'created_at'           => $user->usr_create_time,
             'updated_at'           => $user->usr_update_time,
         ];

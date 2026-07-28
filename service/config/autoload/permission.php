@@ -21,8 +21,8 @@ return [
         '/user/*/session/*' => 1,
         // 验证码
         '/home/*/captcha' => 3,
-        // Pi Agent 聊天端点（兼容旧路由，无需登录）
-        '/api/auth/*' => 3,
+        // Pi Agent 用户端 API（兼容旧路由，JWT 鉴权由 JwtAuthMiddleware 处理）
+        '/api/*' => 1,
         '/chat' => 3,
         '/chat/*' => 3,
         // 开放平台始终跳过
