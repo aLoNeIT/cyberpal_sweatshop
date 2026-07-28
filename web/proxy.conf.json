@@ -1,0 +1,22 @@
+{
+  "/api": {
+    "target": "http://localhost:9502",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/admin": {
+    "target": "http://localhost:9502",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/home": {
+    "target": "http://localhost:9502",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/user": {
+    "target": "http://localhost:9502",
+    "secure": false,
+    "changeOrigin": true
+  }
+}
