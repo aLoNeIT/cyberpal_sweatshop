@@ -42,7 +42,7 @@ class CsUser extends Model
     /**
      * cs_user 使用 BIGINT 时间列，关闭 Eloquent 自动时间戳，手动维护。
      */
-    public $timestamps = false;
+    public bool $timestamps = false;
 
     protected array $fillable = [
         'usr_app_type',

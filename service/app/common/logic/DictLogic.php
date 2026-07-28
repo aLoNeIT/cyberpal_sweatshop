@@ -58,7 +58,23 @@ class DictLogic extends BaseLogic
         if ($dict instanceof Dict) {
             return $cloned ? unserialize(serialize($dict)) : $dict;
         }
-        // 字典未初始化时返回基础对象（由子类按需注入实际字典数据）
+
+        // 从 cs_dict 表加载字典数据（d_id → Dict 对象）
+        $dictId = is_numeric($dict) ? (int) $dict : 0;
+        if ($dictId > 0) {
+            $dictData = Db::table('dict')->where('d_id', $dictId)->first();
+            if ($dictData) {
+                $dictObject = new Dict((array) $dictData);
+                // 加载字典项数据
+                $dictItems = Db::table('dict_item')->where('di_dict', $dictId)->get();
+                foreach ($dictItems as $item) {
+                    $dictObject->addItem((array) $item);
+                }
+                return $dictObject;
+            }
+        }
+
+        // 字典未初始化时返回基础对象
         $dictObject = new Dict();
         return $dictObject;
     }
@@ -467,5 +483,63 @@ class DictLogic extends BaseLogic
         }
 
         return $query;
+    }
+
+    // ============================================================
+    // 角色-权限关联操作（admin RBAC 07 PRD §FR-3）
+    // ============================================================
+
+    /**
+     * 获取指定角色在指定 app_type 下的功能授权码列表。
+     *
+     * @return array 功能编码数组（如 ['FN050200', 'FN050201', ...]）
+     */
+    public function getRolePermissions(int $roleId, int $appType = 1): array
+    {
+        try {
+            return Db::table('role_permission')
+                ->where('rp_role', $roleId)
+                ->where('rp_app_type', $appType)
+                ->pluck('rp_function_code')
+                ->toArray();
+        } catch (Throwable $ex) {
+            return Helper::logListenException(static::class, __FUNCTION__, $ex);
+        }
+    }
+
+    /**
+     * 设置指定角色的功能授权（全量替换：先删后插）。
+     *
+     * @param int   $roleId  角色 ID
+     * @param array $codes   功能编码列表
+     * @param int   $appType 应用类型
+     */
+    public function setRolePermissions(int $roleId, array $codes, int $appType = 1): void
+    {
+        try {
+            Db::transaction(function () use ($roleId, $codes, $appType) {
+                Db::table('role_permission')
+                    ->where('rp_role', $roleId)
+                    ->where('rp_app_type', $appType)
+                    ->delete();
+
+                if (empty($codes)) {
+                    return;
+                }
+
+                $rows = [];
+                foreach ($codes as $code) {
+                    $rows[] = [
+                        'rp_role'          => $roleId,
+                        'rp_function_code' => $code,
+                        'rp_app_type'      => $appType,
+                    ];
+                }
+
+                Db::table('role_permission')->insert($rows);
+            });
+        } catch (Throwable $ex) {
+            Helper::logListenException(static::class, __FUNCTION__, $ex);
+        }
     }
 }

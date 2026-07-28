@@ -92,10 +92,96 @@ Router::addGroup('/api/profile', function () {
 
 // 管理后台路由
 Router::addGroup('/admin', function () {
-    // Session 登录
-    Router::post('/v1/session/login', 'app\http\admin\controller\v1\SessionController@login');
-    Router::get('/v1/session/logout', 'app\http\admin\controller\v1\SessionController@logout');
+    // Session（对齐 hongshan_cloudscript 框架模式）
+    Router::post('/v1/session', 'app\http\admin\controller\v1\SessionController@save');
+    Router::put('/v1/session/{id:[A-Za-z0-9]{40}}', 'app\http\admin\controller\v1\SessionController@update');
+    Router::delete('/v1/session/{id:[A-Za-z0-9]{40}}', 'app\http\admin\controller\v1\SessionController@delete');
     Router::get('/v1/session/profile', 'app\http\admin\controller\v1\SessionController@profile');
+
+    // ============================================================
+    // Dashboard 仪表盘 — MN00
+    // ============================================================
+    Router::get('/v1/dashboard/index', 'app\http\admin\controller\v1\DashboardController@index');
+
+    // ============================================================
+    // 用户管理 — MN0101（DictCrudController 标准 + 自定义）
+    // ============================================================
+    Router::get('/v1/user/index', 'app\http\admin\controller\v1\UserController@index');
+    Router::post('/v1/user/save', 'app\http\admin\controller\v1\UserController@save');
+    Router::get('/v1/user/read/{id}', 'app\http\admin\controller\v1\UserController@read');
+    Router::post('/v1/user/update/{id}', 'app\http\admin\controller\v1\UserController@update');
+    Router::post('/v1/user/delete/{id}', 'app\http\admin\controller\v1\UserController@delete');
+    Router::post('/v1/user/toggleStatus/{id}', 'app\http\admin\controller\v1\UserController@toggleStatus');
+    Router::post('/v1/user/resetPassword/{id}', 'app\http\admin\controller\v1\UserController@resetPassword');
+
+    // ============================================================
+    // Agent 管理 — MN0201
+    // ============================================================
+    Router::get('/v1/agent/index', 'app\http\admin\controller\v1\AgentManagementController@index');
+    Router::post('/v1/agent/stop/{id}', 'app\http\admin\controller\v1\AgentManagementController@stop');
+
+    // ============================================================
+    // 会话管理 — MN0301
+    // ============================================================
+    Router::get('/v1/session-mgmt/index', 'app\http\admin\controller\v1\SessionManagementController@index');
+    Router::post('/v1/session-mgmt/terminate/{id}', 'app\http\admin\controller\v1\SessionManagementController@terminate');
+    Router::get('/v1/session-mgmt/viewContent/{id}', 'app\http\admin\controller\v1\SessionManagementController@viewContent');
+
+    // ============================================================
+    // Skill 库 — MN0401（DictCrudController 标准）
+    // ============================================================
+    Router::get('/v1/skill/index', 'app\http\admin\controller\v1\SkillController@index');
+    Router::post('/v1/skill/save', 'app\http\admin\controller\v1\SkillController@save');
+    Router::get('/v1/skill/read/{id}', 'app\http\admin\controller\v1\SkillController@read');
+    Router::post('/v1/skill/update/{id}', 'app\http\admin\controller\v1\SkillController@update');
+    Router::post('/v1/skill/delete/{id}', 'app\http\admin\controller\v1\SkillController@delete');
+
+    // ============================================================
+    // MCP 模板 — MN0402（DictCrudController 标准）
+    // ============================================================
+    Router::get('/v1/mcp-template/index', 'app\http\admin\controller\v1\McpTemplateController@index');
+    Router::post('/v1/mcp-template/save', 'app\http\admin\controller\v1\McpTemplateController@save');
+    Router::get('/v1/mcp-template/read/{id}', 'app\http\admin\controller\v1\McpTemplateController@read');
+    Router::post('/v1/mcp-template/update/{id}', 'app\http\admin\controller\v1\McpTemplateController@update');
+    Router::post('/v1/mcp-template/delete/{id}', 'app\http\admin\controller\v1\McpTemplateController@delete');
+
+    // ============================================================
+    // 计费大盘 — MN0403
+    // ============================================================
+    Router::get('/v1/billing/index', 'app\http\admin\controller\v1\BillingController@index');
+
+    // ============================================================
+    // 管理员管理 — MN0501（DictCrudController + 自定义）
+    // ============================================================
+    Router::get('/v1/admin-account/index', 'app\http\admin\controller\v1\AdminAccountController@index');
+    Router::post('/v1/admin-account/save', 'app\http\admin\controller\v1\AdminAccountController@save');
+    Router::get('/v1/admin-account/read/{id}', 'app\http\admin\controller\v1\AdminAccountController@read');
+    Router::post('/v1/admin-account/update/{id}', 'app\http\admin\controller\v1\AdminAccountController@update');
+    Router::post('/v1/admin-account/delete/{id}', 'app\http\admin\controller\v1\AdminAccountController@delete');
+    Router::post('/v1/admin-account/toggleStatus/{id}', 'app\http\admin\controller\v1\AdminAccountController@toggleStatus');
+    Router::post('/v1/admin-account/resetPassword/{id}', 'app\http\admin\controller\v1\AdminAccountController@resetPassword');
+
+    // ============================================================
+    // 角色管理 — MN0502（DictCrudController + 权限配置）
+    // ============================================================
+    Router::get('/v1/role/index', 'app\http\admin\controller\v1\RoleController@index');
+    Router::post('/v1/role/save', 'app\http\admin\controller\v1\RoleController@save');
+    Router::get('/v1/role/read/{id}', 'app\http\admin\controller\v1\RoleController@read');
+    Router::post('/v1/role/update/{id}', 'app\http\admin\controller\v1\RoleController@update');
+    Router::post('/v1/role/delete/{id}', 'app\http\admin\controller\v1\RoleController@delete');
+    Router::get('/v1/role/getPermission/{id}', 'app\http\admin\controller\v1\RoleController@getPermission');
+    Router::post('/v1/role/savePermission/{id}', 'app\http\admin\controller\v1\RoleController@savePermission');
+
+    // ============================================================
+    // 全局配置 — MN0503
+    // ============================================================
+    Router::get('/v1/config/index', 'app\http\admin\controller\v1\ConfigController@index');
+    Router::post('/v1/config/save', 'app\http\admin\controller\v1\ConfigController@save');
+
+    // ============================================================
+    // 审计日志 — MN0504
+    // ============================================================
+    Router::get('/v1/audit-log/index', 'app\http\admin\controller\v1\AuditLogController@index');
 });
 
 // 用户端路由
@@ -108,6 +194,7 @@ Router::addGroup('/user', function () {
 // 公共路由
 Router::addGroup('/home', function () {
     Router::get('/v1/index', 'app\http\home\controller\v1\IndexController@index');
+    Router::get('/v1/captcha', 'app\http\home\controller\v1\CaptchaController@index');
 });
 
 Router::get('/favicon.ico', function () {

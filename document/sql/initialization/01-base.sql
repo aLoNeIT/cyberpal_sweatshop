@@ -179,7 +179,7 @@ create table `cs_user` (
     `usr_join_data` INT not null default 0 comment '关联组织数据ID',
     `usr_mp` VARCHAR (255) not null default '' comment '手机号码',
     `usr_account` VARCHAR (50) not null default '' comment '用户账号',
-    `usr_pwd` VARCHAR (80) not null default '4a2d0a43c3a7b6bd18c1d1092f9571ad' comment '密码admin',
+    `usr_pwd` VARCHAR (80) not null default '68b6b4ab792a4476db8f6937bb4c4d12' comment '密码123456',
     `usr_salt` VARCHAR (4) not null default 'RzyL' comment '用户盐值',
     `usr_real_name` VARCHAR (50) not null default '' comment '真实姓名',
     `usr_theme_pref`        VARCHAR(16)  NOT NULL DEFAULT 'system' COMMENT '主题偏好 light|dark|system',
@@ -607,7 +607,7 @@ create table `cs_provider_application_subscriber` (
 -- 初始化种子数据（用户决策 1.3：角色、用户均在初始化建表语句中插入数据）
 -- 依据 07-admin-account-rbac.md FR-1 / FR-3：Admin 为系统 seed 生成；三档角色本期全种子。
 -- 注意：
---   * 超管账号口令为 admin/salt=RzyL（密码哈希：md5(md5('admin').'RzyL')）；首次登录强制改密（07 FR-1.5）。
+--   * 超管账号口令为 admin/salt=RzyL（密码哈希：md5(md5('123456').'RzyL') = 68b6b4ab792a4476db8f6937bb4c4d12）；首次登录强制改密（07 FR-1.5）。
 --     生产部署应通过部署脚本随机化口令并打印到部署日志/环境变量。
 --   * cs_role.r_level=0 为超级管理员快路径（PermissionMiddleware 直接全放行）；
 --     运营/客服走显式 cs_role_permission 授权（待 admin 功能码目录补全后补，见 07 §9）。
@@ -619,7 +619,7 @@ create table `cs_provider_application_subscriber` (
 -- 变更：新增 usr_must_change_pwd=1（07 FR-1.5 首次登录强制改密）
 -- ----------------------------
 INSERT INTO `cs_user` (`usr_id`, `usr_app_type`, `usr_account`, `usr_pwd`, `usr_salt`, `usr_real_name`, `usr_state`, `usr_must_change_pwd`, `usr_create_time`, `usr_update_time`)
-VALUES (1, 1, 'admin', '4a2d0a43c3a7b6bd18c1d1092f9571ad', 'RzyL', '超级管理员', 1, 1, 0, 0);
+VALUES (1, 1, 'admin', '68b6b4ab792a4476db8f6937bb4c4d12', 'RzyL', '超级管理员', 1, 1, 0, 0);
 
 -- ----------------------------
 -- 种子：Admin 三档角色（超管 / 运营 / 客服）

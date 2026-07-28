@@ -6,12 +6,15 @@ namespace app\http\admin\logic;
 
 use app\common\constants\CommonConst;
 use app\common\constants\ErrCodeConst as ErrorCode;
+use app\common\logic\CacheConstLogic;
+use app\common\logic\CaptchaLogic;
 use app\common\logic\ErrCodeLogic;
 use app\common\logic\SessionLogic;
 use app\common\util\Helper;
 use app\common\util\JsonTable;
 use app\http\user\model\CsUser;
 use Throwable;
+use function Hyperf\Config\config;
 
 /**
  * 管理后台会话逻辑。
@@ -45,6 +48,15 @@ class AdminSessionLogic extends SessionLogic
                 ErrorCode::PARAM_ERROR,
                 ['param' => 'account or password']
             );
+        }
+
+        // 验证码校验（与框架 SessionLogic 登录流程保持一致）
+        if ((bool) config('system.login_with_check', true)) {
+            $captchaKey   = (string) $this->session->get(CacheConstLogic::getLoginCaptchaKey($appType), '');
+            $captchaResult = CaptchaLogic::instance()->validate($code, $captchaKey);
+            if (! $captchaResult->isSuccess()) {
+                return $captchaResult;
+            }
         }
 
         try {

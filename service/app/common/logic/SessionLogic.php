@@ -108,6 +108,14 @@ class SessionLogic extends BaseLogic implements SessionLogicContract
             return ErrCodeLogic::instance()->getError(ErrorCode::PARAM_ERROR, ['param' => 'account or password']);
         }
 
+        if ((bool) config('system.login_with_check', true)) {
+            $captchaKey   = (string) $this->session->get(CacheConstLogic::getLoginCaptchaKey($appType), '');
+            $captchaResult = CaptchaLogic::instance()->validate($code, $captchaKey);
+            if (! $captchaResult->isSuccess()) {
+                return $captchaResult;
+            }
+        }
+
         try {
             $user = $this->findUserByAccount($account, $appType);
             if (\is_null($user)) {
@@ -151,6 +159,38 @@ class SessionLogic extends BaseLogic implements SessionLogicContract
         $this->session->invalidate();
 
         return JsonTable::withSuccess();
+    }
+
+    /**
+     * 刷新令牌。
+     *
+     * @param string $refreshToken 刷新令牌
+     * @return JsonTable
+     */
+    public function refresh(string $refreshToken): JsonTable
+    {
+        if ($refreshToken === '') {
+            return ErrCodeLogic::instance()->getError(ErrorCode::PARAM_ERROR, ['param' => 'refresh_token']);
+        }
+
+        $sessionRefreshToken = (string) $this->session->get('refresh_token', '');
+        if ($refreshToken !== $sessionRefreshToken) {
+            return ErrCodeLogic::instance()->getError(12);
+        }
+
+        $appType = (int) $this->session->get('usr_app_type', $this->appType);
+        $sessionData = $this->session->all();
+        $session = $this->create($sessionData, $appType);
+        if (! $session->isSuccess()) {
+            return $session;
+        }
+
+        $data = array_merge(
+            ['user' => $this->formatLoginUser($sessionData)],
+            is_array($session->data) ? $session->data : []
+        );
+
+        return JsonTable::withSuccess('success', $data);
     }
 
     /**

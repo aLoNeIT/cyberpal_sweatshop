@@ -10,4 +10,5 @@ export * from './service/dict.service';
 export * from './service/privilege.service';
 export * from './service/app-xform.service';
 export * from './service/base.service';
+export * from './service/admin-crud.service';
 export * from './logic/index';
