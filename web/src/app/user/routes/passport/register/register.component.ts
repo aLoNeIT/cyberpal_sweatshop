@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UserAuthService } from '../../services/user-auth.service';
+import { UserAuthService } from '../../../services/user-auth.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
@@ -121,7 +121,7 @@ export class UserRegisterComponent {
         this.msg.success('注册成功');
         this.router.navigate(['/user/dashboard']);
       },
-      error: (err) => {
+      error: (err: Error) => {
         this.loading = false;
         this.msg.error(err.message || '注册失败');
       }

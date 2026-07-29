@@ -10,20 +10,23 @@ import { BillingSummary, BillingRecord } from '../../models/user.model';
       <h2 class="page-title">计费概览</h2>
       <nz-row [nzGutter]="16">
         <nz-col [nzXs]="24" [nzSm]="12" [nzLg]="6" *ngFor="let card of summaryCards">
-          <nz-card [nzTitle]="card.title" [nzLoading]="loading">
+          <nz-card [nzTitle]="card.title || ''" [nzLoading]="loading">
             <div class="card-value">{{ card.value }}</div>
           </nz-card>
         </nz-col>
       </nz-row>
 
-      <nz-card nzTitle="按模型分布" style="margin-top: 16px;" *ngIf="summary?.by_model?.length">
-        <nz-row [nzGutter]="8">
-          <nz-col *ngFor="let m of summary.by_model" [nzSpan]="8">
-            <nz-statistic [nzTitle]="m.model" [nzValue]="m.tokens | number"></nz-statistic>
-            <nz-statistic nzTitle="费用" [nzValue]="'$' + m.cost.toFixed(4)"></nz-statistic>
-          </nz-col>
-        </nz-row>
-      </nz-card>
+      <ng-container *ngIf="summary && summary.by_model && summary.by_model.length">
+        <nz-card nzTitle="按模型分布" style="margin-top: 16px;">
+          <nz-row [nzGutter]="8">
+            <nz-col *ngFor="let m of summary!.by_model" [nzSpan]="8">
+              <div style="margin-bottom:8px;color:#888">{{ m.model }}</div>
+              <div style="font-size:24px;font-weight:700;color:#667eea">{{ m.tokens | number }}</div>
+              <div style="color:#52c41a">{{ formatCostShort(m.cost) }}</div>
+            </nz-col>
+          </nz-row>
+        </nz-card>
+      </ng-container>
 
       <nz-card nzTitle="计费记录" style="margin-top: 16px;">
         <nz-table #table [nzData]="records" [nzLoading]="loading" [nzFrontPagination]="false"
@@ -42,7 +45,7 @@ import { BillingSummary, BillingRecord } from '../../models/user.model';
               <td>{{ r.model }}</td>
               <td>{{ r.input_tokens | number }}</td>
               <td>{{ r.output_tokens | number }}</td>
-              <td>${{ (r.cost_estimate || 0) | number:'1.6-6' }}</td>
+              <td>{{ formatCost(r.cost_estimate) }}</td>
               <td>{{ r.created_at | date:'yyyy-MM-dd HH:mm' }}</td>
             </tr>
           </tbody>
@@ -109,5 +112,13 @@ export class UserBillingComponent implements OnInit {
   onPageChange(page: number): void {
     this.page = page;
     this.loadData();
+  }
+
+  formatCost(cost: number | null | undefined): string {
+    return '$' + ((cost || 0).toFixed(6));
+  }
+
+  formatCostShort(cost: number): string {
+    return '$' + cost.toFixed(4);
   }
 }

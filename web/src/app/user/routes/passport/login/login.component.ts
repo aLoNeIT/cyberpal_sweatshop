@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { UserAuthService } from '../../services/user-auth.service';
+import { UserAuthService } from '../../../services/user-auth.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
@@ -109,7 +109,7 @@ export class UserLoginComponent {
         const redirect = this.route.snapshot.queryParams['redirect'] || '/user/dashboard';
         this.router.navigateByUrl(redirect);
       },
-      error: (err) => {
+      error: (err: Error) => {
         this.loading = false;
         this.msg.error(err.message || '登录失败');
       }
