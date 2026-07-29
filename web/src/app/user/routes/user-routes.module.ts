@@ -24,19 +24,21 @@ import { UserLoginComponent } from './passport/login/login.component';
 import { UserRegisterComponent } from './passport/register/register.component';
 import { UserDashboardComponent } from './dashboard/dashboard.component';
 import { UserAgentsComponent } from './agents/agents.component';
+import { UserAgentConfigComponent } from './agent-config/agent-config.component';
 import { UserSessionsComponent } from './sessions/sessions.component';
 import { UserChatComponent } from './chat/chat.component';
 import { UserBillingComponent } from './billing/billing.component';
 import { UserSettingsComponent } from './settings/settings.component';
+import { UserTeamComponent } from './team/team.component';
 import { UserRoutingModule } from '../user-routing.module';
 import { JwtInterceptor } from '../services/jwt.interceptor';
 
 const COMPONENTS = [
   UserLayoutPassportComponent, UserLayoutBasicComponent,
   UserLoginComponent, UserRegisterComponent,
-  UserDashboardComponent, UserAgentsComponent,
+  UserDashboardComponent, UserAgentsComponent, UserAgentConfigComponent,
   UserSessionsComponent, UserChatComponent,
-  UserBillingComponent, UserSettingsComponent
+  UserBillingComponent, UserSettingsComponent, UserTeamComponent
 ];
 
 const EXTRA_MODULES = [
