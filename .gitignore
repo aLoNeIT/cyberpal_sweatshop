@@ -31,3 +31,6 @@ WORKSPACE.md
 
 # 旧 React 前端备份（已被 Angular/ng-alain 重写，仅本地保留，不纳入版本控制）
 web_react_backup/
+
+# playwright组件临时
+.playwright-cli
