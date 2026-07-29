@@ -111,16 +111,21 @@ class AdminSessionLogic extends SessionLogic
     }
 
     /**
-     * 验证管理员密码（框架盐值方案：md5(md5(password) . salt)）。
+     * 验证管理员密码。
      *
-     * @param string $plainPassword 明文密码
-     * @param string $storedHash    数据库中存储的密码哈希
-     * @param string $salt          盐值
-     * @return bool 密码是否匹配
+     * 前端已对密码做一次 md5（传输安全），故此处仅需 md5(前端值 . salt)
+     * 与数据库存储的 md5(md5(原始密码) . salt) 比对。
+     * AdminAccountController 的新建/重置密码 hashPassword() 仍用 md5(md5(plain) . salt)，
+     * 因为那�?plaintext 来自 admin 面板直接提交�??
+     *
+     * @param string $plainPassword 前端 md5 后的密码
+     * @param string $storedHash    数据库中的哈希（md5(md5(原始) . salt)�?
+     * @param string $salt          �?�?
+     * @return bool 是否匹配
      */
     protected function verifyPassword(string $plainPassword, string $storedHash, string $salt): bool
     {
-        return md5(md5($plainPassword) . $salt) === $storedHash;
+        return md5($plainPassword . $salt) === $storedHash;
     }
 
     /**
