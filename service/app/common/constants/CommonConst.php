@@ -24,6 +24,11 @@ class CommonConst extends AbstractConstants
     public const KEY_CAPTCHA_LOGIN = 'captcha_login_key:';
 
     /**
+     * 超级权限码 — 拥有此码的用户可查看所有菜单（不受 visibleMenuCodes 过滤限制）。
+     */
+    public const PRIVILEGE_LEVEL_SUPER_FUNCTION = 'FN0099';
+
+    /**
      * 应用类型映射
      */
     public const APP_TYPE_MAP = [

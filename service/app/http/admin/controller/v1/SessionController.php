@@ -70,6 +70,8 @@ class SessionController extends BaseController
 
     /**
      * 获取当前登录用户信息（保留兼容）。
+     *
+     * 返回用户基本信息、菜单树和功能权限集合，供前端刷新页面时恢复状态。
      */
     public function profile(): JsonTable|PsrResponseInterface
     {
@@ -78,9 +80,21 @@ class SessionController extends BaseController
             return $this->errCodeLogic->getError(80);
         }
 
+        $appType = $this->sessionLogic->getUsrAppType();
+
+        // 从 AdminSessionLogic 加载菜单和功能数据
+        $menu     = [];
+        $function = [];
+        if ($this->sessionLogic instanceof AdminSessionLogic) {
+            $menu     = $this->sessionLogic->loadMenuTree($appType);
+            $function = $this->sessionLogic->loadFunctionSet($userId);
+        }
+
         return JsonTable::withSuccess('success', [
-            'user_id' => $userId,
-            'app_type' => $this->sessionLogic->getUsrAppType(),
+            'user_id'  => $userId,
+            'app_type' => $appType,
+            'menu'     => $menu,
+            'function' => $function,
         ]);
     }
 }
