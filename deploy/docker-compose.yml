@@ -1,26 +1,102 @@
-version: '3'
+version: '3.8'
+
 services:
-  hyperf-piagent:
-    container_name: hyperf-piagent
-    image: hyperf-piagent
+  # =========================================================================
+  # Nginx — 反向代理入口
+  # =========================================================================
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: pi-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - hyperf
+      - pi-gateway
+    restart: unless-stopped
+    networks:
+      - pi-net
+
+  # =========================================================================
+  # pi-gateway — WebSocket 网关（Bun 运行时）
+  #   WS Server + SQLite + 三级隔离 + 断线补传 + Agent 进程管理
+  # =========================================================================
+  pi-gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    container_name: pi-gateway
+    ports:
+      - "${GATEWAY_PORT:-3002}:3002"
+    environment:
+      - GATEWAY_PORT=3002
+      - GATEWAY_HOST=0.0.0.0
+      - SQLITE_PATH=/data/gateway.db
+      - JWT_SECRET=${GATEWAY_JWT_SECRET:-pi-gateway-dev-secret-key}
+      - HEARTBEAT_INTERVAL_MS=${HEARTBEAT_INTERVAL_MS:-10000}
+      - HEARTBEAT_TIMEOUT_MS=${HEARTBEAT_TIMEOUT_MS:-30000}
+      - SESSION_TIMEOUT_MS=${SESSION_TIMEOUT_MS:-1800000}
+      - AGENT_IDLE_TIMEOUT_MS=${AGENT_IDLE_TIMEOUT_MS:-600000}
+      - CLEANUP_INTERVAL_MS=${CLEANUP_INTERVAL_MS:-60000}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PI_SANDBOX=${PI_SANDBOX:-gondolin}
+      - PI_PERMISSION_CONFIG=/etc/pi/permission.config.json
+      - PI_AGENT_MODEL=${PI_AGENT_MODEL:-gpt-4o}
+      - PI_AGENT_PROVIDER=${PI_AGENT_PROVIDER:-openai}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      # workspace 只读挂载（agent 工作目录）
+      - ../service:/workspace:ro
+      # 权限策略
+      - ./pi/permission.config.json:/etc/pi/permission.config.json:ro
+      # SQLite 数据持久化
+      - gateway_data:/data
+    restart: unless-stopped
+    networks:
+      - pi-net
+
+  # =========================================================================
+  # Hyperf — PHP 业务服务
+  # =========================================================================
+  hyperf:
     build:
       context: ../service
-      dockerfile: ./Dockerfile
-    ports:
-      - 9502:9502
+      dockerfile: Dockerfile
+    container_name: hyperf-piagent
+    expose:
+      - "9502"
     environment:
-      - APP_ENV=dev
-      - SCAN_CACHEABLE=false
-      # ===== Pi Agent 配置 =====
+      - APP_ENV=${APP_ENV:-dev}
+      - SCAN_CACHEABLE=${SCAN_CACHEABLE:-false}
+      # ===== pi-gateway 连接配置 =====
+      - PI_GATEWAY_WS_URL=ws://pi-gateway:3002
+      - PI_GATEWAY_SERVICE_ID=${PI_GATEWAY_SERVICE_ID:-hyperf}
+      - PI_GATEWAY_JWT_SECRET=${GATEWAY_JWT_SECRET:-pi-gateway-dev-secret-key}
+      # ===== Pi Agent 配置（通过 gateway 代理）=====
       - PI_AGENT_BIN=pi
       - PI_AGENT_PROVIDER=${PI_AGENT_PROVIDER:-openai}
       - PI_AGENT_MODEL=${PI_AGENT_MODEL:-gpt-4o}
-      # ===== API Key =====
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     volumes:
-      # 挂载 Pi Agent models.json 配置（修改后重启容器生效）
       - ../service/pi-config/models.json:/root/.pi/agent/models.json
+    depends_on:
+      - pi-gateway
+    restart: unless-stopped
+    networks:
+      - pi-net
 
+# =========================================================================
+# Volumes
+# =========================================================================
+volumes:
+  gateway_data:
+    driver: local
+
+# =========================================================================
+# Networks
+# =========================================================================
 networks:
-  default:
-    name: hyperf-piagent
+  pi-net:
+    name: pi-agent-platform
+    driver: bridge

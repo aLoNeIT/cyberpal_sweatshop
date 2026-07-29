@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "default_policy": "deny",
+  "rules": [
+    {
+      "tool": "read_file",
+      "policy": "allow",
+      "paths": ["/workspace/**"]
+    },
+    {
+      "tool": "write_file",
+      "policy": "allow",
+      "paths": ["/workspace/**"]
+    },
+    {
+      "tool": "execute_bash",
+      "policy": "deny",
+      "reason": "非交互模式禁止 bash 执行"
+    },
+    {
+      "tool": "list_directory",
+      "policy": "allow",
+      "paths": ["/workspace/**"]
+    }
+  ],
+  "external_directories": {
+    "deny": ["/etc", "/root", "/home"],
+    "allow": ["/workspace", "/tmp"]
+  },
+  "fail_closed": true
+}
