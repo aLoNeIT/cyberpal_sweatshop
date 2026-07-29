@@ -25,8 +25,8 @@ export class AdminPassportLoginComponent implements OnInit, OnDestroy {
     fb: FormBuilder
   ) {
     this.form = fb.group({
-      account: [null, [Validators.required]],
-      password: [null, [Validators.required]],
+      account: ['admin', [Validators.required]],
+      password: ['123456', [Validators.required]],
       code: [null, [Validators.required]]
     });
   }

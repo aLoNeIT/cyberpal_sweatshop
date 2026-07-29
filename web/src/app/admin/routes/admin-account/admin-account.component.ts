@@ -8,7 +8,7 @@ const PREFIX = 'admin-account';
   standalone: false,
   selector: 'app-admin-account', 
   template: `
-    <nz-card nzTitle="管���员管理">
+    <nz-card nzTitle="管理员管理">
       <div style="margin-bottom:16px"><button nz-button nzType="primary" (click)="onAdd()">新增管理员</button></div>
       <nz-table #table [nzData]="list" [nzLoading]="loading" nzBordered>
         <thead><tr><th>账号</th><th>姓名</th><th>状态</th><th>登录时间</th><th>操作</th></tr></thead>

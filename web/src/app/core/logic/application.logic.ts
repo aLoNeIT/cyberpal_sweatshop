@@ -48,6 +48,9 @@ export class ApplicationLogic extends BaseLogic {
     const functions = this.privilegeSrv.functions;
     if (functions || null != appData) {
       this.aclSrv.setAbility(this.privilegeSrv.funcode);
+    } else {
+      // 页面刷新后缓存丢失的兜底：若 token 有效但权限缓存缺失，仅设基础权限避免菜单完全空白
+      this.aclSrv.setAbility(['99']);
     }
     const menu = this.privilegeSrv.menu;
     setTimeout(() => {

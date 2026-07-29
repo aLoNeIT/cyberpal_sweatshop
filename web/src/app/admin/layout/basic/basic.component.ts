@@ -1,14 +1,11 @@
-import { ChangeDetectorRef, Component, OnChanges } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnChanges } from '@angular/core';
 import { NavigationCancel, NavigationEnd, NavigationError, RouteConfigLoadEnd, RouteConfigLoadStart, Router } from '@angular/router';
-import { PrivilegeService } from '@core';
-import { SettingsService, User, MenuService, Menu } from '@delon/theme';
+import { SettingsService, MenuService } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { merge, Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
-import { getAdminMenuLink, normalizeMenuIcon } from 'src/app/core/logic/menu.logic';
-import { IMenuData, IMenuSet } from 'src/app/shared/model/http';
 
 interface PageHeaderPath {
   title?: string;
@@ -66,13 +63,6 @@ interface PageHeaderPath {
       </a>
     </ng-template>
     <layout-default [options]="{ logo: logoTpl, logoLink: options.logoLink }" [asideUser]="asideUserTpl" [content]="contentTpl" [customError]="null">
-      @for (item of menuArr; track item; let i = $index) {
-        <layout-default-header-item direction="left" hidden="mobile">
-          <div layout-default-header-item-trigger (click)="setMenu(item.children, i)" [style]="i === navIndex ? 'color: #1890ff' : ''">
-            {{ item.title }}
-          </div>
-        </layout-default-header-item>
-      }
       <layout-default-header-item direction="right">
         <app-admin-header-user></app-admin-header-user>
       </layout-default-header-item>
@@ -111,9 +101,9 @@ interface PageHeaderPath {
     <!-- <theme-btn></theme-btn> -->
   `
 })
-export class AdminLayoutBasicComponent implements OnChanges {
+export class AdminLayoutBasicComponent implements OnChanges, AfterViewInit {
   options: LayoutDefaultOptions = {
-    logoLink: '/admin/institution/corporation'
+    logoLink: '/admin/dashboard'
   };
   searchToggleStatus = false;
   showSettingDrawer = !environment.production;
@@ -126,15 +116,13 @@ export class AdminLayoutBasicComponent implements OnChanges {
   inited = false;
   isFetching = false;
   paths: PageHeaderPath[] = [];
-  navIndex: number = -1;
 
   constructor(
     private settings: SettingsService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     msgSrv: NzMessageService,
-    private menuSrv: MenuService,
-    private privilegeSrv: PrivilegeService
+    private menuSrv: MenuService
   ) {
     this.router.events.pipe(takeUntil(this.unsubscribe$)).subscribe(evt => {
       if (!this.isFetching && evt instanceof RouteConfigLoadStart) {
@@ -160,17 +148,22 @@ export class AdminLayoutBasicComponent implements OnChanges {
         let url = evt.urlAfterRedirects;
         setTimeout(() => {
           const menus = this.menuSrv.getPathByUrl(url);
-          this.menuSrv.open(menus[menus.length - 1]);
+          if (menus && menus.length > 0) {
+            this.menuSrv.open(menus[menus.length - 1]);
+          }
         }, 200);
       }
     });
-    merge(menuSrv.change.pipe(filter(() => this.inited)), router.events.pipe(filter(ev => ev instanceof NavigationEnd)))
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.refresh());
 
-    if (this.privilegeSrv.menu! !== null) {
-      this.initMenuTop();
-    }
+    merge(menuSrv.change, router.events.pipe(filter(ev => ev instanceof NavigationEnd)))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => setTimeout(() => this.cdr.detectChanges()));
+  }
+
+  ngAfterViewInit(): void {
+    // 菜单渲染统一由 ApplicationLogic.load() 负责（在 setTimeout 中调用 menuSrv.add），
+    // 此处不再重复加载，仅标记初始化完成状态。
+    this.inited = true;
   }
 
   refresh(): void {
@@ -181,69 +174,5 @@ export class AdminLayoutBasicComponent implements OnChanges {
     if (this.inited) {
       this.refresh();
     }
-  }
-
-  // 顶部导航
-  menuArr: IMenuData[] = [];
-  initMenuTop() {
-    const menu = this.privilegeSrv.menu!;
-    Object.keys(menu).forEach(key => {
-      // 顶部渲染导航菜单
-      // 首页 特殊处理
-      if (menu[key].children && menu[key].style === 1) {
-        this.menuArr.push(menu[key]);
-      }
-    });
-    setTimeout(() => {
-      // 获取当前路由 判断展开对应的菜单
-      const menus = this.menuSrv.getPathByUrl(this.router.url); // 当前路由对应的菜单
-      for (let i = 0; i < this.menuArr.length; i++) {
-        if (menus.length > 1) {
-          if (menus[1].key == this.menuArr[i].code) {
-            this.setMenu(this.menuArr[i].children, i);
-            return;
-          }
-        } else {
-          this.setMenu(this.menuArr[0].children, -1);
-        }
-      }
-    }, 100);
-  }
-  setMenu(menuSet: any, index: number) {
-    this.navIndex = index; // 选中项样式变化
-    let menu: Menu[] = [
-      {
-        text: '',
-        group: true,
-        hideInBreadcrumb: true,
-        children: this.parseMenuC(menuSet)
-      }
-    ];
-    this.menuSrv.add(menu);
-    this.menuSrv.openAll(true);
-  }
-  parseMenuC(menuSet: IMenuSet) {
-    const menu: Menu[] = [];
-    Object.keys(menuSet).forEach(key => {
-      const data: IMenuData = menuSet[key],
-        item: Menu = {
-          text: data.title,
-          icon: normalizeMenuIcon(data.icon),
-          link: getAdminMenuLink(data.uri),
-          acl: {
-            ability: [`${data.code!.replace('MN', 'FN')}00`]
-          },
-          key,
-          open: false
-        };
-      // 菜单关闭或显示样式不是左侧菜单，则跳过
-      if (0 == data.state || 1 != data.style) return;
-      if (data.parented && data.children && Object.keys(data.children).length > 0) {
-        // 有子级菜单，则递归处理
-        item.children = this.parseMenuC(data.children);
-      }
-      menu.push(item);
-    });
-    return menu;
   }
 }

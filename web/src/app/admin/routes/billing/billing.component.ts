@@ -20,7 +20,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
         <nz-card nzTitle="估算费用(USD)" [nzLoading]="loading"><h2 style="margin:0">\${{ summary?.total_cost || 0 }}</h2></nz-card>
       </div>
     </div>
-    <nz-card nzTitle="用���用量 Top 10" style="margin-top:16px">
+    <nz-card nzTitle="用户用量 Top 10" style="margin-top:16px">
       <nz-table [nzData]="topUsers" [nzLoading]="loading" nzBordered nzSize="small">
         <thead><tr><th>#</th><th>用户</th><th>Token</th><th>费用(USD)</th></tr></thead>
         <tbody>
