@@ -68,7 +68,8 @@ const alainProvides = [provideAlain({ config: alainConfig })];
 
 import { NzConfig, NZ_CONFIG } from 'ng-zorro-antd/core/config';
 import { provideHttpClient, withInterceptors, withInterceptorsFromDi } from '@angular/common/http';
-import { authSimpleInterceptor } from '@delon/auth';
+// authSimpleInterceptor 已移除：会劫持 user 端 /user/* 路由，跳转到 admin 登录页
+// import { authSimpleInterceptor } from '@delon/auth';
 
 const ngZorroConfig: NzConfig = {};
 
@@ -89,7 +90,7 @@ export class GlobalConfigModule {
         ...alainProvides,
         ...zorroProvides,
         ...(environment.providers || []),
-        provideHttpClient(withInterceptors([...(environment.interceptorFns || []), authSimpleInterceptor]), withInterceptorsFromDi())
+        provideHttpClient(withInterceptors([...(environment.interceptorFns || [])]), withInterceptorsFromDi())
       ]
     };
   }
