@@ -38,6 +38,13 @@ insert into cs_function_detail(fd_function_code,fd_module,fd_controller,fd_actio
 insert into cs_function_detail(fd_function_code,fd_module,fd_controller,fd_action,fd_app_type) values('FN000201','admin','profile','changePassword',1);
 
 -- ============================================================
+-- MN06 仪表盘（PRD 7.1: 全平台运营数据总览，仅查看）
+-- ============================================================
+insert into cs_function(fn_code,fn_name,fn_state,fn_menu_code,fn_app_type,fn_style,fn_sort,fn_type) values('FN0600','仪表盘查看',1,'MN06',1,0,1000,'default');
+
+insert into cs_function_detail(fd_function_code,fd_module,fd_controller,fd_action,fd_app_type) values('FN0600','admin','dashboard','index',1);
+
+-- ============================================================
 -- MN0101 用户列表（用户管理 08 FR-1~FR-5）
 --   角色权限：超管=全部 | 运营=查看/禁用启用/重置密码(不可删除) | 客服=仅查看
 -- ============================================================

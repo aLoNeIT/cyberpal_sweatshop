@@ -30,6 +30,12 @@ insert into `cs_menu`(`mn_title`,`mn_code`,`mn_parent_code`,`mn_path`,`mn_parent
                 values('修改密码','MN0002','MN00','MN00-MN0002',0,1,1,9020,2,0,'/admin/change-password','anticon-lock');
 
 -- ----------------------------
+-- MN06 仪表盘（PRD 7.1: 全平台运营数据总览，登录后默认首页）
+-- ----------------------------
+insert into `cs_menu`(`mn_title`,`mn_code`,`mn_parent_code`,`mn_path`,`mn_parented`,`mn_app_type`,`mn_state`,`mn_sort`,`mn_level`,`mn_style`,`mn_uri`,`mn_icon`)
+                values('仪表盘','MN06','','MN06',0,1,1,9060,1,1,'/admin/dashboard','anticon-dashboard');
+
+-- ----------------------------
 -- MN01 用户管理（08 FR-1~FR-5: 列表/详情/禁用/启用/删除/重置密码）
 -- ----------------------------
 insert into `cs_menu`(`mn_title`,`mn_code`,`mn_parent_code`,`mn_path`,`mn_parented`,`mn_app_type`,`mn_state`,`mn_sort`,`mn_level`,`mn_style`,`mn_uri`,`mn_icon`)

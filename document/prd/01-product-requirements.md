@@ -296,6 +296,7 @@
 ## 7. Admin 后台（已设计）
 
 > 📋 Admin 后台已由 `07-admin-account-rbac.md` / `08-admin-user-management.md` / `09-admin-ops-modules.md` **设计完成（v0.1 草案）**；整体排期见 `10-functional-planning.md` §3 路线图。功能范围：
+> - 仪表盘（全平台关键指标总览，一站掌握全局）
 > - 用户管理（列表/详情/禁用/删除）
 > - Agent/Session 全平台管理
 > - Skill 库管理（增删改/启用禁用）
@@ -303,6 +304,83 @@
 > - 计费统计大盘
 > - 全局配置（归档阈值、存储上限）
 > - Admin 账号与权限
+
+### 7.1 仪表盘（Dashboard / MN06）
+
+> 一级菜单，登录后默认首页，提供全平台运营数据总览。定位为"一眼看懂平台现状"的指挥中心。
+
+#### FR-D01 指标概览卡（8 项核心 KPI）
+
+| 序号 | 指标 | 数据来源 | 说明 |
+|------|------|----------|------|
+| D01.1 | 用户总数 | `cs_user` WHERE usr_app_type=4 AND usr_delete_time=0 | 注册用户总量（不含已删除） |
+| D01.2 | 活跃用户 | `cs_user` WHERE usr_app_type=4 AND usr_state=1 AND usr_delete_time=0 | 状态为启用的用户 |
+| D01.3 | Agent 总数 | `cs_agents` WHERE delete_time=0 | 全平台 Agent 总量 |
+| D01.4 | 在线 Agent | `cs_agents` WHERE status='online' AND delete_time=0 | 当前运行中的 Agent |
+| D01.5 | 会话总数 | `cs_sessions` WHERE delete_time=0 | 历史累计会话数 |
+| D01.6 | 活跃会话 | `cs_sessions` WHERE status='active' AND delete_time=0 | 当前进行中的会话 |
+| D01.7 | 总 Token | `cs_billing_records` SUM(input_tokens + output_tokens) | 累计消耗 Token 数 |
+| D01.8 | 估算费用(USD) | `cs_billing_records` SUM(cost_estimate) | 累计估算费用 |
+
+> 前端呈现：8 张卡片 2 行 × 4 列，每卡显示标题 + 大号数字 + 单位；loading 态卡片骨架屏；数据为 0 时显示 "0" 不显示 "-"。
+
+#### FR-D02 趋势图表（后续迭代）
+
+| 序号 | 内容 | 本期状态 |
+|------|------|----------|
+| D02.1 | 日 Token 消耗趋势（近 30 天折线图） | 📋 二期 |
+| D02.2 | 新注册用户趋势（近 30 天柱状图） | 📋 二期 |
+| D02.3 | 会话创建趋势（近 30 天） | 📋 二期 |
+
+> 本期不做图表，仅留扩展接口。前端可预留图表区域骨架。
+
+#### FR-D03 快捷入口
+
+| 序号 | 入口 | 目标路由 |
+|------|------|----------|
+| D03.1 | 用户管理 | `/admin/user` |
+| D03.2 | Agent 管理 | `/admin/agent` |
+| D03.3 | 会话管理 | `/admin/session` |
+| D03.4 | 计费大盘 | `/admin/billing` |
+| D03.5 | 系统设置 | `/admin/config` |
+
+> 前端呈现：卡片式快捷入口，含图标 + 标题 + 简述，点击跳转对应页面。
+
+#### FR-D04 权限与可见性
+
+| 角色 | 可见性 | 备注 |
+|------|--------|------|
+| 超管 (r_level=0) | ✅ 全部数据可见 | 默认拥有 FN0600 权限 |
+| 运营 (r_level=1) | ✅ 全部数据可见 | 分配 FN0600 即可 |
+| 客服 (r_level=2) | ✅ 全部数据可见 | 分配 FN0600 即可 |
+
+> 仪表盘为纯聚合展示，不涉及敏感操作，三种角色均可查看。
+> 权限码：`FN0600`（仪表盘查看），归属菜单 MN06。
+
+#### FR-D05 技术约束
+
+- 接口：`GET admin/v1/dashboard/index`（复用现有路由）
+- 查询性能：所有 COUNT/SUM 均走索引（`usr_app_type`、`status`、`delete_time`）
+- 缓存：Redis 缓存 60 秒，避免高频刷新击穿数据库
+- 零写入：仪表盘接口仅供只读查询，不产生任何写操作
+- 表名规范：所有查询使用 `cs_` 前缀表名（`cs_user` / `cs_agents` / `cs_sessions` / `cs_billing_records`）
+
+#### 菜单注册
+
+```
+mn_code:      MN06
+mn_title:     仪表盘
+mn_parent_code: ''（一级菜单）
+mn_path:      MN06
+mn_parented:  0（叶子节点）
+mn_app_type:  1
+mn_state:     1（启用）
+mn_sort:      9060（排在系统隐藏菜单之后、用户管理之前，即侧边栏首位）
+mn_level:     1
+mn_style:     1（侧边栏菜单）
+mn_uri:       /admin/dashboard
+mn_icon:      anticon-dashboard
+```
 
 ---
 
