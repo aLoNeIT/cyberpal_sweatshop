@@ -23,7 +23,7 @@ class RoleController extends BaseController
     /**
      * 角色管理字典 ID（cs_role 表）。
      */
-    protected int $dictId = 502;
+    protected int $dictId = 506;
 
     /**
      * 仅管理 app_type=1（管理后台）的角色，过滤掉其他端角色数据。

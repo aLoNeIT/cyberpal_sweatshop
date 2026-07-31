@@ -17,7 +17,7 @@ use app\http\admin\controller\BaseController;
  */
 class SkillController extends BaseController
 {
-    protected int $dictId = 503;
+    protected int $dictId = 532;
 
     protected int $transaction = 22;
 }

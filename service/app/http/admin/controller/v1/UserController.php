@@ -18,12 +18,12 @@ use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
  *   - 运营=列表/详情/禁用启用/重置密码（不可删除）
  *   - 客服=仅查看
  *
- * dict_id=501，通过 filter 限定 usr_app_type=4。
+ * dict_id=530，通过 filter 限定 usr_app_type=4。
  * 禁用启用/重置密码为自定义 action，不走标准 DictCrudController。
  */
 class UserController extends BaseController
 {
-    protected int $dictId = 501;
+    protected int $dictId = 503;
 
     /**
      * 限定操作对象为 app_type=4（用户端用户）。

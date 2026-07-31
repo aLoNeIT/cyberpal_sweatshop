@@ -21,7 +21,7 @@ use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
  */
 class AdminAccountController extends BaseController
 {
-    protected int $dictId = 501;
+    protected int $dictId = 503;
 
     protected array $filter = [
         'app_type' => ['usr_app_type', '=', 1],

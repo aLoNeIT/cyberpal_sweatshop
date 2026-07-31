@@ -17,7 +17,7 @@ use app\http\admin\controller\BaseController;
  */
 class McpTemplateController extends BaseController
 {
-    protected int $dictId = 504;
+    protected int $dictId = 533;
 
     protected int $transaction = 22;
 }
