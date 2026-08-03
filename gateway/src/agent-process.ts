@@ -128,6 +128,30 @@ export class AgentProcessImpl {
   }
 
   /**
+   * 附加外部进程（仅供测试使用）。
+   *
+   * 允许测试代码将已 spawn 的 mock 进程注入到 AgentProcessImpl 实例中，
+   * 绕过 start() 的正常二进制启动路径。调用后会自动启动 stdout/stderr 读取
+   * 和退出监听。
+   *
+   * @param proc 已 spawn 的子进程（通过 Bun.spawn 创建）
+   */
+  attachProcess(proc: ReturnType<typeof Bun.spawn>): void {
+    this.proc = proc;
+    this._alive = true;
+    this._lastActivity = Date.now();
+    this._killedByGateway = false;
+    this._exited = false;
+    this._exitCode = null;
+
+    this.readStdout();
+    this.readStderr();
+    this.watchExit();
+
+    this.logger.debug("Attached to external process", { pid: this.pid });
+  }
+
+  /**
    * 发送任务请求到 agent stdin（NDJSON 格式）。
    *
    * @param params 任务参数
