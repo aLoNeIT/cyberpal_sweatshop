@@ -11,6 +11,7 @@
  * @module agent-process
  */
 
+import type { FileSink } from "bun";
 import type { AgentTaskParams, AgentMessage } from "./types.ts";
 import type { GatewayConfig } from "./types.ts";
 import { Logger } from "./logger.ts";
@@ -147,9 +148,7 @@ export class AgentProcessImpl {
     };
 
     const line = JSON.stringify(request) + "\n";
-    const writer = this.proc.stdin.getWriter();
-    await writer.write(new TextEncoder().encode(line));
-    writer.releaseLock();
+    (this.proc.stdin as FileSink).write(new TextEncoder().encode(line));
   }
 
   /**
@@ -260,7 +259,7 @@ export class AgentProcessImpl {
    */
   private readStdout(): void {
     if (!this.proc) return;
-    const reader = this.proc.stdout.getReader();
+    const reader = (this.proc.stdout as ReadableStream<Uint8Array>).getReader();
     const decoder = new TextDecoder();
 
     const readLoop = async (): Promise<void> => {
@@ -321,7 +320,7 @@ export class AgentProcessImpl {
    */
   private readStderr(): void {
     if (!this.proc) return;
-    const reader = this.proc.stderr.getReader();
+    const reader = (this.proc.stderr as ReadableStream<Uint8Array>).getReader();
     const decoder = new TextDecoder();
 
     const readLoop = async (): Promise<void> => {

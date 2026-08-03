@@ -15,6 +15,7 @@
  */
 
 import type { WSMessage, GatewayConfig } from "./types.ts";
+import type { ServerWebSocket } from "bun";
 import { SessionContextImpl } from "./session-context.ts";
 import { Persistence } from "./persistence.ts";
 import { Logger } from "./logger.ts";
@@ -30,7 +31,7 @@ import { Logger } from "./logger.ts";
 export class ServiceContextImpl {
   readonly service_id: string;
   offline: boolean = true;
-  ws: WebSocket | null = null;
+  ws: ServerWebSocket<undefined> | null = null;
   last_ping: number;
   sessions: Map<string, SessionContextImpl> = new Map();
   private persistence: Persistence;
@@ -63,7 +64,7 @@ export class ServiceContextImpl {
    *
    * @param ws WebSocket 连接
    */
-  bindWS(ws: WebSocket): void {
+  bindWS(ws: ServerWebSocket<undefined>): void {
     this.ws = ws;
     this.offline = false;
     this.last_ping = Date.now();
@@ -166,7 +167,7 @@ export class ServiceContextImpl {
   push(msg: WSMessage): void {
     const payloadStr = JSON.stringify(msg);
 
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+    if (this.ws && this.ws.readyState === 1) {
       // 在线：直接推送
       try {
         this.ws.send(payloadStr);
@@ -201,7 +202,7 @@ export class ServiceContextImpl {
    * @returns 是否发送成功
    */
   sendDirect(msg: WSMessage): boolean {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+    if (this.ws && this.ws.readyState === 1) {
       try {
         this.ws.send(JSON.stringify(msg));
         return true;

@@ -17,6 +17,7 @@
  */
 
 import { loadConfig } from "./config.ts";
+import type { ServerWebSocket } from "bun";
 import type { GatewayConfig, WSMessage, HealthStatus } from "./types.ts";
 import { Logger } from "./logger.ts";
 import { Persistence } from "./persistence.ts";
@@ -153,9 +154,9 @@ function getHealthStatus(
  * 使用 WeakMap 存储连接级状态，连接断开时自动回收。
  */
 const wsState = new WeakMap<
-  WebSocket,
-  { authenticated: boolean; service_id: string | null }
->();
+    ServerWebSocket<undefined>,
+    { authenticated: boolean; service_id: string | null }
+  >();
 
 /**
  * 处理 WS 消息。
@@ -173,7 +174,7 @@ const wsState = new WeakMap<
  * @param logger 日志工具
  */
 export async function handleMessage(
-  ws: WebSocket,
+  ws: ServerWebSocket<undefined>,
   text: string,
   config: GatewayConfig,
   auth: Auth,
@@ -393,7 +394,7 @@ async function handleReconnect(
  */
 function handlePing(
   service: import("./service-context.ts").ServiceContextImpl,
-  ws: WebSocket,
+  ws: ServerWebSocket<undefined>,
   msg: WSMessage
 ): void {
   service.updatePing();
@@ -419,7 +420,7 @@ function handlePing(
  * @param logger 日志工具
  */
 function handleClose(
-  ws: WebSocket,
+  ws: ServerWebSocket<undefined>,
   registry: ServiceRegistry,
   logger: Logger
 ): void {
@@ -477,13 +478,13 @@ async function main(): Promise<void> {
     },
     websocket: {
       // 连接建立（此时还不知道 service_id，等第一条消息认证）
-      open(_ws: WebSocket): void {
+      open(_ws: ServerWebSocket<undefined>): void {
         logger.debug("WS connection opened");
       },
 
       // 消息处理
       async message(
-        ws: WebSocket,
+        ws: ServerWebSocket<undefined>,
         message: string | Buffer
       ): Promise<void> {
         const text =
@@ -500,7 +501,7 @@ async function main(): Promise<void> {
       },
 
       // 连接关闭
-      close(ws: WebSocket, _code: number, _reason: string): void {
+      close(ws: ServerWebSocket<undefined>, _code: number, _reason: string): void {
         handleClose(ws, registry, logger);
       },
     },

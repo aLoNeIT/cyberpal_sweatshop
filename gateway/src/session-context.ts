@@ -38,8 +38,8 @@ import { ErrorCode } from "./errors.ts";
 export class SessionContextImpl implements SessionContext {
   readonly session_id: string;
   readonly service_id: string;
-  private agent: AgentProcessImpl;
-  private seqId: number = 0;
+  agent: AgentProcessImpl;
+  seqId: number = 0;
   private createdAt: number;
   private status: "running" | "completed" | "error" | "timeout" = "running";
   private logger: Logger;
