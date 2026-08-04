@@ -199,85 +199,210 @@ test("valid error event structure", () => {
 });
 
 // ============================================================================
-// Agent NDJSON 消息结构验证
+// Agent pi.dev RPC NDJSON 消息结构验证
 // ============================================================================
 
-test("valid agent request NDJSON", () => {
-  const request = {
-    type: "request" as const,
-    id: "req-001",
-    method: "task.submit" as const,
-    params: {
-      prompt: "帮我写代码",
-      model: "claude-sonnet-4-20250514",
-    },
+test("valid prompt command NDJSON", () => {
+  const cmd = {
+    type: "prompt" as const,
+    message: "帮我写代码",
+    streamingBehavior: "steer" as const,
   };
 
-  const line = JSON.stringify(request) + "\n";
+  const line = JSON.stringify(cmd) + "\n";
   const parsed = JSON.parse(line.trim());
-  expect(parsed.type).toBe("request");
-  expect(parsed.method).toBe("task.submit");
-  expect(parsed.params.prompt).toBe("帮我写代码");
+  expect(parsed.type).toBe("prompt");
+  expect(parsed.message).toBe("帮我写代码");
+  expect(parsed.streamingBehavior).toBe("steer");
 });
 
-test("valid agent generation event NDJSON", () => {
-  const event = {
-    type: "event" as const,
-    event: "generation" as const,
-    data: { text: "好的，我来" },
+test("valid steer command NDJSON", () => {
+  const cmd = {
+    type: "steer" as const,
+    message: "请更简洁一点",
   };
 
-  const parsed = JSON.parse(JSON.stringify(event));
-  expect(parsed.type).toBe("event");
-  expect(parsed.event).toBe("generation");
-  expect(parsed.data.text).toBe("好的，我来");
+  const parsed = JSON.parse(JSON.stringify(cmd));
+  expect(parsed.type).toBe("steer");
+  expect(parsed.message).toBe("请更简洁一点");
 });
 
-test("valid agent tool:start event NDJSON", () => {
-  const event = {
-    type: "event" as const,
-    event: "tool:start" as const,
-    data: {
-      tool: "write_file",
-      input: { path: "/tmp/test.ts", content: "..." },
-    },
+test("valid follow_up command NDJSON", () => {
+  const cmd = {
+    type: "follow_up" as const,
+    message: "继续完成",
   };
 
-  const parsed = JSON.parse(JSON.stringify(event));
-  expect(parsed.event).toBe("tool:start");
-  expect(parsed.data.tool).toBe("write_file");
+  const parsed = JSON.parse(JSON.stringify(cmd));
+  expect(parsed.type).toBe("follow_up");
 });
 
-test("valid agent response NDJSON", () => {
+test("valid abort command NDJSON", () => {
+  const cmd = { type: "abort" as const };
+  const parsed = JSON.parse(JSON.stringify(cmd));
+  expect(parsed.type).toBe("abort");
+});
+
+test("valid set_model command NDJSON", () => {
+  const cmd = {
+    type: "set_model" as const,
+    provider: "anthropic",
+    modelId: "claude-sonnet-4-20250514",
+  };
+
+  const parsed = JSON.parse(JSON.stringify(cmd));
+  expect(parsed.type).toBe("set_model");
+  expect(parsed.provider).toBe("anthropic");
+  expect(parsed.modelId).toBe("claude-sonnet-4-20250514");
+});
+
+test("valid set_thinking_level command NDJSON", () => {
+  const cmd = {
+    type: "set_thinking_level" as const,
+    level: "high" as const,
+  };
+
+  const parsed = JSON.parse(JSON.stringify(cmd));
+  expect(parsed.type).toBe("set_thinking_level");
+  expect(parsed.level).toBe("high");
+});
+
+test("valid get_state command NDJSON", () => {
+  const cmd = { type: "get_state" as const };
+  const parsed = JSON.parse(JSON.stringify(cmd));
+  expect(parsed.type).toBe("get_state");
+});
+
+test("valid pi response NDJSON — success", () => {
   const response = {
     type: "response" as const,
-    id: "req-001",
-    result: {
-      status: "done" as const,
-      result: "已完成",
-      usage: { input_tokens: 1200, output_tokens: 350 },
-    },
+    command: "prompt",
+    success: true,
+    data: {},
   };
 
   const parsed = JSON.parse(JSON.stringify(response));
   expect(parsed.type).toBe("response");
-  expect(parsed.result.status).toBe("done");
-  expect(parsed.result.usage.input_tokens).toBe(1200);
+  expect(parsed.command).toBe("prompt");
+  expect(parsed.success).toBe(true);
 });
 
-test("valid agent error NDJSON", () => {
-  const error = {
-    type: "error" as const,
-    id: "req-001",
-    error: {
-      code: "PERMISSION_DENIED",
-      message: "工具 execute_bash 被拦截",
+test("valid pi response NDJSON — error", () => {
+  const response = {
+    type: "response" as const,
+    command: "prompt",
+    success: false,
+    error: "Permission denied",
+  };
+
+  const parsed = JSON.parse(JSON.stringify(response));
+  expect(parsed.type).toBe("response");
+  expect(parsed.success).toBe(false);
+  expect(parsed.error).toBe("Permission denied");
+});
+
+test("valid agent_start event NDJSON", () => {
+  const event = { type: "agent_start" };
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.type).toBe("agent_start");
+});
+
+test("valid agent_end event NDJSON", () => {
+  const event = {
+    type: "agent_end" as const,
+    messages: [],
+    willRetry: false,
+  };
+
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.type).toBe("agent_end");
+  expect(parsed.willRetry).toBe(false);
+});
+
+test("valid message_update with text_delta NDJSON", () => {
+  const event = {
+    type: "message_update",
+    assistantMessageEvent: {
+      type: "text_delta",
+      delta: "好的，我来",
     },
   };
 
-  const parsed = JSON.parse(JSON.stringify(error));
-  expect(parsed.type).toBe("error");
-  expect(parsed.error.code).toBe("PERMISSION_DENIED");
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.type).toBe("message_update");
+  expect(parsed.assistantMessageEvent.type).toBe("text_delta");
+  expect(parsed.assistantMessageEvent.delta).toBe("好的，我来");
+});
+
+test("valid message_update with thinking_delta NDJSON", () => {
+  const event = {
+    type: "message_update",
+    assistantMessageEvent: {
+      type: "thinking_delta",
+      delta: "让我思考一下...",
+    },
+  };
+
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.assistantMessageEvent.type).toBe("thinking_delta");
+  expect(parsed.assistantMessageEvent.delta).toBe("让我思考一下...");
+});
+
+test("valid message_update with toolcall_start NDJSON", () => {
+  const event = {
+    type: "message_update",
+    assistantMessageEvent: {
+      type: "toolcall_start",
+      toolCallId: "t1",
+      toolName: "read_file",
+    },
+  };
+
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.assistantMessageEvent.type).toBe("toolcall_start");
+  expect(parsed.assistantMessageEvent.toolCallId).toBe("t1");
+  expect(parsed.assistantMessageEvent.toolName).toBe("read_file");
+});
+
+test("valid tool_execution_start event NDJSON", () => {
+  const event = {
+    type: "tool_execution_start",
+    toolCallId: "t1",
+    toolName: "write_file",
+    args: { path: "/tmp/test.ts", content: "..." },
+  };
+
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.type).toBe("tool_execution_start");
+  expect(parsed.toolCallId).toBe("t1");
+  expect(parsed.toolName).toBe("write_file");
+});
+
+test("valid tool_execution_end event NDJSON", () => {
+  const event = {
+    type: "tool_execution_end",
+    toolCallId: "t1",
+    toolName: "write_file",
+    result: "ok",
+    isError: false,
+  };
+
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.type).toBe("tool_execution_end");
+  expect(parsed.isError).toBe(false);
+});
+
+test("valid bash_execution_update event NDJSON", () => {
+  const event = {
+    type: "bash_execution_update",
+    id: "bash-1",
+    delta: "Compiling...",
+  };
+
+  const parsed = JSON.parse(JSON.stringify(event));
+  expect(parsed.type).toBe("bash_execution_update");
+  expect(parsed.id).toBe("bash-1");
+  expect(parsed.delta).toBe("Compiling...");
 });
 
 // ============================================================================

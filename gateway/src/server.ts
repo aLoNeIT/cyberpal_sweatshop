@@ -95,11 +95,8 @@ function validateConfig(config: GatewayConfig): void {
     );
   }
 
-  const validSandboxes = ["gondolin", "docker", "openshell", "none"];
-  if (!validSandboxes.includes(config.pi_sandbox)) {
-    errors.push(
-      `PI_SANDBOX must be one of ${validSandboxes.join(", ")}`
-    );
+  if (!config.pi_provider || config.pi_provider.length === 0) {
+    errors.push("PI_PROVIDER must not be empty");
   }
 
   const validLogLevels = ["debug", "info", "warn", "error"];
@@ -329,24 +326,12 @@ async function handleSubmit(
 
     const session = service.createSession(msg.session_id);
 
-    await session.start(
-      {
-        prompt: payload.prompt as string,
-        system_prompt: payload.system_prompt as string | undefined,
-        append_system_prompt: payload.append_system_prompt as
-          | string
-          | undefined,
-        model: payload.model as string | undefined,
-        thinking: payload.thinking as "low" | "medium" | "high" | undefined,
-        provider: payload.provider as string | undefined,
-        skills: payload.skills as string[] | undefined,
-        mcp_config: payload.mcp_config as Record<string, unknown> | undefined,
-        tools_whitelist: payload.tools_whitelist as string[] | undefined,
-        tools_blacklist: payload.tools_blacklist as string[] | undefined,
-      },
-      "/workspace", // agent 工作目录
-      {} // 额外环境变量（如 API key）
-    );
+    await session.start({
+      prompt: payload.prompt as string,
+      model: payload.model as string | undefined,
+      thinking: payload.thinking as string | undefined,
+      provider: payload.provider as string | undefined,
+    });
 
     logger.info("Task submitted", {
       service_id: msg.service_id,

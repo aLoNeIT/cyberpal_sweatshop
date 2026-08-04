@@ -28,8 +28,11 @@ import type { GatewayConfig } from "./types.ts";
  *   CLEANUP_RETENTION_MS      - 清理保留（默认 3600000 = 1h）
  *   PI_BINARY                 - pi-agent 路径（默认 "pi"）
  *   PI_MODE                   - pi 运行模式（默认 "rpc"）
- *   PI_SANDBOX                - 沙箱类型（默认 "none"）
- *   PI_PERMISSION_CONFIG      - 权限配置路径
+ *   PI_PROVIDER               - AI provider（默认 "anthropic"）
+ *   PI_MODEL                  - 模型（默认 ""）
+ *   PI_SESSION_DIR            - session 目录（默认 "/data/sessions"）
+ *   PI_NO_SESSION             - 是否禁用 session（默认 false）
+ *   PI_SESSION_NAME           - session 名称（默认 ""）
  *   LOG_LEVEL                 - 日志级别（默认 "info"）
  *
  * @returns 完整的 GatewayConfig 对象
@@ -57,8 +60,11 @@ export function loadConfig(): GatewayConfig {
     cleanup_retention_ms: parseInt(process.env.CLEANUP_RETENTION_MS ?? "3600000", 10),
     pi_binary: process.env.PI_BINARY ?? "pi",
     pi_mode: process.env.PI_MODE ?? "rpc",
-    pi_sandbox: process.env.PI_SANDBOX ?? "none",
-    pi_permission_config: process.env.PI_PERMISSION_CONFIG ?? "",
+    pi_provider: process.env.PI_PROVIDER ?? "anthropic",
+    pi_model: process.env.PI_MODEL ?? "",
+    pi_session_dir: process.env.PI_SESSION_DIR ?? "/data/sessions",
+    pi_no_session: process.env.PI_NO_SESSION === "true",
+    pi_session_name: process.env.PI_SESSION_NAME ?? "",
     log_level: (process.env.LOG_LEVEL ?? "info") as "debug" | "info" | "warn" | "error",
   };
 }
@@ -80,7 +86,10 @@ export const DEFAULT_CONFIG: GatewayConfig = {
   cleanup_retention_ms: 3600000,
   pi_binary: "pi",
   pi_mode: "rpc",
-  pi_sandbox: "none",
-  pi_permission_config: "",
+  pi_provider: "anthropic",
+  pi_model: "",
+  pi_session_dir: "/data/sessions",
+  pi_no_session: false,
+  pi_session_name: "",
   log_level: "info",
 };

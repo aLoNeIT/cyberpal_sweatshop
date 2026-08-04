@@ -15,29 +15,221 @@
 export type MessageType = "request" | "response" | "event";
 
 /** Hyperf → Gateway 的 action 类型 */
-export type ClientAction = "submit" | "reconnect" | "ping";
+export type ClientAction = "submit" | "reconnect" | "ping" | "steer" | "follow_up" | "abort";
 
 /** Gateway → Hyperf 的 event 类型 */
 export type GatewayEvent =
   | "chunk"           // agent 产出文本片段
   | "tool_start"      // 工具调用开始
   | "tool_result"     // 工具调用结束
+  | "tool_progress"   // 工具调用进度
+  | "thinking"        // 思考过程片段
   | "done"            // 任务完成
   | "pong"            // 心跳响应
   | "replay_start"    // 补传开始
   | "replay_done"     // 补传完成
   | "replay_aborted"  // 补传中断
   | "reconnected"     // 重连成功（无积压）
+  | "steer_ack"       // steer 命令确认
+  | "compaction_event" // 上下文压缩事件
+  | "retry_event"     // 自动重试事件
   | "error";          // 错误信息
 
-/** agent NDJSON 事件类型（pi-agent stdout 产出） */
-export type AgentEvent =
-  | "generation"      // 文本生成片段
-  | "tool:start"      // 工具调用开始
-  | "tool:result"     // 工具调用结果
-  | "session"         // 会话状态（含 usage）
-  | "done"            // 任务完成
-  | "error";          // agent 错误
+// ============================================================================
+// pi.dev RPC 协议类型（stdin/stdout）
+// ============================================================================
+
+/** stdin 命令类型 */
+export type PiCommandType = "prompt" | "steer" | "follow_up" | "abort" | "set_model" | "set_thinking_level" | "get_state";
+
+/** 流式行为 */
+export type StreamingBehavior = "steer" | "replace" | "append";
+
+/** 思考级别 */
+export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+
+/** prompt 命令 */
+export interface PromptCmd {
+  type: "prompt";
+  message: string;
+  images?: string[];
+  streamingBehavior?: StreamingBehavior;
+}
+
+/** steer 命令 */
+export interface SteerCmd {
+  type: "steer";
+  message: string;
+}
+
+/** follow_up 命令 */
+export interface FollowUpCmd {
+  type: "follow_up";
+  message: string;
+}
+
+/** abort 命令 */
+export interface AbortCmd {
+  type: "abort";
+}
+
+/** set_model 命令 */
+export interface SetModelCmd {
+  type: "set_model";
+  provider: string;
+  modelId: string;
+}
+
+/** set_thinking_level 命令 */
+export interface SetThinkingCmd {
+  type: "set_thinking_level";
+  level: ThinkingLevel;
+}
+
+/** get_state 命令 */
+export interface GetStateCmd {
+  type: "get_state";
+}
+
+/** pi RPC 命令联合类型 */
+export type PiRpcCommand = PromptCmd | SteerCmd | FollowUpCmd | AbortCmd | SetModelCmd | SetThinkingCmd | GetStateCmd;
+
+// ============================================================================
+// stdout 响应
+// ============================================================================
+
+/** pi RPC 响应消息 */
+export interface PiRpcResponse {
+  type: "response";
+  id?: string;
+  command: string;
+  success: boolean;
+  data?: Record<string, unknown>;
+  error?: string;
+}
+
+// ============================================================================
+// stdout 事件（每类独立结构）
+// ============================================================================
+
+export interface AgentStartEvent {
+  type: "agent_start";
+}
+
+export interface AgentEndEvent {
+  type: "agent_end";
+  messages: unknown[];
+  willRetry: boolean;
+}
+
+export interface AgentSettledEvent {
+  type: "agent_settled";
+}
+
+export interface TurnStartEvent {
+  type: "turn_start";
+}
+
+export interface TurnEndEvent {
+  type: "turn_end";
+  message: unknown;
+  toolResults: unknown[];
+}
+
+export interface MessageStartEvent {
+  type: "message_start";
+  message: unknown;
+}
+
+export interface MessageEndEvent {
+  type: "message_end";
+  message: unknown;
+}
+
+export interface AssistantMessageEvent {
+  type: "text_start" | "text_delta" | "text_end"
+    | "thinking_start" | "thinking_delta" | "thinking_end"
+    | "toolcall_start" | "toolcall_delta" | "toolcall_end";
+  contentIndex?: number;
+  delta?: string;
+  content?: string;
+  toolCallId?: string;
+  toolName?: string;
+  args?: Record<string, unknown>;
+  toolCall?: unknown;
+}
+
+export interface MessageUpdateEvent {
+  type: "message_update";
+  assistantMessageEvent: AssistantMessageEvent;
+}
+
+export interface ToolExecStartEvent {
+  type: "tool_execution_start";
+  toolCallId: string;
+  toolName: string;
+  args: Record<string, unknown>;
+}
+
+export interface ToolExecUpdateEvent {
+  type: "tool_execution_update";
+  toolCallId: string;
+  toolName: string;
+  args?: Record<string, unknown>;
+  partialResult: unknown;
+}
+
+export interface ToolExecEndEvent {
+  type: "tool_execution_end";
+  toolCallId: string;
+  toolName: string;
+  result: unknown;
+  isError: boolean;
+}
+
+export interface BashExecUpdateEvent {
+  type: "bash_execution_update";
+  id: string;
+  delta: string;
+}
+
+export interface CompactionStartEvent {
+  type: "compaction_start";
+}
+
+export interface CompactionEndEvent {
+  type: "compaction_end";
+}
+
+export interface AutoRetryStartEvent {
+  type: "auto_retry_start";
+}
+
+export interface AutoRetryEndEvent {
+  type: "auto_retry_end";
+}
+
+export interface ExtensionErrorEvent {
+  type: "extension_error";
+  error: string;
+}
+
+export interface QueueUpdateEvent {
+  type: "queue_update";
+  queue?: unknown;
+}
+
+/** pi RPC 事件联合类型 */
+export type PiRpcEvent = AgentStartEvent | AgentEndEvent | AgentSettledEvent
+  | TurnStartEvent | TurnEndEvent
+  | MessageStartEvent | MessageUpdateEvent | MessageEndEvent
+  | ToolExecStartEvent | ToolExecUpdateEvent | ToolExecEndEvent
+  | BashExecUpdateEvent | CompactionStartEvent | CompactionEndEvent
+  | AutoRetryStartEvent | AutoRetryEndEvent | ExtensionErrorEvent
+  | QueueUpdateEvent | Record<string, unknown>; // 兜底
+
+/** pi RPC 消息联合类型 */
+export type PiRpcMessage = PiRpcResponse | PiRpcEvent;
 
 // ============================================================================
 // 2.2 WS 消息结构
@@ -73,15 +265,9 @@ export type WSPayload =
 /** submit 请求 payload */
 export interface SubmitPayload {
   prompt: string;
-  system_prompt?: string;
-  append_system_prompt?: string;
   model?: string;
-  thinking?: "low" | "medium" | "high";
+  thinking?: string;
   provider?: string;
-  skills?: string[];
-  mcp_config?: Record<string, unknown>;
-  tools_whitelist?: string[];
-  tools_blacklist?: string[];
 }
 
 /** reconnect 请求 payload */
@@ -102,12 +288,14 @@ export interface ChunkPayload {
 /** tool_start 事件 payload */
 export interface ToolStartPayload {
   tool: string;
+  toolCallId?: string;
   input: Record<string, unknown>;
 }
 
 /** tool_result 事件 payload */
 export interface ToolResultPayload {
   tool: string;
+  toolCallId?: string;
   output: string;
   success: boolean;
 }
@@ -165,76 +353,7 @@ export interface UsageData {
 }
 
 // ============================================================================
-// 2.4 Agent NDJSON 消息结构
-// ============================================================================
-
-/** Gateway → Agent 的 NDJSON 请求（写入 stdin） */
-export interface AgentRequest {
-  type: "request";
-  id: string;             // UUID，用于匹配响应
-  method: "task.submit";
-  params: AgentTaskParams;
-}
-
-/** Agent 任务参数 */
-export interface AgentTaskParams {
-  prompt: string;
-  system_prompt?: string;
-  append_system_prompt?: string;
-  model?: string;
-  thinking?: "low" | "medium" | "high";
-  provider?: string;
-  skills?: string[];
-  mcp_config?: Record<string, unknown>;
-  tools_whitelist?: string[];
-  tools_blacklist?: string[];
-  session_id?: string;     // 用于 resume
-}
-
-/** Agent → Gateway 的 NDJSON 消息（读取 stdout） */
-export type AgentMessage =
-  | AgentEventMessage
-  | AgentResponseMessage
-  | AgentErrorMessage;
-
-/** Agent 事件消息 */
-export interface AgentEventMessage {
-  type: "event";
-  event: AgentEvent;
-  data: AgentEventData;
-}
-
-/** Agent 响应消息（任务完成） */
-export interface AgentResponseMessage {
-  type: "response";
-  id: string;
-  result: {
-    status: "done";
-    result: string;
-    usage: UsageData;
-  };
-}
-
-/** Agent 错误消息 */
-export interface AgentErrorMessage {
-  type: "error";
-  id?: string;
-  error: {
-    code: string;
-    message: string;
-  };
-}
-
-/** Agent 事件数据联合类型 */
-export type AgentEventData =
-  | { text: string }                                    // generation
-  | { tool: string; input: Record<string, unknown> }   // tool:start
-  | { tool: string; output: string; success: boolean }  // tool:result
-  | { usage: UsageData }                                 // session
-  | Record<string, unknown>;                             // 其他
-
-// ============================================================================
-// 2.5 上下文类型
+// 2.4 上下文类型
 // ============================================================================
 
 /** 服务上下文 */
@@ -263,10 +382,10 @@ export type SessionStatus = "running" | "completed" | "error" | "timeout";
 export interface AgentProcess {
   readonly pid: number | null;
   readonly alive: boolean;
-  /** 发送任务请求 */
-  submit(params: AgentTaskParams): Promise<void>;
+  /** 发送 RPC 命令 */
+  submit(command: PiRpcCommand): Promise<void>;
   /** 注册事件回调 */
-  onEvent(callback: (event: AgentMessage) => void): void;
+  onEvent(callback: (msg: PiRpcMessage) => void): void;
   /** 终止进程 */
   kill(): void;
 }
@@ -303,8 +422,11 @@ export interface GatewayConfig {
   cleanup_retention_ms: number;
   pi_binary: string;
   pi_mode: string;
-  pi_sandbox: string;
-  pi_permission_config: string;
+  pi_provider: string;
+  pi_model: string;
+  pi_session_dir: string;
+  pi_no_session: boolean;
+  pi_session_name: string;
   log_level: "debug" | "info" | "warn" | "error";
 }
 

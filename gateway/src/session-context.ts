@@ -2,10 +2,10 @@
  * pi-gateway 会话上下文
  *
  * 管理单次任务会话，维护 agent 进程和消息序号，
- * 将 agent NDJSON 事件映射为 WS 事件。
+ * 将 agent pi.dev RPC 事件映射为 WS 事件。
  *
  * 生命周期：
- *   1. 构造 → 2. start() 启动 agent + 提交任务
+ *   1. 构造 → 2. start() 启动 agent + 发送 prompt 命令
  *   3. agent 产出 → onAgentEvent() → 映射 → push 回调
  *   4. 任务完成/超时/崩溃 → destroy()
  *
@@ -13,8 +13,16 @@
  */
 
 import type {
-  AgentTaskParams,
-  AgentMessage,
+  SubmitPayload,
+  PiRpcMessage,
+  PiRpcResponse,
+  PiRpcEvent,
+  MessageUpdateEvent,
+  ToolExecStartEvent,
+  ToolExecUpdateEvent,
+  ToolExecEndEvent,
+  AgentEndEvent,
+  ExtensionErrorEvent,
   UsageData,
   GatewayEvent,
   WSMessage,
@@ -32,7 +40,7 @@ import { ErrorCode } from "./errors.ts";
  * 职责：
  * - 持有 agent 子进程
  * - 维护递增 seqId
- * - 将 agent NDJSON 事件映射为 WS 消息
+ * - 将 agent pi.dev RPC 事件映射为 WS 消息
  * - 通过 push 回调将 WS 消息推送给上层（ServiceContext）
  */
 export class SessionContextImpl implements SessionContext {
@@ -45,6 +53,9 @@ export class SessionContextImpl implements SessionContext {
   private logger: Logger;
   private config: GatewayConfig;
   private accumulatedUsage: UsageData | null = null;
+  private textAccumulator: string = "";
+  private thinkingAccumulator: string = "";
+  private activeToolCallIds: Set<string> = new Set();
 
   /** push 回调：上层（ServiceContext）注册，用于推送或缓冲 WS 消息 */
   private pushCallback: ((msg: WSMessage) => void) | null = null;
@@ -108,15 +119,13 @@ export class SessionContextImpl implements SessionContext {
   }
 
   /**
-   * 启动 agent 进程并提交任务。
+   * 启动 agent 进程并提交 prompt 命令。
    *
-   * @param params 任务参数
-   * @param workDir agent 工作目录
+   * @param payload 提交参数（prompt + model + thinking + provider）
    * @param env 额外环境变量
    */
   async start(
-    params: AgentTaskParams,
-    workDir: string,
+    payload: SubmitPayload,
     env: Record<string, string> = {}
   ): Promise<void> {
     // 注册 agent 事件回调
@@ -126,10 +135,23 @@ export class SessionContextImpl implements SessionContext {
     this.agent.onExit((code) => this.onAgentExit(code));
 
     // 启动 agent 进程
-    await this.agent.start(workDir, env);
+    await this.agent.start(env);
 
-    // 提交任务
-    await this.agent.submit(params);
+    // 如果指定了 model，先发送 set_model 命令
+    if (payload.model) {
+      // 使用 provider（默认 anthropic）和 model
+      await this.agent.setModel(payload.provider ?? "anthropic", payload.model);
+    }
+
+    // 如果指定了 thinking，设置 thinking level
+    if (payload.thinking) {
+      await this.agent.setThinkingLevel(
+        payload.thinking as "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max"
+      );
+    }
+
+    // 发送 prompt 命令
+    await this.agent.submit({ type: "prompt", message: payload.prompt });
   }
 
   /**
@@ -180,105 +202,233 @@ export class SessionContextImpl implements SessionContext {
   }
 
   /**
-   * 处理 agent NDJSON 事件，映射为 WS 消息。
+   * 处理 agent PiRpcMessage，分派到 response 或 event 处理。
    *
    * 非 running 状态的 session 不接收事件（防御性检查）。
-   * 映射规则见 §3.2.4 事件映射表。
    *
-   * @param msg Agent NDJSON 消息
+   * @param msg PiRpcMessage（response 或 event）
    */
-  private onAgentEvent(msg: AgentMessage): void {
+  private onAgentEvent(msg: PiRpcMessage): void {
     // 非 running 状态丢弃事件（防止 agent 退出前的残留消息）
     if (this.status !== "running") return;
 
-    if (msg.type === "event") {
-      this.handleAgentEvent(msg.event, msg.data);
-    } else if (msg.type === "response") {
-      this.handleAgentResponse(msg.result.result, msg.result.usage);
-    } else if (msg.type === "error") {
-      this.handleAgentError(msg.error.code, msg.error.message);
+    if ("command" in msg && msg.type === "response") {
+      // PiRpcResponse
+      const resp = msg as PiRpcResponse;
+      if (!resp.success) {
+        this.handleAgentError(resp);
+        return;
+      }
+      this.handleAgentResponse(resp);
+    } else {
+      // PiRpcEvent
+      this.handlePiEvent(msg as PiRpcEvent);
     }
   }
 
   /**
-   * 处理 agent 事件消息，映射为 WS 事件。
+   * 处理 pi.dev RPC 事件，映射为 WS 消息。
    *
-   * @param event Agent 事件类型
-   * @param data Agent 事件数据
+   * @param event PiRpcEvent
    */
-  private handleAgentEvent(
-    event: string,
-    data: Record<string, unknown>
-  ): void {
-    switch (event) {
-      case "generation":
-        this.emitWS("chunk", { text: data.text as string });
+  private handlePiEvent(event: PiRpcEvent): void {
+    switch (event.type) {
+      case "agent_start":
+        this.emitWS("thinking", { status: "started" });
         break;
-      case "tool:start":
-        this.emitWS("tool_start", {
-          tool: data.tool as string,
-          input: data.input as Record<string, unknown>,
-        });
-        break;
-      case "tool:result":
-        this.emitWS("tool_result", {
-          tool: data.tool as string,
-          output: data.output as string,
-          success: data.success as boolean,
-        });
-        break;
-      case "session":
-        // 累积 usage，不直接转发
-        if (data.usage) {
-          this.accumulatedUsage = data.usage as UsageData;
-        }
-        break;
-      case "done":
-        // agent "done" event（非 response 类型）→ 也映射为 done
+
+      case "agent_end": {
+        const ae = event as AgentEndEvent;
         this.emitWS("done", {
-          result: (data as Record<string, unknown>).result ?? "done",
+          result: this.textAccumulator,
           usage: this.accumulatedUsage ?? {},
+          willRetry: ae.willRetry,
         });
         this.status = "completed";
         break;
-      case "error":
-        this.handleAgentError(
-          (data.code as string) ?? ErrorCode.AGENT_CRASHED,
-          (data.message as string) ?? "Unknown agent error"
-        );
+      }
+
+      case "agent_settled":
+        // 内部标记，无需映射
         break;
+
+      case "turn_start":
+        // 内部标记，无需映射
+        break;
+
+      case "turn_end":
+        // 内部标记，无需映射
+        break;
+
+      case "message_start":
+        // 初始化 accumulator
+        this.textAccumulator = "";
+        this.thinkingAccumulator = "";
+        break;
+
+      case "message_update":
+        this.handleMessageUpdate(event as MessageUpdateEvent);
+        break;
+
+      case "message_end":
+        // 内部标记，无需映射
+        break;
+
+      case "tool_execution_start": {
+        const ts = event as ToolExecStartEvent;
+        this.activeToolCallIds.add(ts.toolCallId);
+        this.emitWS("tool_start", {
+          tool: ts.toolName,
+          toolCallId: ts.toolCallId,
+          input: ts.args,
+        });
+        break;
+      }
+
+      case "tool_execution_update": {
+        const tu = event as ToolExecUpdateEvent;
+        this.emitWS("tool_progress", {
+          tool: tu.toolName,
+          toolCallId: tu.toolCallId,
+          result: tu.partialResult,
+        });
+        break;
+      }
+
+      case "tool_execution_end": {
+        const te = event as ToolExecEndEvent;
+        this.activeToolCallIds.delete(te.toolCallId);
+        this.emitWS("tool_result", {
+          tool: te.toolName,
+          toolCallId: te.toolCallId,
+          output: typeof te.result === "string" ? te.result : JSON.stringify(te.result),
+          success: !te.isError,
+        });
+        break;
+      }
+
+      case "extension_error": {
+        const ee = event as ExtensionErrorEvent;
+        this.emitWS("error", {
+          code: "EXTENSION_ERROR",
+          message: ee.error,
+        });
+        break;
+      }
+
+      case "compaction_start": {
+        const cs = event as unknown as Record<string, unknown>;
+        this.emitWS("compaction_event", { type: "start", reason: cs.reason });
+        break;
+      }
+
+      case "compaction_end": {
+        const ce = event as unknown as Record<string, unknown>;
+        this.emitWS("compaction_event", { type: "end", reason: ce.reason });
+        break;
+      }
+
+      case "auto_retry_start": {
+        const ars = event as unknown as Record<string, unknown>;
+        this.emitWS("retry_event", {
+          type: "start",
+          attempt: ars.attempt,
+          maxAttempts: ars.maxAttempts,
+        });
+        break;
+      }
+
+      case "auto_retry_end": {
+        const are = event as unknown as Record<string, unknown>;
+        this.emitWS("retry_event", {
+          type: "end",
+          attempt: are.attempt,
+          maxAttempts: are.maxAttempts,
+        });
+        break;
+      }
+
       default:
-        this.logger.debug("Unknown agent event", { event, data });
+        this.logger.debug("Unknown pi event", { type: event.type });
     }
   }
 
   /**
-   * 处理 agent 响应消息（任务完成），发射 done 事件。
+   * 处理 message_update 事件中的 assistantMessageEvent。
    *
-   * @param result 任务结果文本
-   * @param usage Token 用量数据
+   * @param event MessageUpdateEvent
    */
-  private handleAgentResponse(result: string, usage: UsageData): void {
-    this.emitWS("done", {
-      result,
-      usage: this.accumulatedUsage ?? usage,
-    });
-    this.status = "completed";
+  private handleMessageUpdate(event: MessageUpdateEvent): void {
+    const ame = event.assistantMessageEvent;
+
+    switch (ame.type) {
+      case "text_start":
+        // 文本开始，可重置 accumulator
+        break;
+
+      case "text_delta":
+        if (ame.delta) {
+          this.textAccumulator += ame.delta;
+          this.emitWS("chunk", { text: ame.delta });
+        }
+        break;
+
+      case "text_end":
+        // 文本结束，content 包含完整文本
+        break;
+
+      case "thinking_start":
+        break;
+
+      case "thinking_delta":
+        if (ame.delta) {
+          this.thinkingAccumulator += ame.delta;
+          this.emitWS("thinking", { text: ame.delta });
+        }
+        break;
+
+      case "thinking_end":
+        break;
+
+      case "toolcall_start":
+        if (ame.toolCallId) {
+          this.activeToolCallIds.add(ame.toolCallId);
+        }
+        break;
+
+      case "toolcall_delta":
+        break;
+
+      case "toolcall_end":
+        break;
+
+      default:
+        this.logger.debug("Unknown assistant message event", { type: ame.type });
+    }
   }
 
   /**
-   * 处理 agent 错误消息，发射 error 事件。
+   * 处理 agent 响应消息（任务完成）。
    *
-   * @param code agent 错误码
-   * @param message agent 错误描述
+   * @param resp PiRpcResponse
    */
-  private handleAgentError(code: string, message: string): void {
+  private handleAgentResponse(resp: PiRpcResponse): void {
+    // 对于成功的 response，status 通常由 agent_end 事件设置
+    this.logger.debug("Agent response", {
+      command: resp.command,
+      success: resp.success,
+    });
+  }
+
+  /**
+   * 处理 agent 错误���应。
+   *
+   * @param resp PiRpcResponse（success=false）
+   */
+  private handleAgentError(resp: PiRpcResponse): void {
     this.emitWS("error", {
-      code:
-        code === "PERMISSION_DENIED"
-          ? ErrorCode.AGENT_PERMISSION_DENIED
-          : code,
-      message,
+      code: "AGENT_ERROR",
+      message: resp.error ?? "Unknown agent error",
       session_id: this.session_id,
     });
     this.status = "error";

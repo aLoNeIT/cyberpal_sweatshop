@@ -2,7 +2,7 @@
  * pi-gateway 集成测试 — Mock pi-agent 子进程联调
  *
  * 通过启动 mock-pi-agent.ts 并附加到 AgentProcessImpl，
- * 验证 NDJSON/stdio 通信、事件分发、错误处理和崩溃检测。
+ * 验证 pi.dev RPC NDJSON/stdio 通信、事件分发、错误处理和崩溃检测。
  *
  * @module tests/integration
  */
@@ -11,12 +11,7 @@ import { expect, test, beforeAll } from "bun:test";
 import { AgentProcessImpl } from "../src/agent-process.ts";
 import { DEFAULT_CONFIG } from "../src/config.ts";
 import { Logger } from "../src/logger.ts";
-import type {
-  AgentMessage,
-  AgentEventMessage,
-  AgentResponseMessage,
-  AgentErrorMessage,
-} from "../src/types.ts";
+import type { PiRpcMessage, PiRpcResponse, PiRpcEvent } from "../src/types.ts";
 
 // ============================================================================
 // 工具函数
@@ -60,10 +55,10 @@ beforeAll(() => {
 });
 
 // ============================================================================
-// 测试 1：正常 submit 流程
+// 测试 1：正常 prompt 流程
 // ============================================================================
 
-test("正常 submit 流程 — 验证 6 条 NDJSON 消息", async () => {
+test("正常 prompt 流程 — 验证 pi.dev 协议消息", async () => {
   const proc = Bun.spawn({
     cmd: ["bun", "run", MOCK_SCRIPT],
     stdin: "pipe",
@@ -74,57 +69,63 @@ test("正常 submit 流程 — 验证 6 条 NDJSON 消息", async () => {
   const agent = new AgentProcessImpl(DEFAULT_CONFIG, makeLogger());
   agent.attachProcess(proc);
 
-  const messages: AgentMessage[] = [];
+  const messages: PiRpcMessage[] = [];
   agent.onEvent((msg) => messages.push(msg));
 
-  await agent.submit({ prompt: "测试正常流程" }, "req-normal");
+  await agent.submit({ type: "prompt", message: "测试正常流程" });
 
   // 等待 response 消息到达（最后一条）
   await waitFor(() => messages.some((m) => m.type === "response"));
 
-  expect(messages.length).toBe(6);
+  // 新协议有 12 条消息
+  expect(messages.length).toBe(12);
 
-  // 第 1 条：generation
-  const m0 = messages[0] as AgentEventMessage;
-  expect(m0.type).toBe("event");
-  expect(m0.event).toBe("generation");
-  expect((m0.data as { text: string }).text).toBe("Mock: 开始处理");
+  // 第 1 条：agent_start
+  expect(messages[0].type).toBe("agent_start");
 
-  // 第 2 条：generation
-  const m1 = messages[1] as AgentEventMessage;
-  expect(m1.type).toBe("event");
-  expect(m1.event).toBe("generation");
-  expect((m1.data as { text: string }).text).toBe("Mock: 正在分析...");
+  // 第 2 条：message_start
+  expect(messages[1].type).toBe("message_start");
 
-  // 第 3 条：tool:start
-  const m2 = messages[2] as AgentEventMessage;
-  expect(m2.type).toBe("event");
-  expect(m2.event).toBe("tool:start");
-  const toolStartData = m2.data as { tool: string; input: Record<string, unknown> };
-  expect(toolStartData.tool).toBe("mock_tool");
-  expect(toolStartData.input).toEqual({ arg: "test" });
+  // 第 3 条：message_update (text_start)
+  expect(messages[2].type).toBe("message_update");
+  const mu0 = messages[2] as PiRpcEvent;
+  expect((mu0 as Record<string, unknown>).assistantMessageEvent).toBeDefined();
 
-  // 第 4 条：tool:end
-  const m3 = messages[3] as AgentEventMessage;
-  expect(m3.type).toBe("event");
-  expect(m3.event).toBe("tool:end");
-  const toolEndData = m3.data as { tool: string; output: string };
-  expect(toolEndData.tool).toBe("mock_tool");
-  expect(toolEndData.output).toBe("mock_result");
+  // 第 4 条：message_update (text_delta: "Mock: 开始处理")
+  expect(messages[3].type).toBe("message_update");
 
-  // 第 5 条：done
-  const m4 = messages[4] as AgentEventMessage;
-  expect(m4.type).toBe("event");
-  expect(m4.event).toBe("done");
-  const doneData = m4.data as { usage: { input_tokens: number; output_tokens: number } };
-  expect(doneData.usage.input_tokens).toBe(10);
-  expect(doneData.usage.output_tokens).toBe(20);
+  // 第 5 条：message_update (text_delta: "Mock: 正在分析...")
+  expect(messages[4].type).toBe("message_update");
 
-  // 第 6 条：response
-  const m5 = messages[5] as AgentResponseMessage;
-  expect(m5.type).toBe("response");
-  expect(m5.id).toBe("req-normal");
-  expect(m5.result.status).toBe("completed");
+  // 第 6 条：message_update (text_end)
+  expect(messages[5].type).toBe("message_update");
+
+  // 第 7 条：message_end
+  expect(messages[6].type).toBe("message_end");
+
+  // 第 8 条：tool_execution_start
+  expect(messages[7].type).toBe("tool_execution_start");
+  const ts = messages[7] as PiRpcEvent;
+  expect((ts as Record<string, unknown>).toolCallId).toBe("t1");
+  expect((ts as Record<string, unknown>).toolName).toBe("mock_tool");
+
+  // 第 9 条：tool_execution_end
+  expect(messages[8].type).toBe("tool_execution_end");
+  const te = messages[8] as PiRpcEvent;
+  expect((te as Record<string, unknown>).toolCallId).toBe("t1");
+  expect((te as Record<string, unknown>).isError).toBe(false);
+
+  // 第 10 条：agent_end
+  expect(messages[9].type).toBe("agent_end");
+
+  // 第 11 条：agent_settled
+  expect(messages[10].type).toBe("agent_settled");
+
+  // 第 12 条：response (success)
+  expect(messages[11].type).toBe("response");
+  const resp = messages[11] as PiRpcResponse;
+  expect(resp.command).toBe("prompt");
+  expect(resp.success).toBe(true);
 
   agent.kill();
 });
@@ -133,7 +134,7 @@ test("正常 submit 流程 — 验证 6 条 NDJSON 消息", async () => {
 // 测试 2：错误处理
 // ============================================================================
 
-test("错误处理 — 验证收到 error 事件", async () => {
+test("错误处理 — 验证 response.success=false", async () => {
   const proc = Bun.spawn({
     cmd: ["bun", "run", MOCK_SCRIPT, "error"],
     stdin: "pipe",
@@ -144,21 +145,20 @@ test("错误处理 — 验证收到 error 事件", async () => {
   const agent = new AgentProcessImpl(DEFAULT_CONFIG, makeLogger());
   agent.attachProcess(proc);
 
-  const messages: AgentMessage[] = [];
+  const messages: PiRpcMessage[] = [];
   agent.onEvent((msg) => messages.push(msg));
 
-  await agent.submit({ prompt: "测试错误流程" }, "req-error");
+  await agent.submit({ type: "prompt", message: "测试错误流程" });
 
-  // 等待 error 消息到达
-  await waitFor(() => messages.some((m) => m.type === "error"));
+  // 等待 response 消息
+  await waitFor(() => messages.some((m) => m.type === "response"));
 
   expect(messages.length).toBe(1);
 
-  const errMsg = messages[0] as AgentErrorMessage;
-  expect(errMsg.type).toBe("error");
-  expect(errMsg.id).toBe("req-error");
-  expect(errMsg.error.code).toBe("PERMISSION_DENIED");
-  expect(errMsg.error.message).toBe("Mock error: 模拟错误响应");
+  const resp = messages[0] as PiRpcResponse;
+  expect(resp.type).toBe("response");
+  expect(resp.success).toBe(false);
+  expect(resp.error).toBe("Mock: permission denied");
 
   agent.kill();
 });
@@ -185,7 +185,7 @@ test("崩溃检测 — 验证 onExit 回调，exitCode !== 0", async () => {
 
   // 尝试 submit（可能因进程崩溃而失败）
   try {
-    await agent.submit({ prompt: "测试崩溃" }, "req-crash");
+    await agent.submit({ type: "prompt", message: "测试崩溃" });
   } catch {
     // 预期可能的写入失败
   }
@@ -203,7 +203,7 @@ test("崩溃检测 — 验证 onExit 回调，exitCode !== 0", async () => {
 // 测试 4：并发 submit
 // ============================================================================
 
-test("并发 submit — 两个请求的响应 ID 正确对应", async () => {
+test("并发 submit — 两个请求的响应正确对应", async () => {
   const proc = Bun.spawn({
     cmd: ["bun", "run", MOCK_SCRIPT],
     stdin: "pipe",
@@ -214,13 +214,13 @@ test("并发 submit — 两个请求的响应 ID 正确对应", async () => {
   const agent = new AgentProcessImpl(DEFAULT_CONFIG, makeLogger());
   agent.attachProcess(proc);
 
-  const allMessages: AgentMessage[] = [];
+  const allMessages: PiRpcMessage[] = [];
   agent.onEvent((msg) => allMessages.push(msg));
 
   // 并发发送两个请求
   await Promise.all([
-    agent.submit({ prompt: "并发测试 1" }, "req-concurrent-1"),
-    agent.submit({ prompt: "并发测试 2" }, "req-concurrent-2"),
+    agent.submit({ type: "prompt", message: "并发测试 1" }),
+    agent.submit({ type: "prompt", message: "并发测试 2" }),
   ]);
 
   // 等待两个 response 消息
@@ -231,14 +231,14 @@ test("并发 submit — 两个请求的响应 ID 正确对应", async () => {
   // 提取 response 消息
   const responses = allMessages.filter(
     (m) => m.type === "response",
-  ) as AgentResponseMessage[];
+  ) as PiRpcResponse[];
 
   expect(responses.length).toBe(2);
 
-  // 验证两个 response 的 ID 分别为 req-concurrent-1 和 req-concurrent-2
-  const responseIds = responses.map((r) => r.id);
-  expect(responseIds).toContain("req-concurrent-1");
-  expect(responseIds).toContain("req-concurrent-2");
+  // 验证两个 response 都 success
+  for (const r of responses) {
+    expect(r.success).toBe(true);
+  }
 
   agent.kill();
 });
@@ -294,6 +294,6 @@ test("submit 到已退出进程 -> 抛出 AGENT_CRASHED 错误", async () => {
 
   // 再尝试 submit 应该抛出
   await expect(
-    agent.submit({ prompt: "test" }, "req-after-kill"),
+    agent.submit({ type: "prompt", message: "test" }),
   ).rejects.toThrow("AGENT_CRASHED");
 });

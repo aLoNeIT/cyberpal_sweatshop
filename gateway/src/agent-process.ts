@@ -5,14 +5,14 @@
  * 事件分发、崩溃检测和终止。
  *
  * 生命周期：
- *   1. 构造 → 2. start() spawn 子进程 → 3. submit() 发送任务
+ *   1. 构造 → 2. start() spawn 子进程 → 3. submit() 发送命令
  *   4. onEvent() 接收产出 → 5. kill() 或进程自行退出
  *
  * @module agent-process
  */
 
 import type { FileSink } from "bun";
-import type { AgentTaskParams, AgentMessage } from "./types.ts";
+import type { PiRpcCommand, PiRpcMessage, PiRpcResponse, PiRpcEvent } from "./types.ts";
 import type { GatewayConfig } from "./types.ts";
 import { Logger } from "./logger.ts";
 import { ErrorCode } from "./errors.ts";
@@ -27,7 +27,7 @@ export class AgentProcessImpl {
   private proc: ReturnType<typeof Bun.spawn> | null = null;
   private logger: Logger;
   private config: GatewayConfig;
-  private callbacks: Array<(event: AgentMessage) => void> = [];
+  private callbacks: Array<(msg: PiRpcMessage) => void> = [];
   private exitCallbacks: Array<(code: number | null) => void> = [];
   private buffer: string = "";
   private _alive: boolean = false;
@@ -35,6 +35,7 @@ export class AgentProcessImpl {
   private _exitCode: number | null = null;
   private _lastActivity: number = 0;
   private _killedByGateway: boolean = false;
+  private pendingIds: Map<string, { resolve: (resp: PiRpcResponse) => void; reject: (err: Error) => void }> = new Map();
 
   /** @returns 子进程 PID（未启动时为 null） */
   get pid(): number | null {
@@ -75,33 +76,36 @@ export class AgentProcessImpl {
   /**
    * 启动 pi-agent 子进程。
    *
-   * @param workDir agent 工作目录（cwd）
    * @param env 额外环境变量（如模型 API key）
    * @throws 当进程启动失败时抛出 AGENT_SPAWN_FAILED 错误
    */
-  async start(workDir: string, env: Record<string, string> = {}): Promise<void> {
+  async start(env: Record<string, string> = {}): Promise<void> {
     const args = ["--mode", this.config.pi_mode];
 
-    // 沙箱参数（按类型追加）
-    if (this.config.pi_sandbox !== "none") {
-      args.push("--sandbox", this.config.pi_sandbox);
+    if (this.config.pi_provider) {
+      args.push("--provider", this.config.pi_provider);
     }
-
-    // 权限配置
-    if (this.config.pi_permission_config) {
-      args.push("--permission-config", this.config.pi_permission_config);
+    if (this.config.pi_model) {
+      args.push("--model", this.config.pi_model);
+    }
+    if (this.config.pi_no_session) {
+      args.push("--no-session");
+    }
+    if (this.config.pi_session_dir) {
+      args.push("--session-dir", this.config.pi_session_dir);
+    }
+    if (this.config.pi_session_name) {
+      args.push("--name", this.config.pi_session_name);
     }
 
     this.logger.info("Starting pi-agent process", {
       binary: this.config.pi_binary,
       args,
-      workDir,
     });
 
     try {
       this.proc = Bun.spawn({
         cmd: [this.config.pi_binary, ...args],
-        cwd: workDir,
         stdin: "pipe",
         stdout: "pipe",
         stderr: "pipe",
@@ -152,35 +156,68 @@ export class AgentProcessImpl {
   }
 
   /**
-   * 发送任务请求到 agent stdin（NDJSON 格式）。
+   * 发送 RPC 命令到 agent stdin（NDJSON 格式）。
    *
-   * @param params 任务参数
-   * @param requestId 请求 ID（UUID，可选，默认自动生成）
+   * @param command RPC 命令
    * @throws 当 agent 进程未启动或已退出时抛出 AGENT_CRASHED 错误
    */
-  async submit(params: AgentTaskParams, requestId?: string): Promise<void> {
+  async submit(command: PiRpcCommand): Promise<void> {
     if (!this.proc || !this._alive) {
       throw new Error(`${ErrorCode.AGENT_CRASHED}: agent process not running`);
     }
 
-    const id = requestId ?? crypto.randomUUID();
-    const request = {
-      type: "request" as const,
-      id,
-      method: "task.submit",
-      params,
-    };
-
-    const line = JSON.stringify(request) + "\n";
+    const line = JSON.stringify(command) + "\n";
     (this.proc.stdin as FileSink).write(new TextEncoder().encode(line));
+  }
+
+  /**
+   * 发送 steer 命令。
+   */
+  steer(message: string): Promise<void> {
+    return this.submit({ type: "steer", message });
+  }
+
+  /**
+   * 发送 follow_up 命令。
+   */
+  followUp(message: string): Promise<void> {
+    return this.submit({ type: "follow_up", message });
+  }
+
+  /**
+   * 发送 abort 命令。
+   */
+  abort(): Promise<void> {
+    return this.submit({ type: "abort" });
+  }
+
+  /**
+   * 发送 set_model 命令。
+   */
+  setModel(provider: string, modelId: string): Promise<void> {
+    return this.submit({ type: "set_model", provider, modelId });
+  }
+
+  /**
+   * 发送 set_thinking_level 命令。
+   */
+  setThinkingLevel(level: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max"): Promise<void> {
+    return this.submit({ type: "set_thinking_level", level });
+  }
+
+  /**
+   * 发送 get_state 命令。
+   */
+  getState(): Promise<void> {
+    return this.submit({ type: "get_state" });
   }
 
   /**
    * 注册事件回调。
    *
-   * @param callback 回调函数，接收 AgentMessage（每次 agent stdout 产出时调用）
+   * @param callback 回调函数，接收 PiRpcMessage（每次 agent stdout 产出时调用）
    */
-  onEvent(callback: (event: AgentMessage) => void): void {
+  onEvent(callback: (msg: PiRpcMessage) => void): void {
     this.callbacks.push(callback);
   }
 
@@ -322,14 +359,26 @@ export class AgentProcessImpl {
    */
   private parseAndDispatch(line: string): void {
     try {
-      const msg = JSON.parse(line) as AgentMessage;
+      const parsed = JSON.parse(line);
       this._lastActivity = Date.now();
-      this.logger.debug("Agent message received", {
-        type: msg.type,
-        event: "event" in msg ? msg.event : undefined,
-      });
-      for (const cb of this.callbacks) {
-        cb(msg);
+
+      if (parsed.type === "response") {
+        // PiRpcResponse
+        this.logger.debug("Agent response received", {
+          command: parsed.command,
+          success: parsed.success,
+        });
+        for (const cb of this.callbacks) {
+          cb(parsed as PiRpcResponse);
+        }
+      } else {
+        // PiRpcEvent
+        this.logger.debug("Agent event received", {
+          type: parsed.type,
+        });
+        for (const cb of this.callbacks) {
+          cb(parsed as PiRpcEvent);
+        }
       }
     } catch (e) {
       this.logger.warn("Failed to parse agent NDJSON line", {
