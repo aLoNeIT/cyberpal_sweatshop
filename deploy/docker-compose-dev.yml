@@ -1,5 +1,5 @@
 # =========================================================================
-# docker-compose-dev.yml — 本地开发环境
+# docker-compose-dev.yml — 本地开发环境（精简版）
 #
 # 使用方式:
 #   1. 复制 deploy/.env.example 为 deploy/.env.dev（按需调整）
@@ -9,252 +9,93 @@
 #   5. 停止: docker compose -f docker-compose-dev.yml down
 #
 # 服务清单:
-#   mysql (8.0)    — 数据库，端口 3307（宿主机）
-#   redis (7)      — 缓存/Session，端口 6380（宿主机）
-#   hyperf         — PHP/Swoole 后端，端口 9501
-#   pi-gateway     — Bun WebSocket 网关，端口 3002
-#   web            — Angular 前端 DevServer，端口 4200
-#   nginx          — 反向代理 (可选)，端口 80
+#   nginx        — 反向代理统一入口，宿主机只暴露此端口
+#   hyperf       — PHP/Swoole 后端（hyperf/watcher 热更新）
+#   pi-gateway   — Bun WebSocket 网关（bun --watch 热更新）
+#   web          — Angular 前端 DevServer（原生 HMR）
 #
-# 热更新:
-#   web:       Angular DevServer 原生 HMR
-#   pi-gateway: Bun --watch (文件变更自动重启)
-#   hyperf:    容器内 php bin/hyperf.php start，修改代码需手动重启
-#              (可选安装 hyperf/watcher 实现热更新: composer require hyperf/watcher --dev)
+# 路由:
+#   http://host:port/          → 前端项目
+#   http://host:port/service/  → 后端 API
+#   ws://host:port/ws          → WebSocket 网关
+#
+# 所有数据均通过宿主机目录映射，不创建 Docker 托管卷。
+# Hyperf 的 DB/Redis 连接从 service/.env 读取，无需在此配置。
 # =========================================================================
 
 version: '3.8'
 
 services:
   # =========================================================================
-  # MySQL 8.0 — 本地开发数据库
-  # =========================================================================
-  mysql:
-    image: mysql:8.0
-    container_name: cyberpal-mysql-dev
-    ports:
-      - "${MYSQL_PORT:-3307}:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-cyberpal_sweatshop}
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_general_ci
-    volumes:
-      # 数据库文件持久化
-      - mysql_dev_data:/var/lib/mysql
-      # 初始化 SQL（按文件名顺序执行）
-      - ../document/sql/initialization:/docker-entrypoint-initdb.d:ro
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_general_ci
-      - --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 40s
-    restart: unless-stopped
-    networks:
-      - dev-net
-
-  # =========================================================================
-  # Redis 7 — 本地开发缓存 & Session
-  # =========================================================================
-  redis:
-    image: redis:7-alpine
-    container_name: cyberpal-redis-dev
-    ports:
-      - "${REDIS_PORT:-6380}:6379"
-    volumes:
-      - redis_dev_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-    networks:
-      - dev-net
-
-  # =========================================================================
-  # Hyperf — PHP/Swoole 后端
+  # Hyperf — PHP/Swoole 后端（热更新）
   #
-  # 镜像: hyperf/hyperf:8.3-alpine-v3.21-swoole（与 deploy/Dockerfile 一致）
-  # 首次启动会自动 composer install
-  # 注意: Swoole 长驻进程不支持原生热更新，修改 PHP 代码后需重启容器:
-  #   docker compose -f docker-compose-dev.yml restart hyperf
-  # 或手动 exec:
-  #   docker compose -f docker-compose-dev.yml exec hyperf php bin/hyperf.php restart
+  # 热更新: hyperf/watcher，修改 PHP 代码后自动重启服务
+  # 源码挂载: ../service → /opt/www（直接映射，vendor 写入宿主机）
   # =========================================================================
   hyperf:
     image: hyperf/hyperf:8.3-alpine-v3.21-swoole
     container_name: cyberpal-hyperf-dev
-    ports:
-      - "${HYPERF_PORT:-9501}:9501"
-    environment:
-      APP_NAME: cyberpal_sweatshop
-      APP_ENV: ${APP_ENV:-dev}
-      SCAN_CACHEABLE: "false"
-      # 数据库 — 指向 compose 内的 mysql 容器
-      DB_DRIVER: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: ${MYSQL_DATABASE:-cyberpal_sweatshop}
-      DB_USERNAME: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      DB_CHARSET: utf8mb4
-      DB_COLLATION: utf8mb4_general_ci
-      DB_PREFIX: cs_
-      # Redis — 指向 compose 内的 redis 容器
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_AUTH: "${REDIS_AUTH:-}"
-      REDIS_DB: 0
-      # HTTP Server
-      HTTP_PORT: 9501
-      # pi-gateway 连接配置（开发环境可选项）
-      PI_GATEWAY_WS_URL: ws://pi-gateway:3002
-      PI_GATEWAY_SERVICE_ID: ${PI_GATEWAY_SERVICE_ID:-hyperf}
-      PI_GATEWAY_JWT_SECRET: ${GATEWAY_JWT_SECRET:-pi-gateway-dev-secret-key}
-      # Pi Agent 配置
-      PI_AGENT_BIN: pi
-      PI_AGENT_PROVIDER: ${PI_AGENT_PROVIDER:-openai}
-      PI_AGENT_MODEL: ${PI_AGENT_MODEL:-gpt-4o}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      PI_SANDBOX: ${PI_SANDBOX:-gondolin}
     volumes:
-      # 源码挂载（可读写，支持热编辑）
+      # 源码直接映射到宿主机目录（vendor 也写入宿主机）
       - ../service:/opt/www
-      # vendor 匿名卷（避免宿主机 node_modules 污染问题）
-      - hyperf_vendor:/opt/www/vendor
-      # Pi Agent 模型配置
+      # Pi Agent 模型配置（只读）
       - ../service/pi-config/models.json:/root/.pi/agent/models.json:ro
     working_dir: /opt/www
-    # 启动脚本: 首次 composer install → 启动 Hyperf
-    entrypoint: ["sh", "-c"]
-    command:
-      - |
-        if [ ! -d "vendor/hyperf" ]; then
-          echo ">>> First run: composer install..."
-          composer install --no-interaction --prefer-dist
-        fi
-        echo ">>> Starting Hyperf on port $${HTTP_PORT:-9501}..."
-        php bin/hyperf.php start
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      pi-gateway:
-        condition: service_started
+    command: ["php", "bin/hyperf.php", "server:watch"]
     restart: unless-stopped
     networks:
       - dev-net
 
   # =========================================================================
-  # pi-gateway — Bun WebSocket 网关
+  # pi-gateway — Bun WebSocket 网关（热更新）
   #
-  # 热更新: Bun --watch 原生支持，修改 TypeScript 后自动重启
+  # 热更新: bun --watch 原生支持，修改 TypeScript 后自动重启
+  # 数据: SQLite 写入宿主机 ../gateway/data 目录
   # =========================================================================
   pi-gateway:
     image: oven/bun:1-alpine
     container_name: cyberpal-gateway-dev
-    ports:
-      - "${GATEWAY_PORT:-3002}:3002"
-    environment:
-      GATEWAY_PORT: 3002
-      GATEWAY_HOST: 0.0.0.0
-      SQLITE_PATH: /data/gateway.db
-      JWT_SECRET: ${GATEWAY_JWT_SECRET:-pi-gateway-dev-secret-key}
-      HEARTBEAT_INTERVAL_MS: ${HEARTBEAT_INTERVAL_MS:-10000}
-      HEARTBEAT_TIMEOUT_MS: ${HEARTBEAT_TIMEOUT_MS:-30000}
-      SESSION_TIMEOUT_MS: ${SESSION_TIMEOUT_MS:-1800000}
-      AGENT_IDLE_TIMEOUT_MS: ${AGENT_IDLE_TIMEOUT_MS:-600000}
-      CLEANUP_INTERVAL_MS: ${CLEANUP_INTERVAL_MS:-60000}
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      PI_SANDBOX: ${PI_SANDBOX:-gondolin}
-      PI_PERMISSION_CONFIG: /etc/pi/permission.config.json
-      PI_AGENT_MODEL: ${PI_AGENT_MODEL:-gpt-4o}
-      PI_AGENT_PROVIDER: ${PI_AGENT_PROVIDER:-openai}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
-      # 网关源码（可读写）
+      # 网关源码（直接映射到宿主机）
       - ../gateway:/app
-      # SQLite 数据持久化
-      - gateway_dev_data:/data
+      # SQLite 数据持久化到宿主机目录
+      - ../gateway/data:/data
       # 权限策略配置（只读）
       - ./pi/permission.config.json:/etc/pi/permission.config.json:ro
       # workspace（agent 工作目录，只读）
       - ../service:/workspace:ro
     working_dir: /app
-    # 安装 pi-coding-agent + 启动 Bun --watch
-    entrypoint: ["sh", "-c"]
-    command:
-      - |
-        if ! command -v node > /dev/null 2>&1; then
-          echo ">>> Installing Node.js..."
-          apk add --no-cache nodejs npm
-        fi
-        if ! command -v pi > /dev/null 2>&1; then
-          echo ">>> Installing pi-coding-agent..."
-          npm install -g --ignore-scripts @earendil-works/pi-coding-agent
-        fi
-        echo ">>> Starting pi-gateway with Bun --watch..."
-        bun run --watch src/server.ts
+    command: ["bun", "run", "--watch", "src/server.ts"]
     restart: unless-stopped
     networks:
       - dev-net
 
   # =========================================================================
-  # web — Angular 前端 DevServer
+  # web — Angular 前端 DevServer（HMR 热更新）
   #
-  # 镜像: node:22-alpine（与 deploy/Dockerfile 的 Node.js 版本一致）
-  # HMR: Angular DevServer 原生支持，修改代码后浏览器自动刷新
-  # 注意: --poll 2000 解决 Windows 宿主机文件系统事件不触发的问题
+  # 热更新: Angular DevServer 原生 HMR，修改代码后浏览器自动刷新
+  # --poll 2000 解决 Windows 宿主机文件系统事件不触发的问题
   # =========================================================================
   web:
     image: node:22-alpine
     container_name: cyberpal-web-dev
-    ports:
-      - "${WEB_PORT:-4200}:4200"
-    environment:
-      NODE_ENV: development
-      # 后端 API 代理目标（指向 hyperf 容器）
-      BACKEND_API_URL: http://hyperf:9501
     volumes:
-      # 前端源码（可读写）
+      # 前端源码直接映射到宿主机目录（node_modules 也写入宿主机）
       - ../web:/app
-      # node_modules 匿名卷（避免与宿主机冲突）
-      - web_node_modules:/app/node_modules
-      # Angular 缓存
-      - web_angular_cache:/app/.angular
     working_dir: /app
-    entrypoint: ["sh", "-c"]
-    command:
-      - |
-        if [ ! -d "node_modules/@angular" ]; then
-          echo ">>> First run: npm install (this may take a few minutes)..."
-          npm install
-        fi
-        echo ">>> Starting Angular DevServer on port 4200..."
-        npx ng serve --host 0.0.0.0 --port 4200 --poll 2000 --disable-host-check
-    depends_on:
-      - hyperf
+    command: ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000", "--disable-host-check"]
     restart: unless-stopped
     networks:
       - dev-net
 
   # =========================================================================
-  # Nginx — 反向代理（开发环境可选）
+  # Nginx — 反向代理统一入口（宿主机唯一暴露端口）
   #
-  # 用途: 模拟生产环境路由，统一入口
-  # 前端 / → Angular DevServer (web:4200)
-  # 后端 /api → Hyperf (hyperf:9501)
-  # WS    /ws → pi-gateway (pi-gateway:3002)
-  #
-  # 如果不需要统一入口，可注释此服务，直接访问各端口。
+  # 路由:
+  #   /          → web:4200      前端 Angular DevServer
+  #   /service/  → hyperf:9501   后端 API
+  #   /ws        → pi-gateway:3002  WebSocket 网关
+  #   /health    → pi-gateway:3002  健康检查
   # =========================================================================
   nginx:
     image: nginx:1.27-alpine
@@ -270,29 +111,6 @@ services:
     restart: unless-stopped
     networks:
       - dev-net
-
-# =========================================================================
-# Volumes
-# =========================================================================
-volumes:
-  mysql_dev_data:
-    name: cyberpal_mysql_dev_data
-    driver: local
-  redis_dev_data:
-    name: cyberpal_redis_dev_data
-    driver: local
-  gateway_dev_data:
-    name: cyberpal_gateway_dev_data
-    driver: local
-  hyperf_vendor:
-    name: cyberpal_hyperf_vendor
-    driver: local
-  web_node_modules:
-    name: cyberpal_web_node_modules
-    driver: local
-  web_angular_cache:
-    name: cyberpal_web_angular_cache
-    driver: local
 
 # =========================================================================
 # Networks

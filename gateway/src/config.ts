@@ -9,6 +9,9 @@
 
 import type { GatewayConfig } from "./types.ts";
 
+// 加载 .env 文件（不存在时不报错，适合测试环境）
+process.loadEnvFile(".env");
+
 /**
  * 从环境变量加载网关配置。
  *
