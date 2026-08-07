@@ -23,13 +23,11 @@
 # Hyperf 的 DB/Redis 连接从 service/.env 读取，无需在此配置。
 # =========================================================================
 
-version: '3.8'
-
 services:
   # =========================================================================
   # Hyperf — PHP/Swoole 后端（热更新）
   #
-  # 热更新: hyperf/watcher，修改 PHP 代码后自动重启服务
+  # 热更新: hyperf/watcher，修改 PHP 代码后自动重启
   # 源码挂载: ../service → /opt/www（直接映射，vendor 写入宿主机）
   # =========================================================================
   hyperf:
@@ -50,6 +48,7 @@ services:
   # pi-gateway — Bun WebSocket 网关（热更新）
   #
   # 热更新: bun --watch 原生支持，修改 TypeScript 后自动重启
+  # 配置: bun --env-file .env 加载 gateway/.env
   # 数据: SQLite 写入宿主机 ../gateway/data 目录
   # =========================================================================
   pi-gateway:
@@ -65,7 +64,8 @@ services:
       # workspace（agent 工作目录，只读）
       - ../service:/workspace:ro
     working_dir: /app
-    command: ["bun", "run", "--watch", "src/server.ts"]
+    entrypoint: ["sh", "-c"]
+    command: ["bun --env-file=.env run --watch src/server.ts"]
     restart: unless-stopped
     networks:
       - dev-net
@@ -91,8 +91,8 @@ services:
   # =========================================================================
   # Nginx — 反向代理统一入口（宿主机唯一暴露端口）
   #
-  # 路由:
-  #   /          → web:4200      前端 Angular DevServer
+  # 路由（伪静态回退）:
+  #   /          → web:4200（失败则回退到 hyperf:9501）
   #   /service/  → hyperf:9501   后端 API
   #   /ws        → pi-gateway:3002  WebSocket 网关
   #   /health    → pi-gateway:3002  健康检查
@@ -103,6 +103,7 @@ services:
     ports:
       - "${NGINX_PORT:-80}:80"
     volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/nginx-dev.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - hyperf
