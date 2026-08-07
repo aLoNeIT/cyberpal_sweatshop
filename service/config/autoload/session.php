@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-use Hyperf\Session\Handler\FileHandler;
+use Hyperf\Session\Handler\RedisHandler;
 
 return [
-    'handler' => FileHandler::class,
+    'handler' => RedisHandler::class,
     'options' => [
         'connection' => 'default',
-        'path' => BASE_PATH . '/runtime/session',
         'gc_maxlifetime' => 7200,
         'session_name' => 'CYBERPAL_SESSION_ID',
         'domain' => null,
