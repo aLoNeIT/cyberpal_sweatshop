@@ -9,10 +9,11 @@ use function Ella123\HyperfCaptcha\captcha_create;
 use function Ella123\HyperfCaptcha\captcha_verify;
 
 /**
- * 验证码逻��� — 封装 ella123/hyperf-captcha 包。
+ * 验证码逻辑 — 封装 ella123/hyperf-captcha 包。
  */
 class CaptchaLogic extends BaseLogic
 {
+
     /**
      * 创建验证码。
      *
@@ -21,9 +22,10 @@ class CaptchaLogic extends BaseLogic
     public function create(): JsonTable
     {
         $captcha = captcha_create();
+        $key = (string) ($captcha['key'] ?? '');
 
         return JsonTable::withSuccess('success', [
-            'key' => (string) ($captcha['key'] ?? ''),
+            'key' => $key,
             'img' => (string) ($captcha['img'] ?? ''),
         ]);
     }
@@ -39,6 +41,7 @@ class CaptchaLogic extends BaseLogic
     {
         $code = trim($code);
         $key  = trim($key);
+
         if ($code === '' || $key === '') {
             return JsonTable::withError('captcha invalid', 104);
         }
